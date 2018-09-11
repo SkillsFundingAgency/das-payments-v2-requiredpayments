@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT2_TransactionType_1To3_Tests
+namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.ACT2_TransTypes_1To3_Basic_Tests
 {
     using TechTalk.SpecFlow;
     
@@ -18,20 +18,20 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "2.4.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
-    [NUnit.Framework.DescriptionAttribute("R02 - with single historical payment")]
-    public partial class R02_WithSingleHistoricalPaymentFeature
+    [NUnit.Framework.DescriptionAttribute("R02 - First payment including previous month")]
+    public partial class R02_FirstPaymentIncludingPreviousMonthFeature
     {
         
         private TechTalk.SpecFlow.ITestRunner testRunner;
         
-#line 1 "R02_SingleHistoricalPayment.feature"
+#line 1 "R02_NoHistory.feature"
 #line hidden
         
         [NUnit.Framework.OneTimeSetUpAttribute()]
         public virtual void FeatureSetup()
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
-            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "R02 - with single historical payment", null, ProgrammingLanguage.CSharp, ((string[])(null)));
+            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "R02 - First payment including previous month", null, ProgrammingLanguage.CSharp, ((string[])(null)));
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -126,23 +126,31 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT
         [NUnit.Framework.TestAttribute()]
         [NUnit.Framework.DescriptionAttribute("Contract Type 2 On programme payments")]
         [NUnit.Framework.CategoryAttribute("Non-DAS")]
-        [NUnit.Framework.CategoryAttribute("Historical_Payments")]
+        [NUnit.Framework.CategoryAttribute("No_Historical_Payments")]
+        [NUnit.Framework.CategoryAttribute("First_submission")]
+        [NUnit.Framework.CategoryAttribute("Missing_submission")]
+        [NUnit.Framework.CategoryAttribute("minimum_additional")]
         [NUnit.Framework.TestCaseAttribute("Learning_1", "600", null)]
         public virtual void ContractType2OnProgrammePayments(string transaction_Type, string amount, string[] exampleTags)
         {
             string[] @__tags = new string[] {
                     "Non-DAS",
-                    "Historical_Payments"};
+                    "No_Historical_Payments",
+                    "First_submission",
+                    "Missing_submission",
+                    "minimum_additional"};
             if ((exampleTags != null))
             {
                 @__tags = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(@__tags, exampleTags));
             }
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Contract Type 2 On programme payments", null, @__tags);
-#line 19
+#line 22
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
 #line 3
 this.FeatureBackground();
+#line 24
+ testRunner.When("a TOBY is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
             TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
                         "LearnRefNumber",
@@ -160,28 +168,7 @@ this.FeatureBackground();
                         "10000",
                         string.Format("{0}", transaction_Type),
                         string.Format("{0}", amount)});
-#line 21
- testRunner.And("the following historical contract type 2 on programme payments exist:", ((string)(null)), table3, "And ");
-#line 25
- testRunner.When("a TOBY is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line hidden
-            TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
-                        "LearnRefNumber",
-                        "Ukprn",
-                        "PriceEpisodeIdentifier",
-                        "Period",
-                        "ULN",
-                        "TransactionType",
-                        "Amount"});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "1",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
+            table3.AddRow(new string[] {
                         "learnref1",
                         "10000",
                         "p1",
@@ -189,9 +176,9 @@ this.FeatureBackground();
                         "10000",
                         string.Format("{0}", transaction_Type),
                         string.Format("{0}", amount)});
-#line 27
+#line 26
  testRunner.Then("the payments due component will generate the following contract type 2 payable ea" +
-                    "rnings:", ((string)(null)), table4, "Then ");
+                    "rnings:", ((string)(null)), table3, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }

@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT2_TransactionType_1To3_Tests
+namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.ACT2_TransTypes_1To3_Basic_Tests
 {
     using TechTalk.SpecFlow;
     
@@ -18,22 +18,20 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "2.4.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
-    [NUnit.Framework.DescriptionAttribute("807_AC2- Non-DAS learner, is made redundant outside of the last 6 months of plann" +
-        "ed learning - receives full government funding for the next 12 weeks only")]
-    public partial class _807_AC2_Non_DASLearnerIsMadeRedundantOutsideOfTheLast6MonthsOfPlannedLearning_ReceivesFullGovernmentFundingForTheNext12WeeksOnlyFeature
+    [NUnit.Framework.DescriptionAttribute("R04 - No change in duration but start and end months changed after few months")]
+    public partial class R04_NoChangeInDurationButStartAndEndMonthsChangedAfterFewMonthsFeature
     {
         
         private TechTalk.SpecFlow.ITestRunner testRunner;
         
-#line 1 "Redundancy_ouside_of_last_6_months.feature"
+#line 1 "R04_ChangeInStartDate_Earlier_By_1_month.feature"
 #line hidden
         
         [NUnit.Framework.OneTimeSetUpAttribute()]
         public virtual void FeatureSetup()
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
-            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "807_AC2- Non-DAS learner, is made redundant outside of the last 6 months of plann" +
-                    "ed learning - receives full government funding for the next 12 weeks only", null, ProgrammingLanguage.CSharp, ((string[])(null)));
+            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "R04 - No change in duration but start and end months changed after few months", null, ProgrammingLanguage.CSharp, ((string[])(null)));
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -73,10 +71,10 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT
         
         public virtual void FeatureBackground()
         {
-#line 5
 #line 6
- testRunner.Given("the current processing period is 10", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 8
+#line 7
+ testRunner.Given("the current processing period is 4", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 9
  testRunner.And("a learner with LearnRefNumber learnref1 and Uln 10000 undertaking training with t" +
                     "raining provider 10000", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
@@ -100,70 +98,82 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Additional_ACT
                         "",
                         "16-18 Apprenticeship (From May 2017) Non-Levy Contract (non-procured)",
                         "ZPROG001",
-                        "03/08/2017",
+                        "06/08/2017",
                         "20/08/2018",
                         "",
                         "continuing"});
-#line 10
+#line 11
  testRunner.And("the following course information:", ((string)(null)), table1, "And ");
 #line hidden
             TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
-                        "Employer",
-                        "Employment Status",
-                        "Employment Status Applies"});
-            table2.AddRow(new string[] {
-                        "EmployerRef1",
-                        "in paid employment",
-                        "02/08/2017"});
-            table2.AddRow(new string[] {
-                        "",
-                        "not in paid employment",
-                        "19/02/2018"});
-#line 14
- testRunner.And("the employment status in the ILR is:", ((string)(null)), table2, "And ");
-#line hidden
-            TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
                         "PriceEpisodeIdentifier",
                         "EpisodeStartDate",
                         "EpisodeEffectiveTNPStartDate",
                         "TotalNegotiatedPrice",
                         "Learning_1"});
-            table3.AddRow(new string[] {
-                        "p1",
-                        "03/08/2017",
-                        "03/08/2017",
-                        "15000",
-                        "1000"});
-#line 20
+            table2.AddRow(new string[] {
+                        "p2",
+                        "06/08/2017",
+                        "06/08/2017",
+                        "9000",
+                        "600"});
+#line 15
  testRunner.And("the following contract type 2 on programme earnings for periods 1-12 are provided" +
-                    " in the latest ILR for the academic year 1718:", ((string)(null)), table3, "And ");
+                    " in the latest ILR for the academic year 1718:", ((string)(null)), table2, "And ");
 #line hidden
         }
         
         [NUnit.Framework.TestAttribute()]
         [NUnit.Framework.DescriptionAttribute("Contract Type 2 On programme payments")]
         [NUnit.Framework.CategoryAttribute("Non-DAS")]
-        [NUnit.Framework.CategoryAttribute("Redundancy")]
-        [NUnit.Framework.CategoryAttribute("Review")]
-        [NUnit.Framework.CategoryAttribute("minimum_additional")]
-        [NUnit.Framework.TestCaseAttribute("Learning_1", "1000", null)]
+        [NUnit.Framework.CategoryAttribute("Historical_Payments")]
+        [NUnit.Framework.CategoryAttribute("Start_Date_Earlier")]
+        [NUnit.Framework.TestCaseAttribute("Learning_1", "600", null)]
         public virtual void ContractType2OnProgrammePayments(string transaction_Type, string amount, string[] exampleTags)
         {
             string[] @__tags = new string[] {
                     "Non-DAS",
-                    "Redundancy",
-                    "Review",
-                    "minimum_additional"};
+                    "Historical_Payments",
+                    "Start_Date_Earlier"};
             if ((exampleTags != null))
             {
                 @__tags = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(@__tags, exampleTags));
             }
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Contract Type 2 On programme payments", null, @__tags);
-#line 30
+#line 23
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 5
+#line 6
 this.FeatureBackground();
+#line hidden
+            TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
+                        "LearnRefNumber",
+                        "Ukprn",
+                        "PriceEpisodeIdentifier",
+                        "Period",
+                        "ULN",
+                        "TransactionType",
+                        "Amount"});
+            table3.AddRow(new string[] {
+                        "learnref1",
+                        "10000",
+                        "p1",
+                        "1",
+                        "10000",
+                        string.Format("{0}", transaction_Type),
+                        string.Format("{0}", amount)});
+            table3.AddRow(new string[] {
+                        "learnref1",
+                        "10000",
+                        "p1",
+                        "2",
+                        "10000",
+                        string.Format("{0}", transaction_Type),
+                        string.Format("{0}", amount)});
+#line 25
+ testRunner.And("the following historical contract type 2 on programme payments exist:", ((string)(null)), table3, "And ");
+#line 30
+ testRunner.When("a TOBY is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
             TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
                         "LearnRefNumber",
@@ -193,154 +203,53 @@ this.FeatureBackground();
                         "learnref1",
                         "10000",
                         "p1",
-                        "3",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "4",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "5",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "6",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "7",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "8",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table4.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "9",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-#line 32
- testRunner.And("the following historical contract type 2 on programme payments exist:", ((string)(null)), table4, "And ");
-#line 45
- testRunner.When("a TOBY is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line hidden
-            TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
-                        "LearnRefNumber",
-                        "Ukprn",
-                        "PriceEpisodeIdentifier",
-                        "Period",
-                        "ULN",
-                        "TransactionType",
-                        "Amount"});
-            table5.AddRow(new string[] {
-                        "LearnRefNumber",
-                        "Ukprn",
-                        "PriceEpisodeIdentifier",
-                        "Period",
-                        "ULN",
-                        "TransactionType",
-                        "Amount"});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
                         "1",
                         "10000",
                         string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
+                        string.Format("-{0}", amount)});
+            table4.AddRow(new string[] {
                         "learnref1",
                         "10000",
                         "p1",
                         "2",
                         "10000",
                         string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
+                        string.Format("-{0}", amount)});
+            table4.AddRow(new string[] {
                         "learnref1",
                         "10000",
-                        "p1",
+                        "p2",
+                        "1",
+                        "10000",
+                        string.Format("{0}", transaction_Type),
+                        string.Format("{0}", amount)});
+            table4.AddRow(new string[] {
+                        "learnref1",
+                        "10000",
+                        "p2",
+                        "2",
+                        "10000",
+                        string.Format("{0}", transaction_Type),
+                        string.Format("{0}", amount)});
+            table4.AddRow(new string[] {
+                        "learnref1",
+                        "10000",
+                        "p2",
                         "3",
                         "10000",
                         string.Format("{0}", transaction_Type),
                         string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
+            table4.AddRow(new string[] {
                         "learnref1",
                         "10000",
-                        "p1",
+                        "p2",
                         "4",
                         "10000",
                         string.Format("{0}", transaction_Type),
                         string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "5",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "6",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "7",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "8",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-            table5.AddRow(new string[] {
-                        "learnref1",
-                        "10000",
-                        "p1",
-                        "9",
-                        "10000",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-#line 47
+#line 32
  testRunner.Then("the payments due component will generate the following contract type 2 payable ea" +
-                    "rnings:", ((string)(null)), table5, "Then ");
+                    "rnings:", ((string)(null)), table4, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }

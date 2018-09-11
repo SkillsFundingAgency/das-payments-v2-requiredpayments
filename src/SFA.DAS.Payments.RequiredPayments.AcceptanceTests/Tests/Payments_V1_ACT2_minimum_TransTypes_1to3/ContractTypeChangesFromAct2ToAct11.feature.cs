@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Minimum
+namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Payments_V1_ACT2_Minimum_TransTypes_1To3
 {
     using TechTalk.SpecFlow;
     
