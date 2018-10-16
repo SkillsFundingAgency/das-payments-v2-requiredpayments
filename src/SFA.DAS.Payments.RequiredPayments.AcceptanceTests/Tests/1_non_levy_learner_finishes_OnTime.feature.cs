@@ -18,20 +18,20 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "2.4.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
-    [NUnit.Framework.DescriptionAttribute("No history - Learning (TT1) only - Single period")]
-    public partial class NoHistory_LearningTT1Only_SinglePeriodFeature
+    [NUnit.Framework.DescriptionAttribute("Non-Levy learner - Basic Day")]
+    public partial class Non_LevyLearner_BasicDayFeature
     {
         
         private TechTalk.SpecFlow.ITestRunner testRunner;
         
-#line 1 "No history - Learning (TT1) only - Single period.feature"
+#line 1 "1_non_levy_learner_finishes_OnTime.feature"
 #line hidden
         
         [NUnit.Framework.OneTimeSetUpAttribute()]
         public virtual void FeatureSetup()
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
-            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "No history - Learning (TT1) only - Single period", null, ProgrammingLanguage.CSharp, ((string[])(null)));
+            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Non-Levy learner - Basic Day", null, ProgrammingLanguage.CSharp, ((string[])(null)));
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -71,15 +71,14 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
         
         public virtual void FeatureBackground()
         {
+#line 3
 #line 4
+ testRunner.Given("the current collection period is R03", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 5
- testRunner.Given("the current processing period is 1", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 6
  testRunner.And("the payments are for the current collection year", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 6
+ testRunner.And("a learner is undertaking a training with a training provider", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line 7
- testRunner.And("a learner with LearnRefNumber learnref1 and Uln 10000 undertaking training with t" +
-                    "raining provider 10000", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 8
  testRunner.And("the SFA contribution percentage is 90%", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
             TechTalk.SpecFlow.Table table1 = new TechTalk.SpecFlow.Table(new string[] {
@@ -88,41 +87,34 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
                         "TransactionType",
                         "Amount"});
             table1.AddRow(new string[] {
-                        "p1",
+                        "p2",
                         "1",
                         "Learning (TT1)",
-                        "600"});
+                        "1000"});
+            table1.AddRow(new string[] {
+                        "p2",
+                        "2",
+                        "Completion (TT2)",
+                        "3000"});
 #line 9
  testRunner.And("the payments due component generates the following contract type 2 payments due:", ((string)(null)), table1, "And ");
 #line hidden
         }
         
         [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("Contract Type 2 On Programme Learning payments")]
-        [NUnit.Framework.CategoryAttribute("Non-DAS")]
-        [NUnit.Framework.CategoryAttribute("Learning")]
-        [NUnit.Framework.CategoryAttribute("(TT1)")]
-        [NUnit.Framework.CategoryAttribute("NoHistory")]
-        [NUnit.Framework.TestCaseAttribute("Learning (TT1)", "600", null)]
-        public virtual void ContractType2OnProgrammeLearningPayments(string transaction_Type, string amount, string[] exampleTags)
+        [NUnit.Framework.DescriptionAttribute("1_non_levy_learner_finishes_OnTime")]
+        [NUnit.Framework.CategoryAttribute("NonDas_BasicDay")]
+        [NUnit.Framework.CategoryAttribute("OnTime")]
+        public virtual void _1_Non_Levy_Learner_Finishes_OnTime()
         {
-            string[] @__tags = new string[] {
-                    "Non-DAS",
-                    "Learning",
-                    "(TT1)",
-                    "NoHistory"};
-            if ((exampleTags != null))
-            {
-                @__tags = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(@__tags, exampleTags));
-            }
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Contract Type 2 On Programme Learning payments", null, @__tags);
-#line 17
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("1_non_levy_learner_finishes_OnTime", null, new string[] {
+                        "NonDas_BasicDay",
+                        "OnTime"});
+#line 16
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 4
+#line 3
 this.FeatureBackground();
-#line 18
- testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
             TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
                         "PriceEpisodeIdentifier",
@@ -130,51 +122,69 @@ this.FeatureBackground();
                         "TransactionType",
                         "Amount"});
             table2.AddRow(new string[] {
-                        "p1",
+                        "p2",
                         "1",
-                        string.Format("{0}", transaction_Type),
-                        string.Format("{0}", amount)});
-#line 19
- testRunner.Then("the required payments component will generate the following contract type 2 Learn" +
-                    "ing (TT1) payable earnings:", ((string)(null)), table2, "Then ");
+                        "Learning (TT1)",
+                        "1000"});
+#line 17
+ testRunner.Given("the following historical contract type 2 payments exist:", ((string)(null)), table2, "Given ");
+#line 21
+ testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+            TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
+                        "PriceEpisodeIdentifier",
+                        "Delivery Period",
+                        "TransactionType",
+                        "Amount"});
+            table3.AddRow(new string[] {
+                        "p2",
+                        "2",
+                        "Completion (TT2)",
+                        "3000"});
+#line 22
+ testRunner.Then("the required payments component will generate the following contract type 2 payab" +
+                    "le earnings:", ((string)(null)), table3, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
         
         [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("Contract Type 2 no On Programme Completion payment")]
-        public virtual void ContractType2NoOnProgrammeCompletionPayment()
+        [NUnit.Framework.DescriptionAttribute("1_non_levy_learner_finishes_OnTime - No history")]
+        [NUnit.Framework.CategoryAttribute("NonDas_BasicDay")]
+        [NUnit.Framework.CategoryAttribute("OnTime")]
+        [NUnit.Framework.CategoryAttribute("NoHistory")]
+        public virtual void _1_Non_Levy_Learner_Finishes_OnTime_NoHistory()
         {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Contract Type 2 no On Programme Completion payment", null, ((string[])(null)));
-#line 28
-this.ScenarioInitialize(scenarioInfo);
-            this.ScenarioStart();
-#line 4
-this.FeatureBackground();
-#line 29
- testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("1_non_levy_learner_finishes_OnTime - No history", null, new string[] {
+                        "NonDas_BasicDay",
+                        "OnTime",
+                        "NoHistory"});
 #line 30
- testRunner.Then("the required payments component will not generate any contract type 2 Completion " +
-                    "(TT2) payable earnings", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
-#line hidden
-            this.ScenarioCleanup();
-        }
-        
-        [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("Contract Type 2 no On Programme Balancing payment")]
-        public virtual void ContractType2NoOnProgrammeBalancingPayment()
-        {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Contract Type 2 no On Programme Balancing payment", null, ((string[])(null)));
-#line 32
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 4
+#line 3
 this.FeatureBackground();
-#line 33
+#line 31
  testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line 34
- testRunner.Then("the required payments component will not generate any contract type 2 Balancing (" +
-                    "TT3) payable earnings", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+            TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
+                        "PriceEpisodeIdentifier",
+                        "Delivery Period",
+                        "TransactionType",
+                        "Amount"});
+            table4.AddRow(new string[] {
+                        "p2",
+                        "1",
+                        "Learning (TT1)",
+                        "1000"});
+            table4.AddRow(new string[] {
+                        "p2",
+                        "2",
+                        "Completion (TT2)",
+                        "3000"});
+#line 32
+ testRunner.Then("the required payments component will generate the following contract type 2 payab" +
+                    "le earnings:", ((string)(null)), table4, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
