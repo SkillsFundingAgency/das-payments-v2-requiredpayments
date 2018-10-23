@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
+namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests.Non_LevyLearner_BasicDay
 {
     using TechTalk.SpecFlow;
     
@@ -18,20 +18,20 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "2.4.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
-    [NUnit.Framework.DescriptionAttribute("Non-Levy learner - Basic Day")]
-    public partial class Non_LevyLearner_BasicDayFeature
+    [NUnit.Framework.DescriptionAttribute("One Non-Levy Learner Finishes Late PV2-196")]
+    public partial class OneNon_LevyLearnerFinishesLatePV2_196Feature
     {
         
         private TechTalk.SpecFlow.ITestRunner testRunner;
         
-#line 1 "1_non_levy_learner_finishes_OnTime.feature"
+#line 1 "One Non-Levy Learner Finishes Late PV2-196.feature"
 #line hidden
         
         [NUnit.Framework.OneTimeSetUpAttribute()]
         public virtual void FeatureSetup()
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
-            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Non-Levy learner - Basic Day", null, ProgrammingLanguage.CSharp, ((string[])(null)));
+            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "One Non-Levy Learner Finishes Late PV2-196", "Provider earnings and payments where learner completes later than planned", ProgrammingLanguage.CSharp, ((string[])(null)));
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -71,15 +71,32 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
         
         public virtual void FeatureBackground()
         {
-#line 3
 #line 4
- testRunner.Given("the current collection period is R03", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 5
- testRunner.And("the payments are for the current collection year", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+ testRunner.Given("a learner is undertaking a training with a training provider", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 6
- testRunner.And("a learner is undertaking a training with a training provider", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 7
  testRunner.And("the SFA contribution percentage is 90%", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 7
+ testRunner.And("the payments are for the current collection year", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+        }
+        
+        [NUnit.Framework.TestAttribute()]
+        [NUnit.Framework.DescriptionAttribute("A non-DAS learner, learner finishes late")]
+        [NUnit.Framework.CategoryAttribute("NonDas_BasicDay")]
+        [NUnit.Framework.CategoryAttribute("finishes_late")]
+        public virtual void ANon_DASLearnerLearnerFinishesLate()
+        {
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("A non-DAS learner, learner finishes late", null, new string[] {
+                        "NonDas_BasicDay",
+                        "finishes_late"});
+#line 12
+this.ScenarioInitialize(scenarioInfo);
+            this.ScenarioStart();
+#line 4
+this.FeatureBackground();
+#line 13
+ testRunner.Given("the current collection period is R05", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line hidden
             TechTalk.SpecFlow.Table table1 = new TechTalk.SpecFlow.Table(new string[] {
                         "PriceEpisodeIdentifier",
@@ -93,28 +110,11 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Tests
                         "1000"});
             table1.AddRow(new string[] {
                         "p2",
-                        "2",
+                        "5",
                         "Completion (TT2)",
                         "3000"});
-#line 9
+#line 15
  testRunner.And("the payments due component generates the following contract type 2 payments due:", ((string)(null)), table1, "And ");
-#line hidden
-        }
-        
-        [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("1_non_levy_learner_finishes_OnTime")]
-        [NUnit.Framework.CategoryAttribute("NonDas_BasicDay")]
-        [NUnit.Framework.CategoryAttribute("OnTime")]
-        public virtual void _1_Non_Levy_Learner_Finishes_OnTime()
-        {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("1_non_levy_learner_finishes_OnTime", null, new string[] {
-                        "NonDas_BasicDay",
-                        "OnTime"});
-#line 16
-this.ScenarioInitialize(scenarioInfo);
-            this.ScenarioStart();
-#line 3
-this.FeatureBackground();
 #line hidden
             TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
                         "PriceEpisodeIdentifier",
@@ -126,9 +126,9 @@ this.FeatureBackground();
                         "1",
                         "Learning (TT1)",
                         "1000"});
-#line 17
- testRunner.Given("the following historical contract type 2 payments exist:", ((string)(null)), table2, "Given ");
-#line 21
+#line 20
+ testRunner.And("the following historical contract type 2 payments exist:", ((string)(null)), table2, "And ");
+#line 24
  testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
             TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
@@ -138,10 +138,10 @@ this.FeatureBackground();
                         "Amount"});
             table3.AddRow(new string[] {
                         "p2",
-                        "2",
+                        "5",
                         "Completion (TT2)",
                         "3000"});
-#line 22
+#line 25
  testRunner.Then("the required payments component will generate the following contract type 2 payab" +
                     "le earnings:", ((string)(null)), table3, "Then ");
 #line hidden
@@ -149,23 +149,23 @@ this.FeatureBackground();
         }
         
         [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("1_non_levy_learner_finishes_OnTime - No history")]
+        [NUnit.Framework.DescriptionAttribute("A non-DAS learner, learner finishes late - no history")]
         [NUnit.Framework.CategoryAttribute("NonDas_BasicDay")]
-        [NUnit.Framework.CategoryAttribute("OnTime")]
-        [NUnit.Framework.CategoryAttribute("NoHistory")]
-        public virtual void _1_Non_Levy_Learner_Finishes_OnTime_NoHistory()
+        [NUnit.Framework.CategoryAttribute("finishes_late")]
+        [NUnit.Framework.CategoryAttribute("withdrawal")]
+        public virtual void ANon_DASLearnerLearnerFinishesLate_NoHistory()
         {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("1_non_levy_learner_finishes_OnTime - No history", null, new string[] {
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("A non-DAS learner, learner finishes late - no history", null, new string[] {
                         "NonDas_BasicDay",
-                        "OnTime",
-                        "NoHistory"});
-#line 30
+                        "finishes_late",
+                        "withdrawal"});
+#line 47
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 3
+#line 4
 this.FeatureBackground();
-#line 31
- testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line 48
+ testRunner.Given("the current collection period is R05", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line hidden
             TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
                         "PriceEpisodeIdentifier",
@@ -179,12 +179,32 @@ this.FeatureBackground();
                         "1000"});
             table4.AddRow(new string[] {
                         "p2",
-                        "2",
+                        "5",
                         "Completion (TT2)",
                         "3000"});
-#line 32
+#line 50
+ testRunner.And("the payments due component generates the following contract type 2 payments due:", ((string)(null)), table4, "And ");
+#line 55
+ testRunner.When("a payments due event is received", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+            TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
+                        "PriceEpisodeIdentifier",
+                        "Delivery Period",
+                        "TransactionType",
+                        "Amount"});
+            table5.AddRow(new string[] {
+                        "p2",
+                        "1",
+                        "Learning (TT1)",
+                        "1000"});
+            table5.AddRow(new string[] {
+                        "p2",
+                        "5",
+                        "Completion (TT2)",
+                        "3000"});
+#line 56
  testRunner.Then("the required payments component will generate the following contract type 2 payab" +
-                    "le earnings:", ((string)(null)), table4, "Then ");
+                    "le earnings:", ((string)(null)), table5, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
