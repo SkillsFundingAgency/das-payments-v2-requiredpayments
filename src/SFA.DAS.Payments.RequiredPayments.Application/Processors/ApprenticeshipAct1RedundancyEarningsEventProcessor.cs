@@ -8,10 +8,10 @@ using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
-    public class ApprenticeshipContractType2EarningEventProcessor 
-        : ApprenticeshipContractTypeEarningEventProcessor<ApprenticeshipContractTypeEarningsEvent>, IApprenticeshipContractType2EarningsEventProcessor
+    public class ApprenticeshipAct1RedundancyEarningsEventProcessor 
+        : ApprenticeshipContractTypeEarningEventProcessor<ApprenticeshipContractType1RedundancyEarningEvent>, IApprenticeshipAct1RedundancyEarningsEventProcessor
     {
-        public ApprenticeshipContractType2EarningEventProcessor(
+        public ApprenticeshipAct1RedundancyEarningsEventProcessor(
             IMapper mapper,
             IRequiredPaymentProcessor requiredPaymentProcessor,
             IHoldingBackCompletionPaymentService holdingBackCompletionPaymentService,
