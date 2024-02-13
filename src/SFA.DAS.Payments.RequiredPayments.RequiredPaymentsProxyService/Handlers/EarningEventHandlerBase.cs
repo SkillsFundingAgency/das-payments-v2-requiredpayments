@@ -1,29 +1,30 @@
-using ESFA.DC.Logging.Interfaces;
-using Microsoft.ServiceFabric.Actors;
-using Microsoft.ServiceFabric.Actors.Client;
-using NServiceBus;
-using SFA.DAS.Payments.Application.Infrastructure.Logging;
-using SFA.DAS.Payments.RequiredPayments.Domain;
-using SFA.DAS.Payments.RequiredPayments.Messages.Events;
-using SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using ESFA.DC.Logging;
+using ESFA.DC.Logging.Interfaces;
+using Microsoft.ServiceFabric.Actors;
+using Microsoft.ServiceFabric.Actors.Client;
+using NServiceBus;
+using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.RequiredPayments.Domain;
+using SFA.DAS.Payments.RequiredPayments.Messages.Events;
+using SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces;
 
 namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handlers
 {
     public abstract class EarningEventHandlerBase<T> : IHandleMessages<T> where T : PaymentsEvent
     {
         private readonly IApprenticeshipKeyService apprenticeshipKeyService;
-        private readonly IActorProxyFactory proxyFactory;
+        private readonly ExecutionContext executionContext;
         private readonly IPaymentLogger paymentLogger;
-        private readonly ESFA.DC.Logging.ExecutionContext executionContext;
+        private readonly IActorProxyFactory proxyFactory;
 
         protected EarningEventHandlerBase(IApprenticeshipKeyService apprenticeshipKeyService,
             IActorProxyFactory proxyFactory,
@@ -33,7 +34,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
             this.apprenticeshipKeyService = apprenticeshipKeyService;
             this.proxyFactory = proxyFactory ?? new ActorProxyFactory();
             this.paymentLogger = paymentLogger;
-            this.executionContext = (ESFA.DC.Logging.ExecutionContext) executionContext;
+            this.executionContext = (ExecutionContext)executionContext;
         }
 
         public async Task Handle(T message, IMessageHandlerContext context)
@@ -66,11 +67,11 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
             if (requiredPaymentEvent != null)
                 await Task.WhenAll(requiredPaymentEvent.Select(context.Publish)).ConfigureAwait(false);
 
-            paymentLogger.LogInfo("Successfully processed RequiredPaymentsProxyService event for Actor for " + 
-            $"jobId:{message.JobId}, learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
-            $"pathwayCode:{message.LearningAim.PathwayCode}, programmeType:{message.LearningAim.ProgrammeType}, " +
-            $"standardCode:{message.LearningAim.StandardCode}, learningAimReference:{message.LearningAim.Reference}, " +
-            $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{contractType}");
+            paymentLogger.LogInfo("Successfully processed RequiredPaymentsProxyService event for Actor for " +
+                                  $"jobId:{message.JobId}, learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
+                                  $"pathwayCode:{message.LearningAim.PathwayCode}, programmeType:{message.LearningAim.ProgrammeType}, " +
+                                  $"standardCode:{message.LearningAim.StandardCode}, learningAimReference:{message.LearningAim.Reference}, " +
+                                  $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{contractType}");
         }
 
         private ContractType GetContractTypeFromMessage(T message)
@@ -78,7 +79,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
             if (message is PayableEarningEvent || message is ApprenticeshipContractType1RedundancyEarningEvent)
                 return ContractType.Act1;
 
-            if (message is ApprenticeshipContractType2EarningEvent || message is ApprenticeshipContractType2RedundancyEarningEvent)
+            if (message is ApprenticeshipContractType2EarningEvent ||
+                message is ApprenticeshipContractType2RedundancyEarningEvent)
                 return ContractType.Act2;
 
             if (message is IFunctionalSkillEarningEvent funcSkill)

@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SFA.DAS.Payments.Model.Core;
+﻿using SFA.DAS.Payments.Model.Core;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.TestHelpers
 {
     internal static class EarningEventDataHelper
     {
-
-
         public static LearningAim CreateLearningAim()
         {
             return new LearningAim
@@ -30,6 +25,5 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.TestHelpers
                 Uln = 4
             };
         }
-        
     }
 }

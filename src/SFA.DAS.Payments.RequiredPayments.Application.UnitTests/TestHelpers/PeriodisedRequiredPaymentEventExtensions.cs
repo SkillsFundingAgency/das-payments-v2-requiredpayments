@@ -7,7 +7,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.TestHelpers
 {
     public static class PeriodisedRequiredPaymentEventExtensions
     {
-        public static void ShouldBeMappedTo(this PeriodisedRequiredPaymentEvent paymentEvent, IdentifiedRemovedLearningAim identifiedLearningAim)
+        public static void ShouldBeMappedTo(this PeriodisedRequiredPaymentEvent paymentEvent,
+            IdentifiedRemovedLearningAim identifiedLearningAim)
         {
             paymentEvent.EarningEventId.Should().Be(Guid.Empty);
             paymentEvent.EventId.Should().NotBe(Guid.Empty);
@@ -24,7 +25,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.TestHelpers
             paymentEvent.LearningAim.StandardCode.Should().Be(identifiedLearningAim.LearningAim.StandardCode);
         }
 
-        public static void ShouldBeMappedTo(this PeriodisedRequiredPaymentEvent paymentEvent, PaymentHistoryEntity historicPayment)
+        public static void ShouldBeMappedTo(this PeriodisedRequiredPaymentEvent paymentEvent,
+            PaymentHistoryEntity historicPayment)
         {
             paymentEvent.EarningEventId.Should().Be(Guid.Empty);
             paymentEvent.EventId.Should().NotBe(Guid.Empty);

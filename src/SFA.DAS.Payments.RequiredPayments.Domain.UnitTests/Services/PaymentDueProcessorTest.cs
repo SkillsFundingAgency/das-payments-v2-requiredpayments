@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using SFA.DAS.Payments.Model.Core.Factories;
-using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
 
@@ -11,13 +10,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
     [TestFixture]
     public class PaymentDueProcessorTest
     {
-        private PaymentDueProcessor paymentDueProcessor;
-
         [SetUp]
         public void SetUp()
         {
             paymentDueProcessor = new PaymentDueProcessor();
         }
+
+        private PaymentDueProcessor paymentDueProcessor;
 
         [Test]
         public void TestNullPaymentHistory()
@@ -64,13 +63,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 {
                     Amount = 1,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 },
                 new Payment
                 {
                     Amount = 3,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 }
             };
 
@@ -91,7 +90,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 {
                     Amount = 2,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 }
             };
 
@@ -101,7 +100,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             // assert
             Assert.AreEqual(0, amount);
         }
-        
+
         [Test]
         public void TestMultiplePaymentsFoundWithMorePaidThanDue()
         {
@@ -112,13 +111,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 {
                     Amount = 3,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 },
                 new Payment
                 {
                     Amount = 3,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 }
             };
 
@@ -128,7 +127,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             // assert
             Assert.AreEqual(-1, amount);
         }
-              
+
         [Test]
         public void TestMultiplePaymentsFoundWithSamePaidAsDue()
         {
@@ -139,13 +138,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 {
                     Amount = 3,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 },
                 new Payment
                 {
                     Amount = 2,
                     DeliveryPeriod = 2,
-                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2)
                 }
             };
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.Serialization;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 
 namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
 {
@@ -9,11 +9,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     public abstract class PeriodisedRequiredPaymentEvent : PeriodisedPaymentEvent, IPeriodisedRequiredPaymentEvent
     {
         private static Type[] inheritors;
+
         private static Type[] GetInheritors()
         {
             return inheritors ?? (inheritors = typeof(PeriodisedRequiredPaymentEvent).Assembly.GetTypes()
-                       .Where(x => x.IsSubclassOf(typeof(PeriodisedRequiredPaymentEvent)))
-                       .ToArray());
+                .Where(x => x.IsSubclassOf(typeof(PeriodisedRequiredPaymentEvent)))
+                .ToArray());
         }
     }
 }
