@@ -10,7 +10,7 @@ using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.Application.Infrastructure.Telemetry;
 using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
@@ -27,14 +27,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
     public abstract class EarningEventProcessorBase<TEarningEvent> : IEarningEventProcessor<TEarningEvent>
         where TEarningEvent : IEarningEvent
     {
-        private readonly IRequiredPaymentProcessor requiredPaymentProcessor;
-        private readonly IMapper mapper;
-        private readonly IHoldingBackCompletionPaymentService completionPaymentService;
-        private readonly IPaymentHistoryRepository paymentHistoryRepository;
         private readonly IApprenticeshipKeyProvider apprenticeshipKeyProvider;
-        private readonly INegativeEarningService negativeEarningService;
-        private readonly IPaymentLogger paymentLogger;
+        private readonly IHoldingBackCompletionPaymentService completionPaymentService;
         private readonly IDuplicateEarningEventService duplicateEarningEventService;
+        private readonly IMapper mapper;
+        private readonly INegativeEarningService negativeEarningService;
+        private readonly IPaymentHistoryRepository paymentHistoryRepository;
+        private readonly IPaymentLogger paymentLogger;
+        private readonly IRequiredPaymentProcessor requiredPaymentProcessor;
         private readonly ITelemetry telemetry;
 
         protected EarningEventProcessorBase(
@@ -49,17 +49,21 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             ITelemetry telemetry)
         {
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            this.requiredPaymentProcessor = requiredPaymentProcessor ?? throw new ArgumentNullException(nameof(requiredPaymentProcessor));
+            this.requiredPaymentProcessor = requiredPaymentProcessor ??
+                                            throw new ArgumentNullException(nameof(requiredPaymentProcessor));
             this.completionPaymentService = completionPaymentService;
             this.paymentHistoryRepository = paymentHistoryRepository;
             this.apprenticeshipKeyProvider = apprenticeshipKeyProvider;
             this.negativeEarningService = negativeEarningService;
             this.paymentLogger = paymentLogger;
-            this.duplicateEarningEventService = duplicateEarningEventService ?? throw new ArgumentNullException(nameof(duplicateEarningEventService));
+            this.duplicateEarningEventService = duplicateEarningEventService ??
+                                                throw new ArgumentNullException(nameof(duplicateEarningEventService));
             this.telemetry = telemetry ?? throw new ArgumentNullException(nameof(telemetry));
         }
 
-        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(TEarningEvent earningEvent, IDataCache<PaymentHistoryEntity[]> paymentHistoryCache, CancellationToken cancellationToken)
+        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(
+            TEarningEvent earningEvent, IDataCache<PaymentHistoryEntity[]> paymentHistoryCache,
+            CancellationToken cancellationToken)
         {
             if (earningEvent == null)
                 throw new ArgumentNullException(nameof(earningEvent));
@@ -68,14 +72,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             {
                 var result = new List<PeriodisedRequiredPaymentEvent>();
                 if (await duplicateEarningEventService.IsDuplicate(earningEvent, cancellationToken)
-                    .ConfigureAwait(false))
+                        .ConfigureAwait(false))
                 {
                     return result.AsReadOnly();
                 }
+
                 var cachedPayments = await paymentHistoryCache.TryGet(CacheKeys.PaymentHistoryKey, cancellationToken);
                 var academicYearPayments = cachedPayments.HasValue
                     ? cachedPayments.Value
-                        .Where(p => p.LearnAimReference.Equals(earningEvent.LearningAim.Reference, StringComparison.OrdinalIgnoreCase))
+                        .Where(p => p.LearnAimReference.Equals(earningEvent.LearningAim.Reference,
+                            StringComparison.OrdinalIgnoreCase))
                         .Select(p => mapper.Map<PaymentHistoryEntity, Payment>(p))
                         .ToList()
                     : new List<Payment>();
@@ -100,7 +106,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     if (NegativeEarningWillResultInARefund(period, payments))
                     {
                         requiredPayments = negativeEarningService
-                            .ProcessNegativeEarning(period.Amount, academicYearPayments, period.Period, period.PriceEpisodeIdentifier);
+                            .ProcessNegativeEarning(period.Amount, academicYearPayments, period.Period,
+                                period.PriceEpisodeIdentifier);
                     }
                     else
                     {
@@ -117,7 +124,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                         requiredPayments = requiredPaymentProcessor.GetRequiredPayments(earning, payments);
                         if (requiredPayments.Count > 0)
                         {
-                            holdBackCompletionPayments = await HoldBackCompletionPayments(earningEvent, earning, type, cancellationToken).ConfigureAwait(false);
+                            holdBackCompletionPayments =
+                                await HoldBackCompletionPayments(earningEvent, earning, type, cancellationToken)
+                                    .ConfigureAwait(false);
                         }
                     }
 
@@ -130,7 +139,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                     foreach (var requiredPayment in requiredPayments)
                     {
-                        var requiredPaymentEvent = CreateRequiredPaymentEvent(requiredPayment.EarningType, type, holdBackCompletionPayments);
+                        var requiredPaymentEvent = CreateRequiredPaymentEvent(requiredPayment.EarningType, type,
+                            holdBackCompletionPayments);
                         mapper.Map(period, requiredPaymentEvent);
                         mapper.Map(earningEvent, requiredPaymentEvent);
                         mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -143,18 +153,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                         {
                             var priceEpisode = earningEvent.PriceEpisodes.Count == 1
                                 ? earningEvent.PriceEpisodes.FirstOrDefault()
-                                : earningEvent.PriceEpisodes?.SingleOrDefault(x => x.Identifier == priceEpisodeIdentifier);
+                                : earningEvent.PriceEpisodes?.SingleOrDefault(x =>
+                                    x.Identifier == priceEpisodeIdentifier);
 
                             mapper.Map(priceEpisode, requiredPaymentEvent);
 
-                            if (requiredPaymentEvent.LearningAim != null) mapper.Map(priceEpisode, requiredPaymentEvent.LearningAim);
+                            if (requiredPaymentEvent.LearningAim != null)
+                                mapper.Map(priceEpisode, requiredPaymentEvent.LearningAim);
                         }
 
                         result.Add(requiredPaymentEvent);
                     }
                 }
-                return result.AsReadOnly();
 
+                return result.AsReadOnly();
             }
             catch (Exception e)
             {
@@ -163,7 +175,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             }
         }
 
-        private static void AddRefundCommitmentDetails(RequiredPayment requiredPayment, PeriodisedRequiredPaymentEvent requiredPaymentEvent)
+        private static void AddRefundCommitmentDetails(RequiredPayment requiredPayment,
+            PeriodisedRequiredPaymentEvent requiredPaymentEvent)
         {
             if (requiredPayment.Amount < 0)
             {
@@ -173,10 +186,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             }
         }
 
-        private static void AddAimSeqNumber(EarningPeriod period, TEarningEvent earningEvent, PeriodisedRequiredPaymentEvent requiredPaymentEvent)
+        private static void AddAimSeqNumber(EarningPeriod period, TEarningEvent earningEvent,
+            PeriodisedRequiredPaymentEvent requiredPaymentEvent)
         {
-            var priceEpisode = earningEvent?.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
-            requiredPaymentEvent.LearningAimSequenceNumber = priceEpisode != null ? priceEpisode.LearningAimSequenceNumber : earningEvent.LearningAim.SequenceNumber;
+            var priceEpisode =
+                earningEvent?.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
+            requiredPaymentEvent.LearningAimSequenceNumber = priceEpisode != null
+                ? priceEpisode.LearningAimSequenceNumber
+                : earningEvent.LearningAim.SequenceNumber;
         }
 
         private static bool NegativeEarningWillResultInARefund(EarningPeriod period, List<Payment> payments)
@@ -184,7 +201,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return period.Amount < 0 && period.Amount < payments.Sum(x => x.Amount);
         }
 
-        private async Task<bool> HoldBackCompletionPayments(TEarningEvent earningEvent, Earning earning, int type, CancellationToken cancellationToken)
+        private async Task<bool> HoldBackCompletionPayments(TEarningEvent earningEvent, Earning earning, int type,
+            CancellationToken cancellationToken)
         {
             if (type != (int)OnProgrammeEarningType.Completion)
                 return false;
@@ -194,24 +212,26 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
             var priceEpisode = earningEvent.PriceEpisodes.Single(p => p.Identifier == earning.PriceEpisodeIdentifier);
             var key = apprenticeshipKeyProvider.GetCurrentKey();
-            var employerPayments = await paymentHistoryRepository.GetEmployerCoInvestedPaymentHistoryTotal(key, cancellationToken).ConfigureAwait(false);
+            var employerPayments = await paymentHistoryRepository
+                .GetEmployerCoInvestedPaymentHistoryTotal(key, cancellationToken).ConfigureAwait(false);
 
-            var shouldHoldBackCompletionPayment = completionPaymentService.ShouldHoldBackCompletionPayment(employerPayments, priceEpisode);
+            var shouldHoldBackCompletionPayment =
+                completionPaymentService.ShouldHoldBackCompletionPayment(employerPayments, priceEpisode);
 
             if (shouldHoldBackCompletionPayment)
             {
                 var properties = new Dictionary<string, string>
                 {
-                    { TelemetryKeys.JobId, earningEvent.JobId.ToString()},
+                    { TelemetryKeys.JobId, earningEvent.JobId.ToString() },
                     { TelemetryKeys.Ukprn, earningEvent.Ukprn.ToString() },
                     { TelemetryKeys.LearnerRef, earningEvent.Learner.ReferenceNumber },
                     { "LearningAimReference", earningEvent.LearningAim.Reference },
                     { "EarningEventId", earningEvent.EventId.ToString() },
-                    { TelemetryKeys.CollectionPeriod, earningEvent.CollectionPeriod.Period.ToString()},
-                    { TelemetryKeys.AcademicYear, earningEvent.CollectionPeriod.AcademicYear.ToString()},
-                    { "Completion HoldBack Exemption Code", employerPayments.ToString(CultureInfo.InvariantCulture)},
-                    { "Expected Employer Contribution", priceEpisode.CompletionHoldBackExemptionCode.ToString()},
-                    { "Reported Employer Contribution", priceEpisode.EmployerContribution.ToString()},
+                    { TelemetryKeys.CollectionPeriod, earningEvent.CollectionPeriod.Period.ToString() },
+                    { TelemetryKeys.AcademicYear, earningEvent.CollectionPeriod.AcademicYear.ToString() },
+                    { "Completion HoldBack Exemption Code", employerPayments.ToString(CultureInfo.InvariantCulture) },
+                    { "Expected Employer Contribution", priceEpisode.CompletionHoldBackExemptionCode.ToString() },
+                    { "Reported Employer Contribution", priceEpisode.EmployerContribution.ToString() }
                 };
 
                 telemetry.TrackEvent("Holding Back Completion Payment", properties, new Dictionary<string, double>());
@@ -222,7 +242,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
         protected abstract EarningType GetEarningType(int type);
 
-        protected PeriodisedRequiredPaymentEvent CreateRequiredPaymentEvent(EarningType earningType, int transactionType, bool holdBackCompletionPayment)
+        protected PeriodisedRequiredPaymentEvent CreateRequiredPaymentEvent(EarningType earningType,
+            int transactionType, bool holdBackCompletionPayment)
         {
             if (holdBackCompletionPayment)
             {
@@ -234,17 +255,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 case EarningType.CoInvested:
                     return new CalculatedRequiredCoInvestedAmount
                     {
-                        OnProgrammeEarningType = (OnProgrammeEarningType)transactionType,
+                        OnProgrammeEarningType = (OnProgrammeEarningType)transactionType
                     };
                 case EarningType.Incentive:
                     return new CalculatedRequiredIncentiveAmount
                     {
-                        Type = (IncentivePaymentType)transactionType,
+                        Type = (IncentivePaymentType)transactionType
                     };
                 case EarningType.Levy:
                     return new CalculatedRequiredLevyAmount
                     {
-                        OnProgrammeEarningType = (OnProgrammeEarningType)transactionType,
+                        OnProgrammeEarningType = (OnProgrammeEarningType)transactionType
                     };
             }
 

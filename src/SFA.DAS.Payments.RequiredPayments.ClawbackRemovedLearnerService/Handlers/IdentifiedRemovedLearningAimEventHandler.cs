@@ -14,12 +14,16 @@ namespace SFA.DAS.Payments.RequiredPayments.ClawbackRemovedLearnerService.Handle
     public class IdentifiedRemovedLearningAimEventHandler : IHandleMessages<IdentifiedRemovedLearningAim>
     {
         private readonly IClawbackRemovedLearnerAimsProcessor clawbackRemovedLearnerAimsProcessor;
-        private readonly IPaymentLogger logger;
         private readonly IExecutionContext executionContext;
+        private readonly IPaymentLogger logger;
 
-        public IdentifiedRemovedLearningAimEventHandler(IClawbackRemovedLearnerAimsProcessor clawbackRemovedLearnerAimsProcessor, IPaymentLogger logger, IExecutionContext executionContext)
+        public IdentifiedRemovedLearningAimEventHandler(
+            IClawbackRemovedLearnerAimsProcessor clawbackRemovedLearnerAimsProcessor, IPaymentLogger logger,
+            IExecutionContext executionContext)
         {
-            this.clawbackRemovedLearnerAimsProcessor = clawbackRemovedLearnerAimsProcessor ?? throw new ArgumentNullException(nameof(clawbackRemovedLearnerAimsProcessor));
+            this.clawbackRemovedLearnerAimsProcessor = clawbackRemovedLearnerAimsProcessor ??
+                                                       throw new ArgumentNullException(
+                                                           nameof(clawbackRemovedLearnerAimsProcessor));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.executionContext = executionContext ?? throw new ArgumentNullException(nameof(executionContext));
         }
@@ -29,7 +33,8 @@ namespace SFA.DAS.Payments.RequiredPayments.ClawbackRemovedLearnerService.Handle
             logger.LogDebug("Processing 'IdentifiedRemovedLearningAim' message.");
             ((ExecutionContext)executionContext).JobId = message.JobId.ToString();
 
-            var calculatedRequiredLevyAmount = await clawbackRemovedLearnerAimsProcessor.GenerateClawbackForRemovedLearnerAim(message, CancellationToken.None).ConfigureAwait(false);
+            var calculatedRequiredLevyAmount = await clawbackRemovedLearnerAimsProcessor
+                .GenerateClawbackForRemovedLearnerAim(message, CancellationToken.None).ConfigureAwait(false);
 
             logger.LogDebug($"Got {calculatedRequiredLevyAmount?.Count ?? 0} Calculated Required Levy Amount events.");
 

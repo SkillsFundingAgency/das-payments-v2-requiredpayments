@@ -6,7 +6,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.Model.Core.Factories;
@@ -22,6 +22,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
     [TestFixture]
     public class EarningEventMappingTest
     {
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<RequiredPaymentsProfile>());
+            config.AssertConfigurationIsValid();
+            mapper = new Mapper(config);
+        }
+
         public EarningEventMappingTest()
         {
             ukprn = 123L;
@@ -32,26 +40,19 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         private static long ukprn;
         private static long uln;
 
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<RequiredPaymentsProfile>());
-            config.AssertConfigurationIsValid();
-            mapper = new Mapper(config);
-        }
-
         [Test]
         [TestCase(typeof(CalculatedRequiredCoInvestedAmount))]
         [TestCase(typeof(CalculatedRequiredIncentiveAmount))]
         [TestCase(typeof(CalculatedRequiredLevyAmount))]
         public void AmountIsCorrect(Type requiredPaymentEventType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
             var expectedAmount = 100;
 
             var requiredPayment = new RequiredPayment
             {
-                Amount = expectedAmount,
+                Amount = expectedAmount
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -64,12 +65,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CalculatedRequiredLevyAmount))]
         public void PriceEpisodeIdentifierIsCorrect(Type requiredPaymentEventType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
             var expectedPriceEpisodeIdentifier = "peid";
 
             var requiredPayment = new RequiredPayment
             {
-                PriceEpisodeIdentifier = expectedPriceEpisodeIdentifier,
+                PriceEpisodeIdentifier = expectedPriceEpisodeIdentifier
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -81,12 +83,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CalculatedRequiredLevyAmount))]
         public void SfaPercentageIsCorrect(Type requiredPaymentEventType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as CalculatedRequiredOnProgrammeAmount;
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as CalculatedRequiredOnProgrammeAmount;
             var expectedSfaPercentage = 100;
 
             var requiredPayment = new RequiredPayment
             {
-                SfaContributionPercentage = expectedSfaPercentage,
+                SfaContributionPercentage = expectedSfaPercentage
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -100,8 +103,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CompletionPaymentHeldBackEvent))]
         public void ContractTypeIsCorrectForPayableEarningEvent(Type requiredPaymentEventType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
-            var earningEvent = new PayableEarningEvent{ PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var earningEvent = new PayableEarningEvent
+                { PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
 
             var actual = mapper.Map(earningEvent, requiredPaymentEvent);
             actual.ContractType.Should().Be(ContractType.Act1);
@@ -114,8 +119,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CompletionPaymentHeldBackEvent))]
         public void ContractTypeIsCorrectForNotLevyEvent(Type requiredPaymentEventType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
-            var earningEvent = new ApprenticeshipContractType2EarningEvent{ PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var earningEvent = new ApprenticeshipContractType2EarningEvent
+                { PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
 
             var actual = mapper.Map(earningEvent, requiredPaymentEvent);
             actual.ContractType.Should().Be(ContractType.Act2);
@@ -127,7 +134,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         {
             var earningEventId = Guid.NewGuid();
             var requiredPaymentEvent = new CalculatedRequiredIncentiveAmount() as PeriodisedRequiredPaymentEvent;
-            var earningEvent = new PayableFunctionalSkillEarningEvent { EarningEventId = earningEventId, PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
+            var earningEvent = new PayableFunctionalSkillEarningEvent
+            {
+                EarningEventId = earningEventId, PriceEpisodes = new List<PriceEpisode>(),
+                LearningAim = new LearningAim()
+            };
             var actual = mapper.Map(earningEvent, requiredPaymentEvent);
             actual.EarningEventId.Should().Be(earningEventId);
         }
@@ -136,9 +147,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [Test]
         [TestCase(typeof(CalculatedRequiredIncentiveAmount), ContractType.Act1)]
         [TestCase(typeof(CalculatedRequiredIncentiveAmount), ContractType.Act2)]
-        public void ContractTypeIsCorrectForFunctionalSkills(Type requiredPaymentEventType, ContractType expectedContractType)
+        public void ContractTypeIsCorrectForFunctionalSkills(Type requiredPaymentEventType,
+            ContractType expectedContractType)
         {
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
             requiredPaymentEvent.ContractType = expectedContractType;
 
             IFunctionalSkillEarningEvent earningEvent = null;
@@ -146,10 +159,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             switch (expectedContractType)
             {
                 case ContractType.Act1:
-                    earningEvent = new PayableFunctionalSkillEarningEvent{ PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
+                    earningEvent = new PayableFunctionalSkillEarningEvent
+                        { PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
                     break;
                 case ContractType.Act2:
-                    earningEvent = new Act2FunctionalSkillEarningsEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
+                    earningEvent = new Act2FunctionalSkillEarningsEvent
+                        { PriceEpisodes = new List<PriceEpisode>(), LearningAim = new LearningAim() };
                     break;
             }
 
@@ -211,15 +226,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             Assert.AreEqual(earningPeriod.Period, act1RequiredPayment.DeliveryPeriod);
             Assert.AreEqual(earningPeriod.ApprenticeshipId, act1RequiredPayment.ApprenticeshipId);
-            Assert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId, act1RequiredPayment.ApprenticeshipPriceEpisodeId);
+            Assert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId,
+                act1RequiredPayment.ApprenticeshipPriceEpisodeId);
             Assert.AreEqual(earningPeriod.AgreedOnDate, act1RequiredPayment.AgreedOnDate);
             Assert.AreEqual(earningPeriod.Priority, act1RequiredPayment.Priority);
             Assert.AreEqual(earningPeriod.SfaContributionPercentage, act1RequiredPayment.SfaContributionPercentage);
             Assert.AreEqual(OnProgrammeEarningType.Balancing, act1RequiredPayment.OnProgrammeEarningType);
-
         }
 
-      
+
         [Test]
         public void TestEarningPeriodToCalculatedRequiredIncentiveAmountMapping()
         {
@@ -248,7 +263,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         }
 
 
-
         [Test]
         [TestCaseSource(nameof(GetFunctionalSkillEarningEvents))]
         public void TestFunctionalSkillEarningEventMap(IFunctionalSkillEarningEvent functionalSkillEarningsEvent)
@@ -266,7 +280,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             // assert
             AssertCommonProperties(requiredPayment, functionalSkillEarningsEvent);
-            Assert.AreEqual(requiredPayment.LearningAim.FundingLineType, functionalSkillEarningsEvent.LearningAim.FundingLineType);
+            Assert.AreEqual(requiredPayment.LearningAim.FundingLineType,
+                functionalSkillEarningsEvent.LearningAim.FundingLineType);
             functionalSkillEarningsEvent.StartDate.Should().Be(requiredPayment.StartDate);
         }
 
@@ -283,10 +298,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 ActualEndDate = DateTime.UtcNow,
                 CompletionAmount = 100M,
                 InstalmentAmount = 200M,
-                NumberOfInstalments = 16,
+                NumberOfInstalments = 16
             };
 
-            var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
+            var requiredPaymentEvent =
+                Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
 
             mapper.Map(priceEpisode, requiredPaymentEvent);
             requiredPaymentEvent.StartDate.Should().Be(priceEpisode.EffectiveTotalNegotiatedPriceStartDate);
@@ -352,7 +368,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             payment.NumberOfInstalments.Should().Be(paymentHistoryEntity.NumberOfInstalments);
         }
 
-        private static void AssertCommonProperties(PeriodisedRequiredPaymentEvent requiredPayment, IEarningEvent earning)
+        private static void AssertCommonProperties(PeriodisedRequiredPaymentEvent requiredPayment,
+            IEarningEvent earning)
         {
             Assert.AreEqual(requiredPayment.Learner.Uln, earning.Learner.Uln);
             Assert.AreEqual(requiredPayment.Learner.ReferenceNumber, earning.Learner.ReferenceNumber);
@@ -373,6 +390,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             yield return CreateAct2FunctionalSkillEarningsEvent();
             yield return CreatePayableFunctionalSkillEarningsEvent();
         }
+
         private static Act2FunctionalSkillEarningsEvent CreateAct2FunctionalSkillEarningsEvent()
         {
             return new Act2FunctionalSkillEarningsEvent
@@ -398,21 +416,70 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 {
                     new FunctionalSkillEarning
                     {
-                        Type = FunctionalSkillType.OnProgrammeMathsAndEnglish, Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
-                        {
-                            new EarningPeriod {Period = 1, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 2, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 3, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 4, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 5, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 6, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 7, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 8, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 9, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 10, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 11, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 12, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                        })
+                        Type = FunctionalSkillType.OnProgrammeMathsAndEnglish, Periods =
+                            new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
+                            {
+                                new EarningPeriod
+                                {
+                                    Period = 1, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 2, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 3, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 4, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 5, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 6, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 7, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 8, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 9, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 10, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 11, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 12, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                }
+                            })
                     }
                 }),
                 PriceEpisodes = new List<PriceEpisode>()
@@ -443,21 +510,70 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 {
                     new FunctionalSkillEarning
                     {
-                        Type = FunctionalSkillType.OnProgrammeMathsAndEnglish, Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
-                        {
-                            new EarningPeriod {Period = 1, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 2, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 3, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 4, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 5, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 6, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 7, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 8, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 9, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 10, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 11, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                            new EarningPeriod {Period = 12, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = 1},
-                        })
+                        Type = FunctionalSkillType.OnProgrammeMathsAndEnglish, Periods =
+                            new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
+                            {
+                                new EarningPeriod
+                                {
+                                    Period = 1, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 2, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 3, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 4, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 5, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 6, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 7, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 8, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 9, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 10, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 11, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 12, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = 1
+                                }
+                            })
                     }
                 }),
                 PriceEpisodes = new List<PriceEpisode>()
@@ -490,21 +606,82 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 {
                     new OnProgrammeEarning
                     {
-                        Type = OnProgrammeEarningType.Learning, Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
-                        {
-                            new EarningPeriod {Period = 1, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 2, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 3, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 4, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 5, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 6, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 7, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 8, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 9, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 10, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 11, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                            new EarningPeriod {Period = 12, Amount = 100, PriceEpisodeIdentifier = "1", SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101, ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today},
-                        })
+                        Type = OnProgrammeEarningType.Learning, Periods = new ReadOnlyCollection<EarningPeriod>(
+                            new List<EarningPeriod>
+                            {
+                                new EarningPeriod
+                                {
+                                    Period = 1, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 2, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 3, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 4, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 5, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 6, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 7, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 8, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 9, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 10, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 11, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                },
+                                new EarningPeriod
+                                {
+                                    Period = 12, Amount = 100, PriceEpisodeIdentifier = "1",
+                                    SfaContributionPercentage = .9m, ApprenticeshipId = 102, AccountId = 101,
+                                    ApprenticeshipPriceEpisodeId = 105, Priority = 104, AgreedOnDate = DateTime.Today
+                                }
+                            })
                     }
                 },
                 PriceEpisodes = new List<PriceEpisode>()

@@ -12,8 +12,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
 {
     public class ReceivedProviderEarningsEventHandler : IHandleMessages<ReceivedProviderEarningsEvent>
     {
-        private readonly IActorProxyFactory proxyFactory;
         private readonly IPaymentLogger paymentLogger;
+        private readonly IActorProxyFactory proxyFactory;
 
         public ReceivedProviderEarningsEventHandler(IActorProxyFactory proxyFactory, IPaymentLogger paymentLogger)
         {
@@ -23,11 +23,16 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
 
         public async Task Handle(ReceivedProviderEarningsEvent message, IMessageHandlerContext context)
         {
-            paymentLogger.LogInfo($"Processing ReceivedProviderEarningsEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo(
+                $"Processing ReceivedProviderEarningsEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
 
             var actorId = new ActorId(message.Ukprn.ToString());
-            var actor = proxyFactory.CreateActorProxy<IRemovedLearnerService>(new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RemovedLearnerServiceActorService"), actorId);
-            var removedAims = await actor.HandleReceivedProviderEarningsEvent(message.CollectionPeriod.AcademicYear, message.CollectionPeriod.Period, message.IlrSubmissionDateTime, CancellationToken.None).ConfigureAwait(false);
+            var actor = proxyFactory.CreateActorProxy<IRemovedLearnerService>(
+                new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RemovedLearnerServiceActorService"),
+                actorId);
+            var removedAims = await actor.HandleReceivedProviderEarningsEvent(message.CollectionPeriod.AcademicYear,
+                    message.CollectionPeriod.Period, message.IlrSubmissionDateTime, CancellationToken.None)
+                .ConfigureAwait(false);
 
             foreach (var removedAim in removedAims)
             {
@@ -35,7 +40,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                 await context.Publish(removedAim).ConfigureAwait(false);
             }
 
-            paymentLogger.LogInfo($"Finished processing ReceivedProviderEarningsEvent, published {removedAims.Count} aims. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo(
+                $"Finished processing ReceivedProviderEarningsEvent, published {removedAims.Count} aims. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
         }
     }
 }

@@ -3,14 +3,15 @@ using AutoMapper;
 using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.Application.Infrastructure.Telemetry;
 using SFA.DAS.Payments.Application.Messaging;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.RequiredPayments.Application.Repositories;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
-    public abstract class ApprenticeshipContractTypeEarningEventProcessor<TEarningEvent> : EarningEventProcessorBase<TEarningEvent>
+    public abstract class
+        ApprenticeshipContractTypeEarningEventProcessor<TEarningEvent> : EarningEventProcessorBase<TEarningEvent>
         where TEarningEvent : IContractTypeEarningEvent
     {
         protected ApprenticeshipContractTypeEarningEventProcessor(
@@ -20,7 +21,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             IPaymentHistoryRepository paymentHistoryRepository,
             IApprenticeshipKeyProvider apprenticeshipKeyProvider,
             INegativeEarningService negativeEarningService,
-            IPaymentLogger paymentLogger, 
+            IPaymentLogger paymentLogger,
             IDuplicateEarningEventService duplicateEarningEventService,
             ITelemetry telemetry
         ) : base(
@@ -30,10 +31,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             paymentHistoryRepository,
             apprenticeshipKeyProvider,
             negativeEarningService,
-            paymentLogger, 
-            duplicateEarningEventService, 
+            paymentLogger,
+            duplicateEarningEventService,
             telemetry
-            )
+        )
         {
         }
 
@@ -47,7 +48,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 {
                     foreach (var period in onProgrammeEarning.Periods)
                     {
-                        result.Add((period, (int) onProgrammeEarning.Type));
+                        result.Add((period, (int)onProgrammeEarning.Type));
                     }
                 }
             }
@@ -58,7 +59,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 {
                     foreach (var period in incentiveEarning.Periods)
                     {
-                        result.Add((period, (int) incentiveEarning.Type));
+                        result.Add((period, (int)incentiveEarning.Type));
                     }
                 }
             }
