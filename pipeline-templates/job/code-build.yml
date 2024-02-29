@@ -54,6 +54,16 @@ jobs:
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
 
+  # task: DotNetCoreCLI@2 - src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj
+  - task: DotNetCoreCLI@2
+    displayName: Restore - src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
+    inputs:
+      command: restore
+      projects: src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
+      noCache: true
+      feedsToUse: 'select'
+      vstsFeed: 'dct-pkg'
+
   # task: DotNetCoreCLI@2 - src/SFA.DAS.Payments.RequiredPayments.RemovedLearnerService/SFA.DAS.Payments.RequiredPayments.RemovedLearnerService.csproj
   - task: DotNetCoreCLI@2
     displayName: Restore - src/SFA.DAS.Payments.RequiredPayments.RemovedLearnerService/SFA.DAS.Payments.RequiredPayments.RemovedLearnerService.csproj
@@ -117,6 +127,15 @@ jobs:
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
 
+  # task: NuGetCommand@2 - src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
+  - task: NuGetCommand@2
+    displayName: Restore - src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
+    inputs:
+      command: restore
+      projects: src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
+      noCache: true
+      feedsToUse: 'select'
+      vstsFeed: 'dct-pkg'
 
 
   - task: DotNetCoreCLI@2
@@ -141,6 +160,12 @@ jobs:
     displayName: Build
     inputs:
       projects:  src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      projects:  src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
       arguments: '--configuration $(buildConfiguration) --no-restore'
 
   - task: DotNetCoreCLI@2
@@ -175,11 +200,20 @@ jobs:
 
 
   - task: DotNetCoreCLI@2
-    displayName: "Publish $(SolutionBaseName)"
+    displayName: "Publish src/SFA.DAS.Payments.RequiredPayments.Messages"
     inputs:
       command: publish
       publishWebProjects: false
       projects: src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj
+      arguments: "-o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-restore --no-build"
+      modifyOutputPath: true
+
+  - task: DotNetCoreCLI@2
+    displayName: "Publish src/SFA.DAS.Payments.RequiredPayments.Model"
+    inputs:
+      command: publish
+      publishWebProjects: false
+      projects: src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj
       arguments: "-o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-restore --no-build"
       modifyOutputPath: true
 
@@ -203,4 +237,5 @@ jobs:
   - template: /azure-pipelines-templates/build/step/nuget-pack.yml
     parameters:
       DotNetStandardPackagesToPack: |
-        src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj
+        src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj;
+        src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj;
