@@ -18,7 +18,8 @@ jobs:
     displayName: Nuget Restore
     inputs:
       command: restore
-      projects: ${{ parameters.TargetProjects }}
+      #projects: ${{ parameters.TargetProjects }}
+      projects: src/SFA.DAS.Payments.RequiredPayments.Application/SFA.DAS.Payments.RequiredPayments.Application.csproj
       noCache: true
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
@@ -27,21 +28,23 @@ jobs:
     displayName: Dotnet Restore
     inputs:
       command: restore
-      projects: ${{ parameters.TargetProjects }}
+      #projects: ${{ parameters.TargetProjects }}
+      projects: src/SFA.DAS.Payments.RequiredPayments.Application/SFA.DAS.Payments.RequiredPayments.Application.csproj
       noCache: true
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
     
-  #- task: DotNetCoreCLI@2
-  #  displayName: Build
-  #  inputs:
-  #    projects:  ${{ parameters.TargetProjects }}
-  #    arguments: '--configuration $(buildConfiguration) --no-restore'
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      #projects:  ${{ parameters.TargetProjects }}
+      projects:  src/SFA.DAS.Payments.RequiredPayments.Application/SFA.DAS.Payments.RequiredPayments.Application.csproj
+      arguments: '--configuration $(buildConfiguration) --no-restore'
 
   - task: MSBuild@1
     displayName: 'Build sln'
     inputs:
-      solution: 'src/SFA.DAS.Payments.RequiredPayments.sln'
+      #solution: 'src/SFA.DAS.Payments.RequiredPayments.sln'
       msbuildArchitecture: x64
       platform: '$(BuildPlatform)'
       configuration: '$(BuildConfiguration)'
