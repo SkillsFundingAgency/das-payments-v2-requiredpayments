@@ -27,7 +27,7 @@ jobs:
     displayName: Dotnet Restore
     inputs:
       command: restore
-      projects: src/SFA.DAS.Payments.RequiredPayments.Application/SFA.DAS.Payments.RequiredPayments.Application.csproj
+      projects: ${{ parameters.TargetProjects }}
       noCache: true
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
@@ -35,7 +35,7 @@ jobs:
   - task: DotNetCoreCLI@2
     displayName: Build
     inputs:
-      projects:  src/SFA.DAS.Payments.RequiredPayments.Application/SFA.DAS.Payments.RequiredPayments.Application.csproj
+      projects: ${{ parameters.TargetProjects }}
       arguments: '--configuration $(buildConfiguration) --no-restore'
 
   - task: MSBuild@1
