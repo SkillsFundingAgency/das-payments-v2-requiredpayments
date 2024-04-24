@@ -37,7 +37,7 @@ Background:
 	| learnref1      | 10000 | p1                     | 11     | 10000 | Learning (TT1)		| 600      |
 
 @Non-DAS
-@Learning (TT1)
+@Learning(TT1)
 
 Scenario Outline: Contract Type 2 On Programme Learning payments
 

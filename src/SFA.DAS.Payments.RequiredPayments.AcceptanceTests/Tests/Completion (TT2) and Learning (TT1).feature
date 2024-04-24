@@ -23,7 +23,7 @@ Background:
 	| p1                     | 13              | Completion (TT2) | 1800   |
 
 @Non-DAS
-@Learning (TT1)
+@Learning(TT1)
 @Completion
 @Historical_Payments
 
