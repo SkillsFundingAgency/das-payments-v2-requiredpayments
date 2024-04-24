@@ -20,7 +20,7 @@ Background:
 
 @Non-DAS
 @HistoricalPayments
-@Learning (TT1)
+@Learning(TT1)
 
 Scenario Outline: Contract Type 2 On Programme Learning payments
 

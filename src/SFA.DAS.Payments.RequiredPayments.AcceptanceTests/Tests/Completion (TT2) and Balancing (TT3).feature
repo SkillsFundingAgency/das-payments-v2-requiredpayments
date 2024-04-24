@@ -35,8 +35,8 @@ Background:
 	
 	
 @Non-DAS
-@Completion (TT2)
-@Balancing (TT3)
+@Completion(TT2)
+@Balancing(TT3)
 @Historical_Payments
 
 Scenario: Contract Type 2 no On Programme payments

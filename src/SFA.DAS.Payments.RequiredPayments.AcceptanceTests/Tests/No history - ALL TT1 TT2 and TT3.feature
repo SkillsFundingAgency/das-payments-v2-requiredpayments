@@ -22,9 +22,9 @@ Background:
 	| p1                     | 10              | Balancing (TT3)  | 3000   |
 	
 @Non-DAS
-@Learning (TT1)
-@Completion (TT2)
-@Balancing (TT3)
+@Learning(TT1)
+@Completion(TT2)
+@Balancing(TT3)
 @NoHistory
 
 Scenario: Contract Type 2 On Programme Learning payments
