@@ -128,3 +128,16 @@ jobs:
       CleanTargetFolder: true
       flattenFolders: true
       continueOnError: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Pipeline Artifact - Required Payments'
+    inputs:
+      targetPath: $(build.artifactstagingdirectory)
+      artifact: requiredpayments-drop
+      continueOnError: true
+
+  - template: /azure-pipelines-templates/build/step/nuget-pack.yml
+    parameters:
+      DotNetStandardPackagesToPack: |
+        src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj;
+        src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj;
