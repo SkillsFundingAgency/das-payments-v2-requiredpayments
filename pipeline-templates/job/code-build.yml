@@ -1,7 +1,6 @@
 parameters:
   TargetProjects: 'src/**/*.csproj'
   
-
 jobs:
 - job: CodeBuild
   pool:
@@ -13,7 +12,6 @@ jobs:
   steps:
   - template: /azure-pipelines-templates/build/step/gitversion.yml
 
-
   - task: NuGetCommand@2
     displayName: Nuget Restore
     inputs:
@@ -22,6 +20,7 @@ jobs:
       noCache: true
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
+      includeNuGetOrg: true
 
   - task: DotNetCoreCLI@2
     displayName: Dotnet Restore
@@ -31,26 +30,21 @@ jobs:
       noCache: true
       feedsToUse: 'select'
       vstsFeed: 'dct-pkg'
-    
-  - task: DotNetCoreCLI@2
-    displayName: Build
-    inputs:
-      projects: ${{ parameters.TargetProjects }}
-      arguments: '--configuration $(buildConfiguration) --no-restore'
+      includeNuGetOrg: true
 
   - task: MSBuild@1
-    displayName: 'Build sln'
+    displayName: 'Build solution'
     inputs:
-      #solution: 'src/SFA.DAS.Payments.RequiredPayments.sln'
+      solution: '**/*.sln'
       msbuildArchitecture: x64
-      platform: '$(BuildPlatform)'
       configuration: '$(BuildConfiguration)'
       msbuildArguments: '/p:version=$(Build.BuildNumber) /p:FileVersion=$(Build.BuildNumber)'
-      clean: true
       maximumCpuCount: true
       logProjectEvents: true
       createLogFile: true
-
+      continueOnError: true
+      clean: true
+      
   - task: DotNetCoreCLI@2
     displayName: 'dotnet build UnitTest Projects'
     inputs:
@@ -64,8 +58,6 @@ jobs:
       projects: '**/*unittest*.csproj'
       arguments: '--filter FullyQualifiedName~UnitTests'
 
-  
-
   - task: MSBuild@1
     displayName: 'Build solution'
     inputs:
@@ -78,13 +70,11 @@ jobs:
       createLogFile: true
       continueOnError: true
 
-  
-
   - task: DeleteFiles@1
     displayName: 'Delete Symbols files from Artifact Folder '
     inputs:
       SourceFolder: '$(build.artifactstagingdirectory)/ApplicationPackage/'
-      Contents: '**/*ApplicationPackage*/*.fdb'
+      Contents: '**/*ApplicationPackage*/*.pdb'
       continueOnError: true
 
   - task: ServiceFabricUpdateManifests@2
@@ -93,6 +83,7 @@ jobs:
       applicationPackagePath: '$(build.artifactstagingdirectory)/ApplicationPackage'
       versionBehavior: Replace
       continueOnError: true
+
 
   - task: CopyFiles@2
     displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
@@ -104,8 +95,6 @@ jobs:
       CleanTargetFolder: true
       flattenFolders: true  
       continueOnError: true
-
-  
 
   - task: CopyFiles@2 
     displayName: 'Copy Nuget Files to: Artifact Nuget Directory'
@@ -119,19 +108,16 @@ jobs:
      CleanTargetFolder: true
      flattenFolders: true
      continueOnError: true
-     
 
   - task: CopyFiles@2
     displayName: 'Copy ApplicationParameters Files to: Artifact ApplicationParameters Directory'
     inputs:
-      Contents: 'src/SFA.DAS.Payments.RequiredPayments.ServiceFabric/ApplicationParameters/*.xml'
+      Contents: 'src/SFA.DAS.Payments.Audit.ServiceFabric/ApplicationParameters/*.xml'
       TargetFolder: '$(build.artifactstagingdirectory)/ApplicationParameters'
       OverWrite: true
       CleanTargetFolder: true
       flattenFolders: true
       continueOnError: true
-      
-      
 
   - task: CopyFiles@2
     displayName: 'Copy PublishProfiles Files to: Artifact PublishProfiles Directory'
@@ -141,19 +127,4 @@ jobs:
       OverWrite: true
       CleanTargetFolder: true
       flattenFolders: true
-      continueOnError: true
-      
-      
-
-  #- task: PublishPipelineArtifact@1
-  #  displayName: 'Publish Artifact: drop'
-  #  inputs:
-  #    targetPath: '$(build.artifactstagingdirectory)'
-  #    artifact: drop
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish Pipeline Artifact - Provider Adjustments'
-    inputs:
-      targetPath: $(build.artifactstagingdirectory)
-      artifact: requiredpayments
       continueOnError: true
