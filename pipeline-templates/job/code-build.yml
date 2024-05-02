@@ -112,7 +112,7 @@ jobs:
   - task: CopyFiles@2
     displayName: 'Copy ApplicationParameters Files to: Artifact ApplicationParameters Directory'
     inputs:
-      Contents: 'src/SFA.DAS.Payments.Audit.ServiceFabric/ApplicationParameters/*.xml'
+      Contents: 'src/SFA.DAS.Payments.RequiredPayments.ServiceFabric/ApplicationParameters/*.xml'
       TargetFolder: '$(build.artifactstagingdirectory)/ApplicationParameters'
       OverWrite: true
       CleanTargetFolder: true
