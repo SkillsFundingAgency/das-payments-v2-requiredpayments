@@ -39,7 +39,7 @@ Background:
 
 @Non-DAS
 @LateCompletion
-@Completion (TT2)
+@Completion(TT2)
 
 Scenario: Contract Type 2 no On Programme Learning payments
 	When a payments due event is received
