@@ -76,7 +76,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Steps
         private PaymentModel ToPayment(HistoricalPayment payment, FundingSourceType fundingSource)
         {
             var testSessionLearner = TestSession.Learners.FirstOrDefault(l => l.LearnerIdentifier == payment.LearnerId) ?? TestSession.Learner;
-            Assert.IsNotNull(testSessionLearner, $"Test session learner with learner id: '{payment.LearnerId}' not found.");
+            Assert.That(testSessionLearner, Is.Not.Null, $"Test session learner with learner id: '{payment.LearnerId}' not found.");
             return new PaymentModel
             {
                 

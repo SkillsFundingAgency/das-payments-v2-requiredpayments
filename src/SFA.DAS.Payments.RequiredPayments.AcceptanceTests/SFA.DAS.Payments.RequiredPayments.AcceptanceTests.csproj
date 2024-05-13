@@ -1,22 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+	  <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="RemoveOnceTested\**" />
+    <EmbeddedResource Remove="RemoveOnceTested\**" />
+    <None Remove="RemoveOnceTested\**" />
+    <SpecFlowFeatureFiles Remove="RemoveOnceTested\**" />
+    <SpecFlowObsoleteCodeBehindFiles Remove="RemoveOnceTested\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="Gherkin" Version="19.0.3" />
+    <PackageReference Include="Gherkin" Version="28.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NUnit" Version="4.1.0" />
     <PackageReference Include="NUnit.Console" Version="3.17.0" />
     <PackageReference Include="NUnit.ConsoleRunner" Version="3.17.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="Polly" Version="8.3.1" />
-    <PackageReference Include="SFA.DAS.Payments.AcceptanceTests.Core" Version="1.0.0" />
-    <PackageReference Include="SFA.DAS.Payments.Core" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="0.1.123" />
-    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="1.1.0" />
+    <PackageReference Include="Polly" Version="8.4.0" />
+    <PackageReference Include="SFA.DAS.Payments.AcceptanceTests.Core" Version="2.1.0-prerelease-4" />
+    <PackageReference Include="SFA.DAS.Payments.Core" Version="1.1.1" />
+    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="1.0.2" />
+    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="1.1.1" />
     <PackageReference Include="SpecFlow" Version="3.9.74" />
     <PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
     <PackageReference Include="SpecFlow.NUnit.Runners" Version="3.9.74" />

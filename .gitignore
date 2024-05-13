@@ -9,7 +9,7 @@
 
 # Settings
 */local.settings.json
-*/appsettings.[Dd]evelopment.json
+*appsettings.[Dd]evelopment.json
 */App.Debug.config
 src/SFA.DAS.Forecasting.Web/Web.Debug.config
 *.v3.ncrunchsolution
