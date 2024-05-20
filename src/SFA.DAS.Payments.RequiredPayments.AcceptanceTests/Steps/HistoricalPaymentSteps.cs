@@ -25,11 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Steps
         [BeforeTestRun(Order = 40)]
         public static void SetUpPaymentsDataContext()
         {
-            Builder.Register((c, p) =>
-            {
-                var configHelper = c.Resolve<TestsConfiguration>();
-                return new PaymentsDataContext(configHelper.GetConnectionString("PaymentsConnectionString"));
-            }).As<IPaymentsDataContext>().InstancePerDependency();
+            Builder.Register((c, p) => new PaymentsDataContext(Config.PaymentsConnectionString)).As<IPaymentsDataContext>().InstancePerDependency();
         }
 
         //#if DEBUG

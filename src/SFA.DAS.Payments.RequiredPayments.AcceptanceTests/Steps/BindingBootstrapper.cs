@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using NServiceBus;
 using SFA.DAS.Payments.AcceptanceTests.Core;
+using SFA.DAS.Payments.AcceptanceTests.Core.Infrastructure;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Messages.Common;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
@@ -16,10 +17,11 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Steps
         public static void AddRoutingConfig()
         {
             var endpointConfiguration = Container.Resolve<EndpointConfiguration>();
+            
             endpointConfiguration.Conventions().DefiningEventsAs(type => type.IsEvent<IPeriodisedRequiredPaymentEvent>());
             var transportConfig = Container.Resolve<TransportExtensions<AzureServiceBusTransport>>();
             var routing = transportConfig.Routing();
-            routing.RouteToEndpoint(typeof(ApprenticeshipContractType2EarningEvent), EndpointNames.RequiredPayments);
+            routing.RouteToEndpoint(typeof(ApprenticeshipContractType2EarningEvent), Config.GetAppSetting("RequiredPaymentsServiceEndpointName"));
         }
     }
 }
