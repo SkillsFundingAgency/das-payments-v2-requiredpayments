@@ -14,6 +14,7 @@ using ESFA.DC.IO.AzureStorage.Config.Interfaces;
 using ESFA.DC.IO.Interfaces;
 using ESFA.DC.Serialization.Interfaces;
 using ESFA.DC.Serialization.Json;
+using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using NServiceBus;
@@ -34,6 +35,7 @@ using SFA.DAS.Payments.AcceptanceTests.Services.Services;
 using SFA.DAS.Payments.Messages.Common;
 using SFA.DAS.Payments.Monitoring.Jobs.Client;
 using TechTalk.SpecFlow;
+using MessageReceiver = Microsoft.Azure.ServiceBus.Core.MessageReceiver;
 
 namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
 {
@@ -66,7 +68,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
 
             if (config.ValidateDcAndDasServices)
             {
-                Builder.RegisterType<UkprnService>().As<IUkprnService>().InstancePerLifetimeScope();
+                //Builder.RegisterType<UkprnService>().As<IUkprnService>().InstancePerLifetimeScope();
                 Builder.RegisterType<UlnService>().As<IUlnService>().InstancePerLifetimeScope();
                 Builder.RegisterType<DcNullHelper>().As<IDcHelper>().InstancePerLifetimeScope();
             }
@@ -116,7 +118,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
             var conventions = EndpointConfiguration.Conventions();
             conventions.DefiningMessagesAs(type => type.IsMessage());
 
-            var ukprnServiceType = config.ValidateDcAndDasServices ? typeof(UkprnService) : typeof(RandomUkprnService);
+            var ukprnServiceType = typeof(RandomUkprnService);
             Builder.RegisterType(ukprnServiceType).As<IUkprnService>().InstancePerLifetimeScope();
 
             EndpointConfiguration.UsePersistence<AzureStoragePersistence>()
@@ -165,8 +167,9 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 75)]
         public static async Task ClearQueue()
         {
-            var namespaceManager = NamespaceManager.CreateFromConnectionString(Config.ServiceBusConnectionString);
-            if (!await namespaceManager.QueueExistsAsync(Config.AcceptanceTestsEndpointName))
+            var managementClient = new ManagementClient(Config.ServiceBusConnectionString);
+
+            if (!await managementClient.QueueExistsAsync(Config.AcceptanceTestsEndpointName))
             {
                 Console.WriteLine($"'{Config.AcceptanceTestsEndpointName}' not found.");
                 return;
@@ -175,25 +178,23 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
             Console.WriteLine($"Now clearing queue: '{Config.AcceptanceTestsEndpointName}'");
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var messagingFactory = MessagingFactory.CreateFromConnectionString(Config.ServiceBusConnectionString);
 
-
-            var receiver = await messagingFactory.CreateMessageReceiverAsync(Config.AcceptanceTestsEndpointName,
-                ReceiveMode.ReceiveAndDelete);
+            var messageReceiver = new MessageReceiver(Config.ServiceBusConnectionString,
+                Config.AcceptanceTestsEndpointName, Microsoft.Azure.ServiceBus.ReceiveMode.ReceiveAndDelete);
             while (true)
             {
-                var messages = await receiver.ReceiveBatchAsync(500, TimeSpan.FromSeconds(1));
-                if (!messages.Any())
+                var messages = await messageReceiver.ReceiveAsync(500, TimeSpan.FromSeconds(1));
+                if (messages == null || !messages.Any())
                 {
                     break;
                 }
             }
 
-            var queueDescription = await namespaceManager.GetQueueAsync(Config.AcceptanceTestsEndpointName);
+            var queueDescription = await managementClient.GetQueueAsync(Config.AcceptanceTestsEndpointName);
             if (queueDescription.DefaultMessageTimeToLive != Config.DefaultMessageTimeToLive)
             {
                 queueDescription.DefaultMessageTimeToLive = Config.DefaultMessageTimeToLive;
-                await namespaceManager.UpdateQueueAsync(queueDescription);
+                await managementClient.UpdateQueueAsync(queueDescription);
             }
 
             Console.WriteLine(
