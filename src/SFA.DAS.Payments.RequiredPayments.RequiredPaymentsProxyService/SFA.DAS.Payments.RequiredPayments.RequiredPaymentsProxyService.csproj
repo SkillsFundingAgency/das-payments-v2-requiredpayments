@@ -17,7 +17,7 @@
     <PackageReference Include="NServiceBus" Version="8.2.0" />
     <PackageReference Include="NServiceBus.Azure.Transports.WindowsAzureStorageQueues" Version="8.1.0" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.1.0" />
-    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.0.0" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="3.2.3" />
     <PackageReference Include="SFA.DAS.Payments.Application" Version="1.1.0" />
     <PackageReference Include="SFA.DAS.Payments.Core" Version="1.1.0" />
     <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="1.0.0" />

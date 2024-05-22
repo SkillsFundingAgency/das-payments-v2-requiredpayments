@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
+using Azure.Messaging.ServiceBus.Administration;
 using ESFA.DC.ILR.TestDataGenerator.Api;
 using ESFA.DC.ILR.TestDataGenerator.Api.StorageService;
 using ESFA.DC.ILR.TestDataGenerator.Interfaces;
@@ -14,11 +15,8 @@ using ESFA.DC.IO.AzureStorage.Config.Interfaces;
 using ESFA.DC.IO.Interfaces;
 using ESFA.DC.Serialization.Interfaces;
 using ESFA.DC.Serialization.Json;
-using Microsoft.Azure.ServiceBus.Management;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
-using NServiceBus.Features;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Polly;
@@ -47,9 +45,8 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = -1)]
         public static void TestRunSetUp()
         {
-            const int maxEntityName = 50;
             var config = new TestsConfiguration();
-
+            
             Builder = new ContainerBuilder();
             Builder.RegisterType<TestsConfiguration>().As<ITestsConfiguration>();
             Builder.RegisterInstance<ITestsConfiguration>(config).SingleInstance();
@@ -123,14 +120,26 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
 
             EndpointConfiguration.UsePersistence<AzureStoragePersistence>()
                 .ConnectionString(config.StorageConnectionString);
-            EndpointConfiguration.DisableFeature<TimeoutManager>();
 
-            var transportConfig = EndpointConfiguration.UseTransport<AzureServiceBusTransport>();
-            Builder.RegisterInstance(transportConfig)
-                .As<TransportExtensions<AzureServiceBusTransport>>()
+            var transportSettings = new AzureServiceBusTransport(config.ServiceBusConnectionString)
+            {
+                
+                SubscriptionNamingConvention = (ruleName => ruleName.Split('.').LastOrDefault() ?? ruleName),
+                TransportTransactionMode = TransportTransactionMode.ReceiveOnly
+                
+            };
+
+            Builder.RegisterInstance(transportSettings)
                 .SingleInstance();
 
-            //Uses built in ForwardingTopology
+            var transportConfig = EndpointConfiguration.UseTransport(transportSettings);
+
+            Builder.RegisterInstance(transportConfig)
+                .SingleInstance();
+
+
+
+            /*//Uses built in ForwardingTopology
             transportConfig.ConnectionString(config.ServiceBusConnectionString)
                 .Transactions(TransportTransactionMode.ReceiveOnly);
 
@@ -138,10 +147,12 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
             transportConfig.SubscriptionNameShortener(ruleName => ruleName.Split('.').LastOrDefault() ?? ruleName);
             transportConfig.SubscriptionNameShortener(n => n.Length > maxEntityName ? HashName(n) : n);
             transportConfig.RuleNameShortener(
-                ruleName => ruleName.Split('.').LastOrDefault() ?? ruleName);
+                ruleName => ruleName.Split('.').LastOrDefault() ?? ruleName);*/
 
+            EndpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
-            EndpointConfiguration.UseSerialization<NewtonsoftSerializer>();
+            //EndpointConfiguration.UseSerialization<NewtonsoftSerializer>();
+
             EndpointConfiguration.EnableInstallers();
         }
 
@@ -167,9 +178,9 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 75)]
         public static async Task ClearQueue()
         {
-            var managementClient = new ManagementClient(Config.ServiceBusConnectionString);
+            var serviceBusAdminClient = new ServiceBusAdministrationClient(Config.ServiceBusConnectionString);
 
-            if (!await managementClient.QueueExistsAsync(Config.AcceptanceTestsEndpointName))
+            if (!await serviceBusAdminClient.QueueExistsAsync(Config.AcceptanceTestsEndpointName))
             {
                 Console.WriteLine($"'{Config.AcceptanceTestsEndpointName}' not found.");
                 return;
@@ -190,12 +201,16 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
                 }
             }
 
-            var queueDescription = await managementClient.GetQueueAsync(Config.AcceptanceTestsEndpointName);
-            if (queueDescription.DefaultMessageTimeToLive != Config.DefaultMessageTimeToLive)
+            var queueDescription = await serviceBusAdminClient.GetQueueAsync(Config.AcceptanceTestsEndpointName);
+            if (queueDescription.HasValue)
             {
-                queueDescription.DefaultMessageTimeToLive = Config.DefaultMessageTimeToLive;
-                await managementClient.UpdateQueueAsync(queueDescription);
+                if (queueDescription.Value.DefaultMessageTimeToLive != Config.DefaultMessageTimeToLive)
+                {
+                    queueDescription.Value.DefaultMessageTimeToLive = Config.DefaultMessageTimeToLive;
+                    await serviceBusAdminClient.UpdateQueueAsync(queueDescription);
+                }
             }
+
 
             Console.WriteLine(
                 $"Finished purging messages from {Config.AcceptanceTestsEndpointName}. Took: {stopwatch.ElapsedMilliseconds}ms");
@@ -204,9 +219,13 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 99)]
         public static void StartBus()
         {
+            var serviceCollection = new ServiceCollection();
             var endpointConfiguration = Container.Resolve<EndpointConfiguration>();
-            endpointConfiguration.UseContainer<AutofacBuilder>(c => c.ExistingLifetimeScope(Container));
-            MessageSession = Endpoint.Start(endpointConfiguration).Result;
+            var startableEndpoint = EndpointWithExternallyManagedContainer.Create(endpointConfiguration, serviceCollection);
+
+            IServiceProvider builder = serviceCollection.BuildServiceProvider();
+
+            MessageSession = startableEndpoint.Start(builder).Result;
         }
 
         [AfterScenario]

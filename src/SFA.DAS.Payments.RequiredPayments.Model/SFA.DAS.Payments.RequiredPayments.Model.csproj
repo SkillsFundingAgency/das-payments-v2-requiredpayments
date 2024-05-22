@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="3.2.3" />
     <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="1.1.0" />
   </ItemGroup>
 </Project>
