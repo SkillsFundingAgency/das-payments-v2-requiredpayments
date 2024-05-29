@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -15,6 +16,8 @@ using ESFA.DC.IO.AzureStorage.Config.Interfaces;
 using ESFA.DC.IO.Interfaces;
 using ESFA.DC.Serialization.Interfaces;
 using ESFA.DC.Serialization.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using NUnit.Framework;
@@ -45,48 +48,55 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = -1)]
         public static void TestRunSetUp()
         {
-            var config = new TestsConfiguration();
-            
-            Builder = new ContainerBuilder();
-            Builder.RegisterType<TestsConfiguration>().As<ITestsConfiguration>();
-            Builder.RegisterInstance<ITestsConfiguration>(config).SingleInstance();
+            ServiceCollection = new ServiceCollection();
 
-            Builder.RegisterType<EarningsJobClient>()
-                .As<IEarningsJobClient>()
-                .InstancePerLifetimeScope();
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true).Build();
 
-            Builder.RegisterType<AzureStorageServiceConfig>().As<IAzureStorageKeyValuePersistenceServiceConfig>()
-                .InstancePerLifetimeScope();
-            Builder.RegisterType<AzureStorageKeyValuePersistenceService>().As<IStreamableKeyValuePersistenceService>()
-                .InstancePerLifetimeScope();
-            Builder.RegisterType<StorageService>().As<IStorageService>().InstancePerLifetimeScope();
-            Builder.RegisterType<TdgService>().As<ITdgService>().InstancePerLifetimeScope();
-            Builder.RegisterType<PaymentsHelper>().As<IPaymentsHelper>().InstancePerLifetimeScope();
+            var config = new TestsConfiguration(configuration);
+            ServiceCollection.AddScoped(_ => configuration);
+
+
+            ServiceCollection.AddScoped<ITestsConfiguration, TestsConfiguration>();
+            ServiceCollection.AddSingleton(config);
+
+            ServiceCollection.AddScoped<IEarningsJobClient, EarningsJobClient>();
+
+            ServiceCollection.AddScoped<AzureStorageServiceConfig>();
+            ServiceCollection.AddScoped<IAzureStorageKeyValuePersistenceServiceConfig, AzureStorageServiceConfig>();
+
+            ServiceCollection.AddScoped<IStorageService, StorageService>();
+
+            ServiceCollection.AddScoped<ITdgService, TdgService>();
+
+            ServiceCollection.AddScoped<IPaymentsHelper, PaymentsHelper>();
 
             if (config.ValidateDcAndDasServices)
             {
                 //Builder.RegisterType<UkprnService>().As<IUkprnService>().InstancePerLifetimeScope();
-                Builder.RegisterType<UlnService>().As<IUlnService>().InstancePerLifetimeScope();
-                Builder.RegisterType<DcNullHelper>().As<IDcHelper>().InstancePerLifetimeScope();
+                ServiceCollection.AddScoped<IUlnService, UlnService>();
+                ServiceCollection.AddScoped<IDcHelper, DcNullHelper>();
             }
             else
             {
-                Builder.RegisterType<IlrNullService>().As<IIlrService>().InstancePerLifetimeScope();
-                Builder.RegisterType<RandomUkprnService>().As<IUkprnService>().InstancePerLifetimeScope();
-                Builder.RegisterType<DcHelper>().As<IDcHelper>().InstancePerLifetimeScope();
-                Builder.RegisterType<RandomUlnService>().As<IUlnService>().InstancePerLifetimeScope();
+                ServiceCollection.AddScoped<IIlrService, IlrNullService>();
+                ServiceCollection.AddScoped<IUkprnService, RandomUkprnService>();
+                ServiceCollection.AddScoped<IDcHelper, DcHelper>();
+                ServiceCollection.AddScoped<IUlnService, RandomUlnService>();
             }
 
 
-            Builder.Register((c, p) => new TestPaymentsDataContext(config.PaymentsConnectionString)).As<TestPaymentsDataContext>().InstancePerDependency();
+            ServiceCollection.AddDbContext<TestPaymentsDataContext>(options =>
+                options.UseSqlServer(config.PaymentsConnectionString));
 
-            Builder.Register((c, p) => new SubmissionDataContext(config.PaymentsConnectionString)).As<SubmissionDataContext>().InstancePerDependency();
+            ServiceCollection.AddDbContext<TestPaymentsDataContext>(options =>
+                               options.UseSqlServer(config.PaymentsConnectionString));
+            ServiceCollection.AddDbContext<SubmissionDataContext>(options =>
 
+            ServiceCollection.AddScoped(c => new TestSession(c.GetService<IUkprnService>(), c.GetService<IUlnService>())));
 
-            Builder.Register(c => new TestSession(c.Resolve<IUkprnService>(), c.Resolve<IUlnService>()))
-                .InstancePerLifetimeScope();
-
-            Builder.Register(context =>
+            ServiceCollection.AddScoped<IReadOnlyPolicyRegistry<string>>(_ =>
             {
                 var registry = new PolicyRegistry();
                 registry.Add(
@@ -100,23 +110,21 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
                                 // add logging
                             }));
                 return registry;
-            }).As<IReadOnlyPolicyRegistry<string>>()
-                .SingleInstance();
+            });
 
-            Builder.RegisterType<JobService>().As<IJobService>().InstancePerLifetimeScope();
+            ServiceCollection.AddScoped<IJobService, JobService>();
 
-            Builder.RegisterType<BespokeHttpClient>().As<IBespokeHttpClient>().InstancePerLifetimeScope();
+            ServiceCollection.AddScoped<IBespokeHttpClient, BespokeHttpClient>();
 
-            Builder.RegisterType<JsonSerializationService>().As<IJsonSerializationService>().InstancePerLifetimeScope();
+            ServiceCollection.AddScoped<IJsonSerializationService, JsonSerializationService>();
 
             EndpointConfiguration = new EndpointConfiguration(config.AcceptanceTestsEndpointName);
-            Builder.RegisterInstance(EndpointConfiguration)
-                .SingleInstance();
+            ServiceCollection.AddSingleton(EndpointConfiguration);
+
             var conventions = EndpointConfiguration.Conventions();
             conventions.DefiningMessagesAs(type => type.IsMessage());
 
-            var ukprnServiceType = typeof(RandomUkprnService);
-            Builder.RegisterType(ukprnServiceType).As<IUkprnService>().InstancePerLifetimeScope();
+            ServiceCollection.AddSingleton<IUkprnService, RandomUkprnService>();
 
             EndpointConfiguration.UsePersistence<AzureStoragePersistence>()
                 .ConnectionString(config.StorageConnectionString);
@@ -129,14 +137,11 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
                 
             };
 
-            Builder.RegisterInstance(transportSettings)
-                .SingleInstance();
+            ServiceCollection.AddSingleton(transportSettings);
 
             var transportConfig = EndpointConfiguration.UseTransport(transportSettings);
 
-            Builder.RegisterInstance(transportConfig)
-                .SingleInstance();
-
+            ServiceCollection.AddSingleton(transportConfig);
 
 
             /*//Uses built in ForwardingTopology
@@ -172,7 +177,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 50)]
         public static void CreateContainer()
         {
-            Container = Builder.Build();
+            ServiceProvider = ServiceCollection.BuildServiceProvider();
         }
 
         [BeforeTestRun(Order = 75)]
@@ -220,12 +225,9 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         public static void StartBus()
         {
             var serviceCollection = new ServiceCollection();
-            var endpointConfiguration = Container.Resolve<EndpointConfiguration>();
-            var startableEndpoint = EndpointWithExternallyManagedContainer.Create(endpointConfiguration, serviceCollection);
+            var startableEndpoint = EndpointWithExternallyManagedContainer.Create(EndpointConfiguration, serviceCollection);
 
-            IServiceProvider builder = serviceCollection.BuildServiceProvider();
-
-            MessageSession = startableEndpoint.Start(builder).Result;
+            MessageSession = startableEndpoint.Start(ServiceProvider).Result;
         }
 
         [AfterScenario]
