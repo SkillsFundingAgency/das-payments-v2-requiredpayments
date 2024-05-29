@@ -48,55 +48,56 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = -1)]
         public static void TestRunSetUp()
         {
-            ServiceCollection = new ServiceCollection();
+            Collection = new ServiceCollection();
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true).Build();
 
             var config = new TestsConfiguration(configuration);
-            ServiceCollection.AddScoped(_ => configuration);
+            Collection.AddScoped(_ => configuration);
 
 
-            ServiceCollection.AddScoped<ITestsConfiguration, TestsConfiguration>();
-            ServiceCollection.AddSingleton(config);
+            Collection.AddScoped<IConfiguration>(_ => configuration);
+            Collection.AddScoped<ITestsConfiguration, TestsConfiguration>();
+            Collection.AddSingleton(config);
 
-            ServiceCollection.AddScoped<IEarningsJobClient, EarningsJobClient>();
+            Collection.AddScoped<IEarningsJobClient, EarningsJobClient>();
 
-            ServiceCollection.AddScoped<AzureStorageServiceConfig>();
-            ServiceCollection.AddScoped<IAzureStorageKeyValuePersistenceServiceConfig, AzureStorageServiceConfig>();
+            Collection.AddScoped<AzureStorageServiceConfig>();
+            Collection.AddScoped<IAzureStorageKeyValuePersistenceServiceConfig, AzureStorageServiceConfig>();
 
-            ServiceCollection.AddScoped<IStorageService, StorageService>();
+            Collection.AddScoped<IStorageService, StorageService>();
 
-            ServiceCollection.AddScoped<ITdgService, TdgService>();
+            Collection.AddScoped<ITdgService, TdgService>();
 
-            ServiceCollection.AddScoped<IPaymentsHelper, PaymentsHelper>();
+            Collection.AddScoped<IPaymentsHelper, PaymentsHelper>();
 
             if (config.ValidateDcAndDasServices)
             {
                 //Builder.RegisterType<UkprnService>().As<IUkprnService>().InstancePerLifetimeScope();
-                ServiceCollection.AddScoped<IUlnService, UlnService>();
-                ServiceCollection.AddScoped<IDcHelper, DcNullHelper>();
+                Collection.AddScoped<IUlnService, UlnService>();
+                Collection.AddScoped<IDcHelper, DcNullHelper>();
             }
             else
             {
-                ServiceCollection.AddScoped<IIlrService, IlrNullService>();
-                ServiceCollection.AddScoped<IUkprnService, RandomUkprnService>();
-                ServiceCollection.AddScoped<IDcHelper, DcHelper>();
-                ServiceCollection.AddScoped<IUlnService, RandomUlnService>();
+                Collection.AddScoped<IIlrService, IlrNullService>();
+                Collection.AddScoped<IUkprnService, RandomUkprnService>();
+                Collection.AddScoped<IDcHelper, DcHelper>();
+                Collection.AddScoped<IUlnService, RandomUlnService>();
             }
 
 
-            ServiceCollection.AddDbContext<TestPaymentsDataContext>(options =>
+            Collection.AddDbContext<TestPaymentsDataContext>(options =>
                 options.UseSqlServer(config.PaymentsConnectionString));
 
-            ServiceCollection.AddDbContext<TestPaymentsDataContext>(options =>
+            Collection.AddDbContext<TestPaymentsDataContext>(options =>
                                options.UseSqlServer(config.PaymentsConnectionString));
-            ServiceCollection.AddDbContext<SubmissionDataContext>(options =>
+            Collection.AddDbContext<SubmissionDataContext>(options =>
 
-            ServiceCollection.AddScoped(c => new TestSession(c.GetService<IUkprnService>(), c.GetService<IUlnService>())));
+            Collection.AddScoped(c => new TestSession(c.GetService<IUkprnService>(), c.GetService<IUlnService>())));
 
-            ServiceCollection.AddScoped<IReadOnlyPolicyRegistry<string>>(_ =>
+            Collection.AddScoped<IReadOnlyPolicyRegistry<string>>(_ =>
             {
                 var registry = new PolicyRegistry();
                 registry.Add(
@@ -112,19 +113,19 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
                 return registry;
             });
 
-            ServiceCollection.AddScoped<IJobService, JobService>();
+            Collection.AddScoped<IJobService, JobService>();
 
-            ServiceCollection.AddScoped<IBespokeHttpClient, BespokeHttpClient>();
+            Collection.AddScoped<IBespokeHttpClient, BespokeHttpClient>();
 
-            ServiceCollection.AddScoped<IJsonSerializationService, JsonSerializationService>();
+            Collection.AddScoped<IJsonSerializationService, JsonSerializationService>();
 
             EndpointConfiguration = new EndpointConfiguration(config.AcceptanceTestsEndpointName);
-            ServiceCollection.AddSingleton(EndpointConfiguration);
+            Collection.AddSingleton(EndpointConfiguration);
 
             var conventions = EndpointConfiguration.Conventions();
             conventions.DefiningMessagesAs(type => type.IsMessage());
 
-            ServiceCollection.AddSingleton<IUkprnService, RandomUkprnService>();
+            Collection.AddSingleton<IUkprnService, RandomUkprnService>();
 
             EndpointConfiguration.UsePersistence<AzureStoragePersistence>()
                 .ConnectionString(config.StorageConnectionString);
@@ -137,11 +138,11 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
                 
             };
 
-            ServiceCollection.AddSingleton(transportSettings);
+            Collection.AddSingleton(transportSettings);
 
             var transportConfig = EndpointConfiguration.UseTransport(transportSettings);
 
-            ServiceCollection.AddSingleton(transportConfig);
+            Collection.AddSingleton(transportConfig);
 
 
             /*//Uses built in ForwardingTopology
@@ -177,7 +178,7 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 50)]
         public static void CreateContainer()
         {
-            ServiceProvider = ServiceCollection.BuildServiceProvider();
+            Provider = Collection.BuildServiceProvider();
         }
 
         [BeforeTestRun(Order = 75)]
@@ -224,10 +225,9 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting
         [BeforeTestRun(Order = 99)]
         public static void StartBus()
         {
-            var serviceCollection = new ServiceCollection();
-            var startableEndpoint = EndpointWithExternallyManagedContainer.Create(EndpointConfiguration, serviceCollection);
+            var startableEndpoint = EndpointWithExternallyManagedContainer.Create(EndpointConfiguration, Collection);
 
-            MessageSession = startableEndpoint.Start(ServiceProvider).Result;
+            MessageSession = startableEndpoint.Start(Provider).Result;
         }
 
         [AfterScenario]

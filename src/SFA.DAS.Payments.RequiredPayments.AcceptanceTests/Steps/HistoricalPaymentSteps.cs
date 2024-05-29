@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autofac;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using SFA.DAS.Payments.AcceptanceTests.Core;
 using SFA.DAS.Payments.AcceptanceTests.Core.Infrastructure;
@@ -12,6 +15,8 @@ using SFA.DAS.Payments.Model.Core.Factories;
 using SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Data;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
+using BindingsBase = SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting.BindingsBase;
+using TestsConfiguration = SFA.DAS.Payments.RequiredPayments.AcceptanceTests.RemoveAfterTesting.TestsConfiguration;
 
 namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Steps
 {
@@ -25,7 +30,11 @@ namespace SFA.DAS.Payments.RequiredPayments.AcceptanceTests.Steps
         [BeforeTestRun(Order = 40)]
         public static void SetUpPaymentsDataContext()
         {
-            Builder.Register((c, p) => new PaymentsDataContext(Config.PaymentsConnectionString)).As<IPaymentsDataContext>().InstancePerDependency();
+            BindingsBase.Collection.AddDbContext<PaymentsDataContext>((c, p) =>
+            {
+                var config = new TestsConfiguration(c.GetService<IConfiguration>());
+                p.UseSqlServer(config.PaymentsConnectionString);
+            });
         }
 
         //#if DEBUG
