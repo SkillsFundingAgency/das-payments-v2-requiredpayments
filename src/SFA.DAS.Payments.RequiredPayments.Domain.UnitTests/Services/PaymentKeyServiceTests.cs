@@ -1,5 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
 
 namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
@@ -20,9 +21,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var key = new PaymentKeyService().GeneratePaymentKey(learnAimRef, transactionType, academicYear, deliveryPeriod);
 
             // assert
-            Assert.AreEqual(0, key.IndexOf("6", StringComparison.Ordinal), "LearnAimRef should go first");
-            Assert.Less(key.IndexOf("6", StringComparison.Ordinal), key.IndexOf("3", StringComparison.Ordinal), "TransactionType should be after LearnAimRef");
-            Assert.Less(key.IndexOf("3", StringComparison.Ordinal), key.IndexOf("5", StringComparison.Ordinal), "DeliveryPeriod should be after TransactionType");
+            ClassicAssert.AreEqual(0, key.IndexOf("6", StringComparison.Ordinal), "LearnAimRef should go first");
+            ClassicAssert.Less(key.IndexOf("6", StringComparison.Ordinal), key.IndexOf("3", StringComparison.Ordinal), "TransactionType should be after LearnAimRef");
+            ClassicAssert.Less(key.IndexOf("3", StringComparison.Ordinal), key.IndexOf("5", StringComparison.Ordinal), "DeliveryPeriod should be after TransactionType");
         }
 
         [Test]
@@ -38,8 +39,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var key = new PaymentKeyService().GeneratePaymentKey(learnAimRef, transactionType, academicYear, deliveryPeriod);
 
             // assert
-            Assert.IsFalse(key.Contains("B"));
-            Assert.IsTrue(key.Contains("b"));
+            ClassicAssert.IsFalse(key.Contains("B"));
+            ClassicAssert.IsTrue(key.Contains("b"));
         }
     }
 }

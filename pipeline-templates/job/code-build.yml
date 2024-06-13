@@ -32,18 +32,12 @@ jobs:
       vstsFeed: 'dct-pkg'
       includeNuGetOrg: true
 
-  - task: MSBuild@1
-    displayName: 'Build solution'
+  - task: DotNetCoreCLI@2
+  #- task: NuGetCommand@2
+    displayName: Build
     inputs:
-      solution: '**/*.sln'
-      msbuildArchitecture: x64
-      configuration: '$(BuildConfiguration)'
-      msbuildArguments: '/p:version=$(Build.BuildNumber) /p:FileVersion=$(Build.BuildNumber)'
-      maximumCpuCount: true
-      logProjectEvents: true
-      createLogFile: true
-      continueOnError: true
-      clean: true
+      projects:  ${{ parameters.TargetProjects }}
+      arguments: '--configuration $(buildConfiguration) --no-restore'
       
   - task: DotNetCoreCLI@2
     displayName: 'dotnet build UnitTest Projects'

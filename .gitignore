@@ -9,6 +9,7 @@
 
 # Settings
 */local.settings.json
+*appsettings.[Dd]evelopment.json
 */App.Debug.config
 src/SFA.DAS.Forecasting.Web/Web.Debug.config
 *.v3.ncrunchsolution
@@ -286,3 +287,5 @@ src/SFA.DAS.Payments.AcceptanceTests.EndToEnd/App.Debug.config-das
 # Azure Functions localsettings file
 local.settings.json
 src/Directory.Build.targets
+/src/SFA.DAS.Payments.Monitoring.Jobs.Application/local.settings.json
+/src/SFA.DAS.Payments.sln.startup.json

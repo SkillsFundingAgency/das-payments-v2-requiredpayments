@@ -2,28 +2,32 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+	<TargetFramework>net6.0</TargetFramework>
     <IsServiceFabricServiceProject>True</IsServiceFabricServiceProject>
     <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>false</TargetLatestRuntimePatch>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.8.1" />
-    <PackageReference Include="Autofac.ServiceFabric" Version="2.0.0" />
+	<PackageReference Include="Autofac" Version="7.0.1" />
+    <PackageReference Include="Autofac.ServiceFabric" Version="4.0.0" />
+    <PackageReference Include="ESFA.DC.DateTimeProvider" Version="0.1.6-beta0001" />
     <PackageReference Include="ESFA.DC.Logging.Interfaces" Version="0.1.4-beta0001" />
-    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="3.4.664" />
-    <PackageReference Include="Microsoft.ServiceFabric.Services" Version="3.4.664" />
-    <PackageReference Include="NServiceBus" Version="7.1.5" />
-    <PackageReference Include="NServiceBus.Azure.Transports.WindowsAzureStorageQueues" Version="8.1.0" />
-    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.1.0" />
-    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.0.0" />
-    <PackageReference Include="SFA.DAS.Payments.Application" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.Core" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="1.0.0" />
-    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.Monitoring.Jobs.Client" Version="1.1.1" />
-    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="1.1.0" />
+    <PackageReference Include="Microsoft.ServiceFabric.Diagnostics.Internal" Version="8.0.1000" />
+    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="7.1.1951" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services" Version="7.1.1951" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="11.0.1000" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NServiceBus" Version="8.2.1" />
+    <PackageReference Include="NServiceBus.Azure.Transports.WindowsAzureStorageQueues" Version="8.2.5" />
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="3.0.0" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="3.2.3" />
+    <PackageReference Include="SFA.DAS.Payments.Application" Version="2.0.0-prerelease-18" />
+    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.0.0-prerelease-18" />
+    <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="1.0.1" />
+    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.0.0-prerelease-18" />
+    <PackageReference Include="SFA.DAS.Payments.Monitoring.Jobs.Client" Version="1.1.4" />
+    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="1.1.1" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
   <ItemGroup>

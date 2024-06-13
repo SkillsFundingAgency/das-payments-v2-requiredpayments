@@ -2,20 +2,23 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+	<TargetFramework>net6.0</TargetFramework>
     <IsServiceFabricServiceProject>True</IsServiceFabricServiceProject>
     <ServerGarbageCollection>True</ServerGarbageCollection>
     <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>False</TargetLatestRuntimePatch>
     <UpdateServiceFabricManifestEnabled>True</UpdateServiceFabricManifestEnabled>
     <ServicePackagePath>PackageRoot</ServicePackagePath>
+	<GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
     <ServicePackagePrefix>$(MSBuildProjectName)</ServicePackagePrefix>
     <FabActUtilWorkingDir>$(BaseIntermediateOutputPath)\FabActUtilTemp</FabActUtilWorkingDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="3.4.664" />
-    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="1.1.0" />
+    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="7.1.1951" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="1.1.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
   </ItemGroup>
 
   <ItemGroup>

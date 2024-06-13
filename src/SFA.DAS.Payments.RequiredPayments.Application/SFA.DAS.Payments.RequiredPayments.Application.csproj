@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+	<TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,15 +15,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.8.1" />
+    <PackageReference Include="Autofac" Version="7.0.1" />
     <PackageReference Include="AutoMapper" Version="7.0.1" />
+    <PackageReference Include="ESFA.DC.DateTimeProvider" Version="0.1.6-beta0001" />
     <PackageReference Include="ESFA.DC.Logging.Interfaces" Version="0.1.4-beta0001" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.1" />
-    <PackageReference Include="SFA.DAS.Payments.Application" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.Core" Version="1.1.0" />
-    <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="1.0.0" />
-    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="0.1.123" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.31" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.31" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SFA.DAS.Payments.Application" Version="2.0.0-prerelease-18" />
+    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.0.0-prerelease-18" />
+    <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="1.0.1" />
+    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="1.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
   </ItemGroup>
 
   <ItemGroup>
