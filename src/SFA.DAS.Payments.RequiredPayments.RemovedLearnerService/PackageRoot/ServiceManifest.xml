@@ -9,7 +9,6 @@
             <ReplicatorEndpoint Name="RemovedLearnerServiceActorServiceReplicatorEndpoint" />
             <ReplicatorConfigSection Name="RemovedLearnerServiceActorServiceReplicatorConfig" />
             <ReplicatorSecurityConfigSection Name="RemovedLearnerServiceActorServiceReplicatorSecurityConfig" />
-            <StoreConfigSection Name="RemovedLearnerServiceActorServiceLocalStoreConfig" />
             <ServiceEndpointV2_1 Name="RemovedLearnerServiceActorServiceEndpointV2_1" />
           </GeneratedNames>
         </Extension>

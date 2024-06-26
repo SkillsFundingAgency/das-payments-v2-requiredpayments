@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.Payments.Model.Core.Factories;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
@@ -30,11 +31,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             }
             catch (ArgumentNullException ex)
             {
-                Assert.AreEqual("paymentHistory", ex.ParamName);
+                ClassicAssert.AreEqual("paymentHistory", ex.ParamName);
                 return;
             }
 
-            Assert.Fail();
+            ClassicAssert.Fail();
         }
 
         [Test]
@@ -47,8 +48,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var amount = paymentDueProcessor.CalculateRequiredPaymentAmount(1, history);
 
             // assert
-            Assert.IsNotNull(amount);
-            Assert.AreEqual(1, amount);
+            ClassicAssert.IsNotNull(amount);
+            ClassicAssert.AreEqual(1, amount);
         }
 
         [Test]
@@ -77,7 +78,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var amount = paymentDueProcessor.CalculateRequiredPaymentAmount(5, history);
 
             // assert
-            Assert.AreEqual(1, amount);
+            ClassicAssert.AreEqual(1, amount);
         }
 
         [Test]
@@ -98,7 +99,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var amount = paymentDueProcessor.CalculateRequiredPaymentAmount(2, history);
 
             // assert
-            Assert.AreEqual(0, amount);
+            ClassicAssert.AreEqual(0, amount);
         }
 
         [Test]
@@ -125,7 +126,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var amount = paymentDueProcessor.CalculateRequiredPaymentAmount(5, history);
 
             // assert
-            Assert.AreEqual(-1, amount);
+            ClassicAssert.AreEqual(-1, amount);
         }
 
         [Test]
@@ -152,7 +153,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var amount = paymentDueProcessor.CalculateRequiredPaymentAmount(5, history);
 
             // assert
-            Assert.AreEqual(0, amount);
+            ClassicAssert.AreEqual(0, amount);
         }
     }
 }

@@ -12,7 +12,6 @@
             <ReplicatorEndpoint Name="RequiredPaymentsServiceActorServiceReplicatorEndpoint" />
             <ReplicatorConfigSection Name="RequiredPaymentsServiceActorServiceReplicatorConfig" />
             <ReplicatorSecurityConfigSection Name="RequiredPaymentsServiceActorServiceReplicatorSecurityConfig" />
-            <StoreConfigSection Name="RequiredPaymentsServiceActorServiceLocalStoreConfig" />
             <ServiceEndpointV2_1 Name="RequiredPaymentsServiceActorServiceEndpointV2_1" />
           </GeneratedNames>
         </Extension>

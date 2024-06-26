@@ -10,6 +10,7 @@ using Autofac.Extras.Moq;
 using AutoMapper;
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
@@ -77,11 +78,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             }
             catch (ArgumentNullException ex)
             {
-                Assert.AreEqual("earningEvent", ex.ParamName);
+                ClassicAssert.AreEqual("earningEvent", ex.ParamName);
                 return;
             }
 
-            Assert.Fail();
+            ClassicAssert.Fail();
         }
 
         [Test]
@@ -158,12 +159,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 paymentHistoryCacheMock.Object, CancellationToken.None);
 
             // assert
-            Assert.IsNotNull(actualRequiredPayment);
-            Assert.AreEqual(1, actualRequiredPayment.Count);
-            Assert.AreEqual(100, actualRequiredPayment.First().AmountDue);
-            Assert.AreEqual(earningEvent.LearningAim.Reference, actualRequiredPayment.First().LearningAim.Reference);
-            Assert.AreEqual("2", actualRequiredPayment.First().PriceEpisodeIdentifier);
-            Assert.AreEqual(2, actualRequiredPayment.First().LearningAimSequenceNumber);
+            ClassicAssert.IsNotNull(actualRequiredPayment);
+            ClassicAssert.AreEqual(1, actualRequiredPayment.Count);
+            ClassicAssert.AreEqual(100, actualRequiredPayment.First().AmountDue);
+            ClassicAssert.AreEqual(earningEvent.LearningAim.Reference, actualRequiredPayment.First().LearningAim.Reference);
+            ClassicAssert.AreEqual("2", actualRequiredPayment.First().PriceEpisodeIdentifier);
+            ClassicAssert.AreEqual(2, actualRequiredPayment.First().LearningAimSequenceNumber);
         }
 
         [Test]
@@ -214,7 +215,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 paymentHistoryCacheMock.Object, CancellationToken.None);
 
             // assert
-            Assert.AreEqual(0, actualRequiredPayment.Count);
+            ClassicAssert.AreEqual(0, actualRequiredPayment.Count);
         }
 
         [Test]
@@ -289,8 +290,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 paymentHistoryCacheMock.Object, CancellationToken.None);
 
             // assert
-            Assert.IsNotNull(actualRequiredPayment);
-            Assert.AreEqual(0, actualRequiredPayment.Count);
+            ClassicAssert.IsNotNull(actualRequiredPayment);
+            ClassicAssert.AreEqual(0, actualRequiredPayment.Count);
         }
     }
 }
