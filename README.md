@@ -10,7 +10,7 @@
 
 ## How It Works
 
-The required payments service is responsible for calculating the how much should be paid for the earning in each period.  It will use the output from the DC earnings calc and also look at previous payments for the same period and determine how much should be paid.  This service will publish calculated levied payment, calculated co-invested payments and calculated incentive payments
+The required payments service is responsible for calculating how much should be paid for the earnings in each period.  It will use the output from the DC earnings calc and also look at previous payments for the same period and determine how much should be paid.  This service will publish calculated levied payments, calculated co-invested payments, and calculated incentive payments
 
 More information here: 
 - https://skillsfundingagency.atlassian.net/wiki/spaces/NDL/pages/400130049/4.+Payments+v2+-+Components+DAS+Space
@@ -20,9 +20,7 @@ More information here:
 
 ### Pre-Requisites
 
-* An Azure DevBox configured for Payments V2 development
-
-Setup instructions: https://skillsfundingagency.atlassian.net/wiki/spaces/NDL/pages/950927878/Development+Environment+-+Payments+V2+DAS+Space
+Setup instructions can be found at the following link, which will help you set up your environment and access the correct repositories: https://skillsfundingagency.atlassian.net/wiki/spaces/NDL/pages/950927878/Development+Environment+-+Payments+V2+DAS+Space
 
 ### Config
 
