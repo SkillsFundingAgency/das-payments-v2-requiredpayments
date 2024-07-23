@@ -99,7 +99,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
 
         public async Task<List<IdentifiedRemovedLearningAim>> IdentifyRemovedLearnerAims(short academicYear, byte collectionPeriod, long ukprn, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken)
         {
-            var aims = await dataContext.SubmittedLearnerAim.FromSqlRaw($@"
+            var aims = await dataContext.SubmittedLearnerAim.FromSql($@"
                 select
                     newid() Id,
                     {ukprn} Ukprn,
