@@ -4,9 +4,10 @@ using System.Collections.ObjectModel;
 using AutoMapper;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
-using SFA.DAS.Payments.Messages.Core.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.Model.Core.Factories;
@@ -176,11 +177,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             var act1RequiredPayment = (CalculatedRequiredLevyAmount)requiredPayment;
 
-            Assert.AreEqual(payableEarning.AgreementId, act1RequiredPayment.AgreementId);
-            Assert.AreEqual(.9m, act1RequiredPayment.SfaContributionPercentage);
-            Assert.AreEqual(OnProgrammeEarningType.Completion, act1RequiredPayment.OnProgrammeEarningType);
-            Assert.AreEqual(payableEarning.EarningEventId, act1RequiredPayment.EarningEventId);
-            Assert.AreNotEqual(payableEarning.EventId, act1RequiredPayment.EarningEventId);
+            ClassicAssert.AreEqual(payableEarning.AgreementId, act1RequiredPayment.AgreementId);
+            ClassicAssert.AreEqual(.9m, act1RequiredPayment.SfaContributionPercentage);
+            ClassicAssert.AreEqual(OnProgrammeEarningType.Completion, act1RequiredPayment.OnProgrammeEarningType);
+            ClassicAssert.AreEqual(payableEarning.EarningEventId, act1RequiredPayment.EarningEventId);
+            ClassicAssert.AreNotEqual(payableEarning.EventId, act1RequiredPayment.EarningEventId);
         }
 
         [Test]
@@ -209,13 +210,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             var act1RequiredPayment = requiredPayment;
 
-            Assert.AreEqual(earningPeriod.Period, act1RequiredPayment.DeliveryPeriod);
-            Assert.AreEqual(earningPeriod.ApprenticeshipId, act1RequiredPayment.ApprenticeshipId);
-            Assert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId, act1RequiredPayment.ApprenticeshipPriceEpisodeId);
-            Assert.AreEqual(earningPeriod.AgreedOnDate, act1RequiredPayment.AgreedOnDate);
-            Assert.AreEqual(earningPeriod.Priority, act1RequiredPayment.Priority);
-            Assert.AreEqual(earningPeriod.SfaContributionPercentage, act1RequiredPayment.SfaContributionPercentage);
-            Assert.AreEqual(OnProgrammeEarningType.Balancing, act1RequiredPayment.OnProgrammeEarningType);
+            ClassicAssert.AreEqual(earningPeriod.Period, act1RequiredPayment.DeliveryPeriod);
+            ClassicAssert.AreEqual(earningPeriod.ApprenticeshipId, act1RequiredPayment.ApprenticeshipId);
+            ClassicAssert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId, act1RequiredPayment.ApprenticeshipPriceEpisodeId);
+            ClassicAssert.AreEqual(earningPeriod.AgreedOnDate, act1RequiredPayment.AgreedOnDate);
+            ClassicAssert.AreEqual(earningPeriod.Priority, act1RequiredPayment.Priority);
+            ClassicAssert.AreEqual(earningPeriod.SfaContributionPercentage, act1RequiredPayment.SfaContributionPercentage);
+            ClassicAssert.AreEqual(OnProgrammeEarningType.Balancing, act1RequiredPayment.OnProgrammeEarningType);
 
         }
 
@@ -238,13 +239,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             // act
             mapper.Map(earningPeriod, requiredPayment);
             var mathsAndEnglishPayment = requiredPayment;
-            Assert.AreEqual(earningPeriod.Period, mathsAndEnglishPayment.DeliveryPeriod);
-            Assert.AreEqual(earningPeriod.ApprenticeshipId, mathsAndEnglishPayment.ApprenticeshipId);
-            Assert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId,
+            ClassicAssert.AreEqual(earningPeriod.Period, mathsAndEnglishPayment.DeliveryPeriod);
+            ClassicAssert.AreEqual(earningPeriod.ApprenticeshipId, mathsAndEnglishPayment.ApprenticeshipId);
+            ClassicAssert.AreEqual(earningPeriod.ApprenticeshipPriceEpisodeId,
                 mathsAndEnglishPayment.ApprenticeshipPriceEpisodeId);
-            Assert.AreEqual(earningPeriod.ApprenticeshipEmployerType,
+            ClassicAssert.AreEqual(earningPeriod.ApprenticeshipEmployerType,
                 mathsAndEnglishPayment.ApprenticeshipEmployerType);
-            Assert.AreEqual(IncentivePaymentType.OnProgrammeMathsAndEnglish, mathsAndEnglishPayment.Type);
+            ClassicAssert.AreEqual(IncentivePaymentType.OnProgrammeMathsAndEnglish, mathsAndEnglishPayment.Type);
         }
 
 
@@ -266,7 +267,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             // assert
             AssertCommonProperties(requiredPayment, functionalSkillEarningsEvent);
-            Assert.AreEqual(requiredPayment.LearningAim.FundingLineType, functionalSkillEarningsEvent.LearningAim.FundingLineType);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.FundingLineType, functionalSkillEarningsEvent.LearningAim.FundingLineType);
             functionalSkillEarningsEvent.StartDate.Should().Be(requiredPayment.StartDate);
         }
 
@@ -354,18 +355,18 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
         private static void AssertCommonProperties(PeriodisedRequiredPaymentEvent requiredPayment, IEarningEvent earning)
         {
-            Assert.AreEqual(requiredPayment.Learner.Uln, earning.Learner.Uln);
-            Assert.AreEqual(requiredPayment.Learner.ReferenceNumber, earning.Learner.ReferenceNumber);
-            Assert.AreEqual(requiredPayment.Ukprn, earning.Ukprn);
-            Assert.AreEqual(requiredPayment.CollectionPeriod.Period, earning.CollectionPeriod.Period);
-            Assert.AreEqual(requiredPayment.CollectionPeriod.AcademicYear, earning.CollectionPeriod.AcademicYear);
-            Assert.AreEqual(requiredPayment.LearningAim.PathwayCode, earning.LearningAim.PathwayCode);
-            Assert.AreEqual(requiredPayment.LearningAim.FrameworkCode, earning.LearningAim.FrameworkCode);
-            Assert.AreEqual(requiredPayment.LearningAim.ProgrammeType, earning.LearningAim.ProgrammeType);
-            Assert.AreEqual(requiredPayment.LearningAim.Reference, earning.LearningAim.Reference);
-            Assert.AreEqual(requiredPayment.LearningAim.StandardCode, earning.LearningAim.StandardCode);
-            Assert.AreEqual(requiredPayment.JobId, earning.JobId);
-            Assert.AreEqual(requiredPayment.IlrSubmissionDateTime, earning.IlrSubmissionDateTime);
+            ClassicAssert.AreEqual(requiredPayment.Learner.Uln, earning.Learner.Uln);
+            ClassicAssert.AreEqual(requiredPayment.Learner.ReferenceNumber, earning.Learner.ReferenceNumber);
+            ClassicAssert.AreEqual(requiredPayment.Ukprn, earning.Ukprn);
+            ClassicAssert.AreEqual(requiredPayment.CollectionPeriod.Period, earning.CollectionPeriod.Period);
+            ClassicAssert.AreEqual(requiredPayment.CollectionPeriod.AcademicYear, earning.CollectionPeriod.AcademicYear);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.PathwayCode, earning.LearningAim.PathwayCode);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.FrameworkCode, earning.LearningAim.FrameworkCode);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.ProgrammeType, earning.LearningAim.ProgrammeType);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.Reference, earning.LearningAim.Reference);
+            ClassicAssert.AreEqual(requiredPayment.LearningAim.StandardCode, earning.LearningAim.StandardCode);
+            ClassicAssert.AreEqual(requiredPayment.JobId, earning.JobId);
+            ClassicAssert.AreEqual(requiredPayment.IlrSubmissionDateTime, earning.IlrSubmissionDateTime);
         }
 
         private static IEnumerable<IFunctionalSkillEarningEvent> GetFunctionalSkillEarningEvents()
