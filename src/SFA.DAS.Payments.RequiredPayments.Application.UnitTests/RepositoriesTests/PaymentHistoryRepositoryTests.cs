@@ -110,6 +110,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
                 FundingSource = FundingSourceType.CoInvestedEmployer,
                 ContractType = ContractType.Act2,
                 TransactionType = TransactionType.Learning,
+                LearningAimFundingLineType = "some-learning-aim-funding-line-type",
+                PriceEpisodeIdentifier = "some-price-episode-identifier",
+                ReportingAimFundingLineType = "some-reporting-aim-funding-line-type"
             };
         }
 

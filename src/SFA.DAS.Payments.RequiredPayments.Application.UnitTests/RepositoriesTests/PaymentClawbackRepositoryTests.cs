@@ -127,6 +127,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2021, Period = 1 },
                 Amount = amount,
                 ContractType = contractType,
+                LearningAimFundingLineType = "some-learning-aim-funding-line-type",
+                PriceEpisodeIdentifier  = "some-price",
+                ReportingAimFundingLineType = "some-reporting-aim-funding-line-type"
             };
         }
     }
