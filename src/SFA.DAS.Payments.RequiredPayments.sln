@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B09FE0FD-D00E-4616-8979-DAEFC4D6D8D9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces", "SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces\SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces.csproj", "{717A2C27-EE6B-4985-8DE1-3FD29A09D3D2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService", "SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService\SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.csproj", "{0C537DB4-F8B2-4429-9875-9C88BDE9D1ED}"
