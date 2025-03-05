@@ -32,7 +32,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var requiredPayment = new RequiredPayment
             {
                 AccountId = 1,
-                TransferSenderAccountId = 2
+                TransferSenderAccountId = 2,
+                  LearningStartDate = DateTime.Today
             };
 
             mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -51,7 +52,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var requiredPayment = new RequiredPayment
             {
                 AccountId = 1,
-                TransferSenderAccountId = 2
+                TransferSenderAccountId = 2,
+                LearningStartDate = DateTime.Today
             };
 
             mapper.Map(requiredPayment, requiredPaymentEvent);

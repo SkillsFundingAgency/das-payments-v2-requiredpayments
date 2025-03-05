@@ -53,6 +53,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var requiredPayment = new RequiredPayment
             {
                 Amount = expectedAmount,
+                LearningStartDate = DateTime.Today
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -71,6 +72,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var requiredPayment = new RequiredPayment
             {
                 PriceEpisodeIdentifier = expectedPriceEpisodeIdentifier,
+                LearningStartDate = DateTime.Today
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
@@ -88,6 +90,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var requiredPayment = new RequiredPayment
             {
                 SfaContributionPercentage = expectedSfaPercentage,
+                LearningStartDate = DateTime.Today
             };
 
             var actual = mapper.Map(requiredPayment, requiredPaymentEvent);
