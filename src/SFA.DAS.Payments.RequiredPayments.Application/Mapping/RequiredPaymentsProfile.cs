@@ -336,7 +336,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.AmountDue, opt => opt.MapFrom(x => x.Amount))
                 .ForMember(x => x.AccountId, opt => opt.MapFrom(x => x.AccountId))
                 .ForMember(x => x.TransferSenderAccountId, opt => opt.MapFrom(x => x.TransferSenderAccountId))
-                .ForMember(x => x.LearningStartDate, opt => opt.MapFrom(x => x.LearningStartDate))
                 .Ignore(x => x.EarningEventId)
                 .Ignore(x => x.DeliveryPeriod)
                 .Ignore(x => x.JobId)
@@ -356,6 +355,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.CompletionAmount)
                 .Ignore(x => x.InstalmentAmount)
                 .Ignore(x => x.NumberOfInstalments)
+                .Ignore(x => x.LearningStartDate)
                 .Ignore(x => x.ApprenticeshipId)
                 .Ignore(x => x.TransactionType)
                 .Ignore(x => x.ApprenticeshipPriceEpisodeId)
@@ -368,6 +368,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
 
             CreateMap<RequiredPayment, CalculatedRequiredCoInvestedAmount>()
                 .ForMember(x => x.SfaContributionPercentage, opt => opt.MapFrom(x => x.SfaContributionPercentage))
+                .ForMember(x => x.LearningStartDate, opt => opt.MapFrom(x => x.LearningStartDate))
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.FundingPlatformType)
@@ -377,6 +378,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.Type)
                 ;
             CreateMap<RequiredPayment, CalculatedRequiredLevyAmount>()
+                .ForMember(x => x.LearningStartDate, opt => opt.MapFrom(x => x.LearningStartDate))
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.Priority)
                 .Ignore(x => x.ApprenticeshipId)
