@@ -65,7 +65,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                     PriceEpisodeIdentifier = employerPayment.PriceEpisodeIdentifier,
                     AccountId = employerPayment.AccountId,
                     TransferSenderAccountId = employerPayment.TransferSenderAccountId,
-                    LearningStartDate = employerPayment.LearningStartDate
+                    //LearningStartDate = employerPayment.LearningStartDate
                 }};
             }
 
@@ -77,7 +77,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                 PriceEpisodeIdentifier = earning.PriceEpisodeIdentifier,
                 AccountId = earning.AccountId,
                 TransferSenderAccountId = earning.TransferSenderAccountId,
-                LearningStartDate = DateTime.Now.Date
+                //LearningStartDate = DateTime.Now.Date
             }};
         }
 
