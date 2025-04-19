@@ -247,6 +247,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 FundingSourceEventId = Guid.NewGuid(),
                 Id = 8,
                 IlrSubmissionDateTime = DateTime.Now.AddDays(-1),
+                LearningStartDate = DateTime.Today,
                 JobId = 10,
                 TransactionType = TransactionType.Learning,
                 FundingPlatformType = null
