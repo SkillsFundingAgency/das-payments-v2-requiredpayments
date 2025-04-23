@@ -141,3 +141,4 @@ jobs:
       DotNetStandardPackagesToPack: |
         src/SFA.DAS.Payments.RequiredPayments.Messages/SFA.DAS.Payments.RequiredPayments.Messages.csproj;
         src/SFA.DAS.Payments.RequiredPayments.Model/SFA.DAS.Payments.RequiredPayments.Model.csproj;
+        src/SFA.DAS.Payments.RequiredPayments.Domain/SFA.DAS.Payments.RequiredPayments.Domain.csproj;
