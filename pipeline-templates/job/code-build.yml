@@ -135,7 +135,7 @@ jobs:
       targetPath: $(build.artifactstagingdirectory)
       artifact: requiredpayments-drop
       continueOnError: true
-
+# Call Nuget-pack
   - template: /azure-pipelines-templates/build/step/nuget-pack.yml
     parameters:
       DotNetStandardPackagesToPack: |
