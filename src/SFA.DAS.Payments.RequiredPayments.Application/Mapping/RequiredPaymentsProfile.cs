@@ -1,7 +1,5 @@
-using System;
 using System.Linq;
 using AutoMapper;
-using Microsoft.EntityFrameworkCore.Internal;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Messages.Common.Events;
@@ -183,7 +181,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
                 .ForMember(x => x.AgeAtStartOfLearning, opt => opt.MapFrom(source => source.AgeAtStartOfLearning))
-                .ForMember(x => x.LearningStartDate, opt => opt.Ignore());
+                .ForMember(x => x.LearningStartDate, opt => opt.MapFrom(source => source.StartDate));
 
 
             CreateMap<FunctionalSkillEarningsEvent, CalculatedRequiredOnProgrammeAmount>()

@@ -76,6 +76,22 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             requiredPaymentEvent.AgeAtStartOfLearning.Should().Be(25);
         }
 
+        [Test]
+        public void Maps_LearningStartDate_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount()
+        {
+            // Arrange
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                StartDate = DateTime.Today.AddDays(5)
+            };
 
+            var requiredPaymentEvent = Activator.CreateInstance(typeof(CalculatedRequiredLevyAmount)) as CalculatedRequiredOnProgrammeAmount;
+
+            // Act
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            // Assert
+            requiredPaymentEvent.LearningStartDate.Should().Be(payableEarningEvent.StartDate);
+        }
     }
 }
