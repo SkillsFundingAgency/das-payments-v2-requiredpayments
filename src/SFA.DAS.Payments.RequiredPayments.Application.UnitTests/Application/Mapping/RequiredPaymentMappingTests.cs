@@ -3,6 +3,7 @@ using AutoMapper;
 using FluentAssertions;
 using NUnit.Framework;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
+using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Application.Mapping;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
@@ -92,6 +93,24 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             // Assert
             requiredPaymentEvent.LearningStartDate.Should().Be(payableEarningEvent.StartDate);
+        }
+
+        [Test]
+        public void Maps_LearningStartDate_From_Payment_To_CalculatedRequiredLevyAmount()
+        {
+            // Arrange
+            var payment = new PaymentModel
+            {
+                LearningStartDate = DateTime.Today.AddDays(-100)
+            };
+
+            var requiredPaymentEvent = Activator.CreateInstance(typeof(CalculatedRequiredLevyAmount)) as CalculatedRequiredOnProgrammeAmount;
+
+            // Act
+            mapper.Map(payment, requiredPaymentEvent);
+
+            // Assert
+            requiredPaymentEvent.LearningStartDate.Should().Be(payment.LearningStartDate);
         }
     }
 }

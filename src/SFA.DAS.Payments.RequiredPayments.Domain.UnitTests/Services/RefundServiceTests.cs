@@ -288,7 +288,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             var testHistory = new List<Payment>
             {
-                new Payment {Amount = 100, FundingSource = FundingSourceType.Levy, SfaContributionPercentage = 0.9m},
+                new Payment {Amount = 100, FundingSource = FundingSourceType.Levy, SfaContributionPercentage = 0.9m, LearningStartDate = DateTime.Today},
             };
 
             var actual = sut.GetRefund(-50, testHistory);
@@ -297,6 +297,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             actual[0].EarningType.Should().Be(EarningType.Levy);
             actual[0].Amount.Should().Be(-50);
             actual[0].SfaContributionPercentage.Should().Be(0.9m);
+            actual[0].LearningStartDate.Should().Be(testHistory[0].LearningStartDate);
         }
 
         [Test]
