@@ -169,6 +169,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(1, actualRequiredPayment.First().AmountDue);
             ClassicAssert.AreEqual(earningEvent.LearningAim.Reference, actualRequiredPayment.First().LearningAim.Reference);
             ClassicAssert.AreEqual(2, actualRequiredPayment.First().LearningAimSequenceNumber);
+            ClassicAssert.AreEqual(earningEvent.StartDate, actualRequiredPayment.First().LearningStartDate);
         }
 
         [Test]

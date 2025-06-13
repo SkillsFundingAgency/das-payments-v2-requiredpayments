@@ -170,6 +170,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 requiredPaymentEvent.ApprenticeshipId = requiredPayment.ApprenticeshipId;
                 requiredPaymentEvent.ApprenticeshipPriceEpisodeId = requiredPayment.ApprenticeshipPriceEpisodeId;
                 requiredPaymentEvent.ApprenticeshipEmployerType = requiredPayment.ApprenticeshipEmployerType;
+                requiredPaymentEvent.LearningStartDate = requiredPayment.LearningStartDate;
             }
         }
 
