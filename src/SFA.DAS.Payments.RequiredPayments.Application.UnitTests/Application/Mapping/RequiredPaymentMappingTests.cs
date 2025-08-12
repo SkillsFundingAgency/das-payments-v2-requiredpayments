@@ -78,7 +78,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         }
 
         [Test]
-        public void Maps_LearningStartDate_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount()
+        public void Ignores_LearningStartDate_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount()
         {
             // Arrange
             var payableEarningEvent = new PayableEarningEvent
@@ -92,7 +92,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             mapper.Map(payableEarningEvent, requiredPaymentEvent);
 
             // Assert
-            requiredPaymentEvent.LearningStartDate.Should().Be(payableEarningEvent.StartDate);
+            requiredPaymentEvent.LearningStartDate.Should().Be(null);
         }
 
         [Test]
