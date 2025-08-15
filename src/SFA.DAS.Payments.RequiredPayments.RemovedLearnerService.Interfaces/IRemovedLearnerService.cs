@@ -13,5 +13,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RemovedLearnerService.Interfaces
     public interface IRemovedLearnerService : IActor
     {
         Task<IList<IdentifiedRemovedLearningAim>> HandleReceivedProviderEarningsEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken);
+
+        Task<IList<IdentifiedRemovedLearningAim>> HandleApprentiecshipIneligibleForFundingEarningEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken);
+
     }
 }

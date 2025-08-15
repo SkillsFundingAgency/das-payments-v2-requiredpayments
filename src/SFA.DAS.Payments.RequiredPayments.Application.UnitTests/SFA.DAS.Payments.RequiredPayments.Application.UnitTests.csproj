@@ -20,9 +20,9 @@
     <PackageReference Include="SFA.DAS.Payments.Application" Version="2.0.6-prerelease-21" />
     <PackageReference Include="SFA.DAS.Payments.Core" Version="2.0.6-prerelease-21" />
     <PackageReference Include="SFA.DAS.Payments.DataLocks.Messages" Version="0.1.137-prerelease-46" />
-    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="2.0.0-prerelease-17" />
-    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.0.6-prerelease-21" />
-    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.0.6-prerelease-21" />
+    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="0.1.130-prerelease-7" />
+    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.0.6-prerelease-31" />
+    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.0.6-prerelease-31" />
   </ItemGroup>
 
   <ItemGroup>
