@@ -15,12 +15,12 @@ using System.Threading.Tasks;
 
 namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handlers
 {
-    public class ApprentiecshipIneligibleForFundingEarningEventHandler : IHandleMessages<ApprenticeshipIneligibleForFundingEarningEvent>
+    public class ApprenticeshipIneligibleForFundingEarningEventHandler : IHandleMessages<ApprenticeshipIneligibleForFundingEarningEvent>
     {
         private readonly IActorProxyFactory proxyFactory;
         private readonly IPaymentLogger paymentLogger;
 
-        public ApprentiecshipIneligibleForFundingEarningEventHandler(IActorProxyFactory proxyFactory, IPaymentLogger paymentLogger)
+        public ApprenticeshipIneligibleForFundingEarningEventHandler(IActorProxyFactory proxyFactory, IPaymentLogger paymentLogger)
         {
             this.proxyFactory = proxyFactory;
             this.paymentLogger = paymentLogger;
@@ -28,11 +28,11 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
 
         public async Task Handle(ApprenticeshipIneligibleForFundingEarningEvent message, IMessageHandlerContext context)
         {
-            paymentLogger.LogInfo($"Processing ApprentiecshipIneligibleForFundingEarningEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo($"Processing ApprenticeshipIneligibleForFundingEarningEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
 
             var actorId = new ActorId(message.Ukprn.ToString());
             var actor = proxyFactory.CreateActorProxy<IRemovedLearnerService>(new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RemovedLearnerServiceActorService"), actorId);
-            var removedAims = await actor.HandleApprentiecshipIneligibleForFundingEarningEvent(message.CollectionPeriod.AcademicYear, message.CollectionPeriod.Period, message.IlrSubmissionDateTime, CancellationToken.None).ConfigureAwait(false);
+            var removedAims = await actor.HandleApprenticeshipIneligibleForFundingEarningEvent(message.CollectionPeriod.AcademicYear, message.CollectionPeriod.Period, message.IlrSubmissionDateTime, CancellationToken.None).ConfigureAwait(false);
 
             foreach (var removedAim in removedAims)
             {
@@ -40,7 +40,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                 await context.Publish(removedAim).ConfigureAwait(false);
             }
 
-            paymentLogger.LogInfo($"Finished ApprentiecshipIneligibleForFundingEarningEvent, published {removedAims.Count} aims. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo($"Finished ApprenticeshipIneligibleForFundingEarningEvent, published {removedAims.Count} aims. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
         }
 
     }

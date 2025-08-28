@@ -33,7 +33,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RemovedLearnerService
             return await removedLearnerAimIdentificationService.IdentifyRemovedLearnerAims(academicYear, collectionPeriod, ukprn, ilrSubmissionDateTime, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<IList<IdentifiedRemovedLearningAim>> HandleApprentiecshipIneligibleForFundingEarningEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken)
+        public async Task<IList<IdentifiedRemovedLearningAim>> HandleApprenticeshipIneligibleForFundingEarningEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken)
         {
             return await removedLearnerAimIdentificationService.IdentifyRemovedLearnerAims(academicYear, collectionPeriod, ukprn, ilrSubmissionDateTime, cancellationToken).ConfigureAwait(false);
         }
