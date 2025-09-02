@@ -182,6 +182,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
                     telemetry.TrackDuration("RequiredPaymentsService.HandlePayableEarningEvent", stopwatch, earningEvent);
                     telemetry.StopOperation(operation);
                     return requiredPaymentEvents;
+
                 }
             }
             catch (Exception e)
