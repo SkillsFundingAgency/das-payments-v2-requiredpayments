@@ -79,7 +79,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
 
         public async Task<decimal> GetEmployerCoInvestedPaymentHistoryTotal(ApprenticeshipKey apprenticeshipKey, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return await dataContext.Payment
+            var result = dataContext.Payment
                 .Where(payment => apprenticeshipKey.Ukprn == payment.Ukprn &&
                                   apprenticeshipKey.FrameworkCode == payment.LearningAimFrameworkCode &&
                                   apprenticeshipKey.LearnAimRef == payment.LearningAimReference &&
@@ -90,8 +90,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
                                   apprenticeshipKey.ContractType == payment.ContractType &&
                                   payment.TransactionType == TransactionType.Learning &&
                                   payment.FundingSource == FundingSourceType.CoInvestedEmployer
-                /*//NOTE: do not remove cast to (int) this is used to remove decimal places from expectedContribution Amount i.e. 123.9997 becomes 123*/
-                ).AsAsyncEnumerable().Select(payment => (int)payment.Amount).DefaultIfEmpty(0).SumAsync(cancellationToken);
+                ).AsEnumerable();
+
+            return result.Select(payment => (int)payment.Amount).DefaultIfEmpty(0).ToList().Sum();
+            /*//NOTE: do not remove cast to (int) this is used to remove decimal places from expectedContribution Amount i.e. 123.9997 becomes 123*/
+
         }
 
         public async Task<List<IdentifiedRemovedLearningAim>> IdentifyRemovedLearnerAims(short academicYear, byte collectionPeriod, long ukprn, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken)
