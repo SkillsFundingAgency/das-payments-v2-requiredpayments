@@ -181,7 +181,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
                 .ForMember(x => x.AgeAtStartOfLearning, opt => opt.MapFrom(source => source.AgeAtStartOfLearning))
-                .ForMember(x => x.LearningStartDate, opt => opt.Ignore());
+                //pull start date from price episode if available (in the case of on prog earnings) or from the aim if not (in the case of functional skills)
+                .ForMember(requiredPayment => requiredPayment.LearningStartDate,
+                    opt => opt.MapFrom((earning, destination) =>
+                        earning.PriceEpisodes
+                            .FirstOrDefault(x => x.LearningAimSequenceNumber == earning.LearningAim.SequenceNumber)
+                            ?.CourseStartDate ?? earning.LearningAim.StartDate))
+                ;
 
 
             CreateMap<FunctionalSkillEarningsEvent, CalculatedRequiredOnProgrammeAmount>()
