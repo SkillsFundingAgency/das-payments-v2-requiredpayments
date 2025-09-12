@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using AutoMapper;
 using FluentAssertions;
 using NUnit.Framework;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
+using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Application.Mapping;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
@@ -65,6 +67,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             // Arrange
             var payableEarningEvent = new PayableEarningEvent
             {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
                 AgeAtStartOfLearning = 25
             };
 
@@ -78,12 +82,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         }
 
         [Test]
-        public void Ignores_LearningStartDate_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount()
+        public void Maps_LearningStartDate_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount()
         {
             // Arrange
+            var expectedDate = DateTime.Today.AddDays(5);
             var payableEarningEvent = new PayableEarningEvent
             {
-                StartDate = DateTime.Today.AddDays(5)
+                LearningAim = new LearningAim{StartDate = expectedDate},
+                PriceEpisodes = new List<PriceEpisode>()
+
             };
 
             var requiredPaymentEvent = Activator.CreateInstance(typeof(CalculatedRequiredLevyAmount)) as CalculatedRequiredOnProgrammeAmount;
@@ -92,7 +99,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             mapper.Map(payableEarningEvent, requiredPaymentEvent);
 
             // Assert
-            requiredPaymentEvent.LearningStartDate.Should().Be(null);
+            requiredPaymentEvent.LearningStartDate.Should().Be(expectedDate);
         }
 
         [Test]
