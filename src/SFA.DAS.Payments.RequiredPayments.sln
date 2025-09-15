@@ -29,6 +29,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.Payments.RequiredPa
 EndProject
 Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "SFA.DAS.Payments.RequiredPayments.ServiceFabric", "SFA.DAS.Payments.RequiredPayments.ServiceFabric\SFA.DAS.Payments.RequiredPayments.ServiceFabric.sfproj", "{8B80DADD-5311-4CA0-9274-9F044A38185E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.RequiredPayments.Tests.Specs", "SFA.DAS.Payments.RequiredPayments.Tests.Specs\SFA.DAS.Payments.RequiredPayments.Tests.Specs.csproj", "{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,9 +149,22 @@ Global
 		{8B80DADD-5311-4CA0-9274-9F044A38185E}.Release|x64.ActiveCfg = Release|x64
 		{8B80DADD-5311-4CA0-9274-9F044A38185E}.Release|x64.Build.0 = Release|x64
 		{8B80DADD-5311-4CA0-9274-9F044A38185E}.Release|x64.Deploy.0 = Release|x64
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Debug|x64.Build.0 = Debug|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Release|x64.ActiveCfg = Release|Any CPU
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CDB27548-0845-4F6D-9132-36AB4866A6D9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{D81D885A-DEE6-4DCE-A417-14D8103B0953} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{8DDDE7FF-AE35-4074-8F5F-2CAA0B21CEAF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45D88E9-C2C6-495A-AF22-06E965CC470A}

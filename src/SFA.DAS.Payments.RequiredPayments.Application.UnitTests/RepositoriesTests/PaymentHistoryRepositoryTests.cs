@@ -13,7 +13,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
     [TestFixture]
     public class PaymentHistoryRepositoryTests
     {
-        private IPaymentsDataContext context;
+        private PaymentsDataContext context;
         private PaymentHistoryRepository sut;
 
         [SetUp]
@@ -60,6 +60,37 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
             var actual = await sut.GetEmployerCoInvestedPaymentHistoryTotal(key);
 
             actual.Should().Be(100);
+        }
+
+        [Test]
+        public async Task Does_Not_Break_Payments_If_History_Contains_Nulls()
+        {
+            var key = CreateTestApprenticeshipKey();
+            var payment1 = CreateTestPayment();
+            payment1.Amount = 50.99m;
+            payment1.AgreementId = null;
+            payment1.RequiredPaymentEventId = null;
+            payment1.AccountId = null;
+            payment1.TransferSenderAccountId = null;
+            payment1.ActualEndDate = null;
+            payment1.ApprenticeshipId = null;
+            payment1.ApprenticeshipPriceEpisodeId = null;
+            //payment1.ReportingAimFundingLineType = null;
+            payment1.LearningAimSequenceNumber = null;
+            payment1.AgeAtStartOfLearning = null;
+            payment1.FundingPlatformType = null;
+            payment1.EventId = Guid.NewGuid();
+            //var payment2 = CreateTestPayment();
+            //payment2.Amount = 50.99m;
+
+            context.Payment.Add(payment1);
+            //context.Payment.Add(payment2);
+            await context.SaveChangesAsync();
+            await context.Database.ExecuteSqlRawAsync($"update Payments2.Payment set ReportingAimFundingLineType = null where EventId = '{payment1.EventId}'");
+            await context.SaveChangesAsync();
+            var actual = await sut.GetEmployerCoInvestedPaymentHistoryTotal(key);
+
+            actual.Should().Be(0);
         }
 
         [TestCase(TransactionType.Completion)]

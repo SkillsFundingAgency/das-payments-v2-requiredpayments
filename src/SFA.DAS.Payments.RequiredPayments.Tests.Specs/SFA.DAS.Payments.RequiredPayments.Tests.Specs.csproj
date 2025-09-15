@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="appSettings.json" />
+		<None Remove="appSettings.local.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="appSettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="appSettings.local.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+		<PackageReference Include="NServiceBus.Persistence.AzureTable" Version="5.0.2" />
+		<PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="3.2.6" />
+		<PackageReference Include="Reqnroll.NUnit" Version="2.2.1" />
+		<PackageReference Include="nunit" Version="3.14.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+		<PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="2.0.0-prerelease-751" />
+		<PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.1.0-prerelease-7" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Drivers\" />
+		<Folder Include="Support\" />
+	</ItemGroup>
+
+</Project>
