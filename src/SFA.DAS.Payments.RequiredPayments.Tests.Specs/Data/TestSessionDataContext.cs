@@ -45,12 +45,12 @@ namespace SFA.DAS.Payments.AcceptanceTests.Core.Data
 
         public void ClearPaymentsData(long ukprn)
         {
-            Database.ExecuteSqlCommand(DeleteUkprnData, ukprn);
+            Database.ExecuteSqlRaw(DeleteUkprnData , ukprn);
         }
 
         public Task<int> ClearPaymentsDataAsync(long ukprn)
         {
-            return Database.ExecuteSqlCommandAsync(DeleteUkprnData, ukprn);
+            return Database.ExecuteSqlRawAsync(DeleteUkprnData, ukprn);
         }
 
         private const string DeleteUkprnData = @"
@@ -114,7 +114,7 @@ namespace SFA.DAS.Payments.AcceptanceTests.Core.Data
                 delete from Payments2.[Apprenticeship] where Id = {0} or Uln = {1}
             ";
 
-            await Database.ExecuteSqlCommandAsync(deleteApprenticeshipData, apprenticeshipId, uln).ConfigureAwait(false);
+            await Database.ExecuteSqlRawAsync(deleteApprenticeshipData, apprenticeshipId, uln).ConfigureAwait(false);
         }
 
 

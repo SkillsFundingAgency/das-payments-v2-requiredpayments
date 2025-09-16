@@ -20,7 +20,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             this.appGuid = appGuid;
         }
 
-        public int GenerateUkprn()
+        public Provider GetProvider()
         {
             //string appGuid =
             //    ((GuidAttribute)Assembly.GetExecutingAssembly().
@@ -32,8 +32,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             {
                 if (mutex.WaitOne(TimeSpan.FromMinutes(1)))
                 {
-                    provider = GetProvider();
-                    // check job queue for ukprn - looking for status 2 or 3 which will block queue
+                    provider = dataContext.LeastRecentlyUsed();
+                    provider.Use();
+                    dataContext.SaveChanges();
                     //var blockedList = jobService.GetJobsByStatus(provider.Ukprn, 2, 3).Result;
                     //if (blockedList.Any())
                     //{
@@ -49,14 +50,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 }
             }
 
-            return provider.Ukprn;
-        }
-
-        private Provider GetProvider()
-        {
-            var provider = dataContext.LeastRecentlyUsed();
-            provider.Use();
-            dataContext.SaveChanges();
             return provider;
         }
     }
