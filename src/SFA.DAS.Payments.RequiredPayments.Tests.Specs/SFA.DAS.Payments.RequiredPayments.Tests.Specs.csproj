@@ -8,14 +8,10 @@
 
 	<ItemGroup>
 		<None Remove="appSettings.json" />
-		<None Remove="appSettings.local.json" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="appSettings.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-		<Content Include="appSettings.local.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
@@ -45,6 +41,12 @@
 	<ItemGroup>
 		<Folder Include="Drivers\" />
 		<Folder Include="Support\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="appSettings.local.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>
