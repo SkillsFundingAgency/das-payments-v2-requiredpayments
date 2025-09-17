@@ -1,4 +1,5 @@
-﻿using Reqnroll;
+﻿using Microsoft.EntityFrameworkCore;
+using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
@@ -14,7 +15,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private readonly MessagingContext messagingContext;
         private readonly TestSession testSession;
         private CollectionPeriod collectionPeriod;
-        private short currentAcademicYear; 
+        private short currentAcademicYear;
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -29,25 +30,26 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [BeforeScenario]
-        public void BeforeScenario() 
+        public void BeforeScenario()
         {
             SetCurrentCollectionYear();
             Console.WriteLine($"UKPRN : {testSession.Provider.Ukprn}, ULN: {testSession.Learner.Uln}, collection year: {currentAcademicYear}");
         }
 
         [AfterScenario]
-        public void AfterScenario() 
-        { 
+        public void AfterScenario()
+        {
         }
 
         [Given("the Co-invested payments for the apprenticeship were recorded prior to the requirement to record the Reporting Funding Line Type")]
         public async Task GivenTheCo_InvestedPaymentsForTheApprenticeshipWereRecordedPriorToTheRequirementToRecordTheReportingFundingLineType()
         {
-            testSession.Learner.Course.LearningStartDate = DateTime.Now.AddYears(-1);                ;
-            testSession.DataContext.Payment.Add(new PaymentModel { 
+            testSession.Learner.Course.LearningStartDate = DateTime.Now.AddYears(-1); ;
+            testSession.DataContext.Payment.Add(new PaymentModel
+            {
                 Ukprn = testSession.Provider.Ukprn,
                 LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod {  AcademicYear = (short)(currentAcademicYear-101), Period = 1 },
+                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 1 },
                 DeliveryPeriod = 1,
                 ContractType = ContractType.Act2,
                 TransactionType = TransactionType.Learning,
@@ -59,7 +61,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 Amount = 270,
                 IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
                 CompletionStatus = 1,
-                InstalmentAmount = 300,                
+                InstalmentAmount = 300,
                 LearningAimReference = "ZPROG001",
                 LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
                 SfaContributionPercentage = 0.9M,
@@ -72,7 +74,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 PriceEpisodeIdentifier = "pe-1",
                 ReportingAimFundingLineType = string.Empty,
                 EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()                
+                EventId = Guid.NewGuid()
             });
             testSession.DataContext.Payment.Add(new PaymentModel
             {
@@ -230,6 +232,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 EventId = Guid.NewGuid()
             });
 
+            await testSession.DataContext.SaveChangesAsync();
+            var sql = $"update Payments2.Payment set ReportingAimFundingLineType = null where Ukprn = {testSession.Provider.Ukprn} and LearnerUln = {testSession.Learner.Uln}";
+            Console.WriteLine(sql);
+            await testSession.DataContext.Database.ExecuteSqlRawAsync(sql);
             await testSession.DataContext.SaveChangesAsync();
 
         }
