@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Runtime;
+using SFA.DAS.Payments.Model.Core;
+using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Application;
 using SFA.DAS.Payments.RequiredPayments.Application.Repositories;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
@@ -33,9 +35,17 @@ namespace SFA.DAS.Payments.RequiredPayments.RemovedLearnerService
             return await removedLearnerAimIdentificationService.IdentifyRemovedLearnerAims(academicYear, collectionPeriod, ukprn, ilrSubmissionDateTime, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<IList<IdentifiedRemovedLearningAim>> HandleApprenticeshipIneligibleForFundingEarningEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken)
-        {
-            return await removedLearnerAimIdentificationService.IdentifyRemovedLearnerAims(academicYear, collectionPeriod, ukprn, ilrSubmissionDateTime, cancellationToken).ConfigureAwait(false);
+        public async Task<IList<IdentifiedRemovedLearningAim>> IdentifyRemovedLearningAims(
+            short academicYear, 
+            byte collectionPeriod,
+            long ukprn,
+            Learner learner,
+            LearningAim  learningAim,
+            long jobId,
+            DateTime ilrSubmissionDateTime, 
+            CancellationToken cancellationToken)
+        {           
+            return await removedLearnerAimIdentificationService.IdentifyRemovedLearnerAims(academicYear, collectionPeriod, ukprn, learner, learningAim, jobId, ilrSubmissionDateTime, cancellationToken).ConfigureAwait(false);            
         }
     }
 }

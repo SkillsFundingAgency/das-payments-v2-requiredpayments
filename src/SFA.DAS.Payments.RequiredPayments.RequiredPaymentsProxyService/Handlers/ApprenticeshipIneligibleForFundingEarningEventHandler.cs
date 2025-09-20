@@ -32,14 +32,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
 
             var actorId = new ActorId(message.Ukprn.ToString());
             var actor = proxyFactory.CreateActorProxy<IRemovedLearnerService>(new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RemovedLearnerServiceActorService"), actorId);
-            var removedAims = await actor.HandleApprenticeshipIneligibleForFundingEarningEvent(message.CollectionPeriod.AcademicYear, message.CollectionPeriod.Period, message.IlrSubmissionDateTime, CancellationToken.None).ConfigureAwait(false);
-
-            foreach (var removedAim in removedAims)
-            {
-                removedAim.JobId = message.JobId;
-                await context.Publish(removedAim).ConfigureAwait(false);
-            }
-
+            var removedAims = await actor.IdentifyRemovedLearningAims(message.CollectionPeriod.AcademicYear, message.CollectionPeriod.Period, message.Ukprn,message.Learner, message.LearningAim, message.JobId, message.IlrSubmissionDateTime, CancellationToken.None).ConfigureAwait(false);
             paymentLogger.LogInfo($"Finished ApprenticeshipIneligibleForFundingEarningEvent, published {removedAims.Count} aims. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
         }
 
