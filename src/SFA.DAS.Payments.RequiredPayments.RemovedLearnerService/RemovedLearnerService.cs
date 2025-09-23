@@ -18,7 +18,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RemovedLearnerService
     {
         private readonly long ukprn;
         private readonly IRemovedLearnerAimIdentificationService removedLearnerAimIdentificationService;
-        private readonly IPaymentHistoryRepository paymentHistoryRepository;
+        private readonly IPaymentHistoryRepository paymentHistoryRepository; 
 
         public RemovedLearnerService(ActorService actorService, ActorId actorId, IRemovedLearnerAimIdentificationService removedLearnerAimIdentificationService) : base(actorService, actorId)
         {
