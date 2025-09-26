@@ -185,7 +185,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(requiredPayment => requiredPayment.LearningStartDate,
                     opt => opt.MapFrom((earning, destination) =>
                         earning.PriceEpisodes
-                            .FirstOrDefault(x => x.LearningAimSequenceNumber == earning.LearningAim.SequenceNumber)
+                            .FirstOrDefault(x => x.Identifier == destination.PriceEpisodeIdentifier)
                             ?.CourseStartDate ?? earning.LearningAim.StartDate))
                 ;
 
