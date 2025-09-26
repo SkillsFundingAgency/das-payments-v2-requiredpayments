@@ -21,4 +21,5 @@ stages:
 - stage: Build
   jobs:
   - template: pipeline-templates/job/code-build.yml
-- template: azure-pipelines-templates/deploy/stage/nuget-publish.yml
+  # TODO - Readd back in once PV2-3711 is in main
+#- template: azure-pipelines-templates/deploy/stage/nuget-publish.yml
