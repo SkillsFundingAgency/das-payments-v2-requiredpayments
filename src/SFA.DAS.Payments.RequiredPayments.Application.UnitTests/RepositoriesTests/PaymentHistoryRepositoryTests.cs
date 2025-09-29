@@ -13,7 +13,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
     [TestFixture]
     public class PaymentHistoryRepositoryTests
     {
-        private IPaymentsDataContext context;
+        private PaymentsDataContext context;
         private PaymentHistoryRepository sut;
 
         [SetUp]
@@ -94,6 +94,40 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
             var actual = await sut.GetEmployerCoInvestedPaymentHistoryTotal(key);
 
             actual.Should().Be(50);
+        }
+
+        [TestCase(FundingSourceType.Levy)]
+        [TestCase(FundingSourceType.CoInvestedSfa)]
+        [TestCase(FundingSourceType.FullyFundedSfa)]
+        [TestCase(FundingSourceType.Transfer)]
+        public async Task GetEmployerCoInvestedPaymentHistoryTotal_Only_includes_EmployerContributions_Payments(FundingSourceType fundingSource)
+        {
+            var key = CreateTestApprenticeshipKey();
+            var payment1 = CreateTestPayment();
+            payment1.Amount = 50.99m;
+
+            var payment2 = CreateTestPayment();
+            payment2.TransactionType = TransactionType.Learning;
+            payment2.FundingSource = fundingSource;
+            payment2.Amount = 50.99m;
+
+            context.Payment.Add(payment1);
+            context.Payment.Add(payment2);
+            await context.SaveChangesAsync();
+
+            var actual = await sut.GetEmployerCoInvestedPaymentHistoryTotal(key);
+
+            actual.Should().Be(50);
+        }
+
+        [Test]
+        public async Task GetEmployerCoInvestedPaymentHistoryTotal_Returns_0_If_No_History()
+        {
+            var key = CreateTestApprenticeshipKey();
+
+            var actual = await sut.GetEmployerCoInvestedPaymentHistoryTotal(key);
+
+            actual.Should().Be(0);
         }
 
         private PaymentModel CreateTestPayment()
