@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="7.0.1001" />
     <PackageReference Include="Microsoft.ServiceFabric.Diagnostics.Internal" Version="7.0.1010" />
     <PackageReference Include="Microsoft.ServiceFabric.Data.Interfaces" Version="7.0.1010" />
+    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="0.1.130-prerelease-7" />
     <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="2.0.3-prerelease-5" />
   </ItemGroup>
 
