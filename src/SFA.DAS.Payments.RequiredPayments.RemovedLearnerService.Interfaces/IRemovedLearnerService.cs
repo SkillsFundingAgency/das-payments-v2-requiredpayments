@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Remoting.FabricTransport;
 using Microsoft.ServiceFabric.Services.Remoting;
-using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 
 [assembly: FabricTransportActorRemotingProvider(RemotingListenerVersion = RemotingListenerVersion.V2_1, RemotingClientVersion = RemotingClientVersion.V2_1)]
@@ -14,8 +13,5 @@ namespace SFA.DAS.Payments.RequiredPayments.RemovedLearnerService.Interfaces
     public interface IRemovedLearnerService : IActor
     {
         Task<IList<IdentifiedRemovedLearningAim>> HandleReceivedProviderEarningsEvent(short academicYear, byte collectionPeriod, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken);
-
-        Task<IList<IdentifiedRemovedLearningAim>> IdentifyRemovedLearningAims(short academicYear, byte collectionPeriod, long ukprn, Learner learner, LearningAim learningAim, long jobId, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken);
-
     }
 }
