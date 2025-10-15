@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -97,72 +96,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
             actual.Should().Be(50);
         }
 
-        [Test]
-        public async Task Get_Find_Aim_Contract_Types_Finds_Contract_Type_For_Aim()
-        {
-            var key = CreateTestApprenticeshipKey();
-            var payment1 = CreateTestPayment();
-            payment1.ContractType = ContractType.Act1;
-
-            var payment2 = CreateTestPayment();
-            payment2.ContractType = ContractType.Act2;
-
-            var payment3 = CreateTestPayment();
-            payment3.ContractType = ContractType.Act1;
-            payment3.LearnerReferenceNumber = "blah blah";
-
-            context.Payment.Add(payment1);
-            context.Payment.Add(payment2);
-            context.Payment.Add(payment3);
-            await context.SaveChangesAsync();
-
-            var actual = await sut.FindRemovedAimContractTypes(2425, 101,
-                new Payments.Model.Core.Learner { ReferenceNumber = payment1.LearnerReferenceNumber },
-                new Payments.Model.Core.LearningAim
-                {
-                    FrameworkCode = payment1.LearningAimFrameworkCode,
-                    PathwayCode = payment1.LearningAimPathwayCode,
-                    StandardCode = payment1.LearningAimStandardCode,
-                    ProgrammeType = payment1.LearningAimProgrammeType,
-                    Reference = payment1.LearningAimReference
-                },CancellationToken.None);
-
-            actual.Should().NotBeNull();
-            actual.Count.Should().Be(2);
-        }
-
-        [Test]
-        public async Task Get_Removed_Learning_Aim_Finds_Aims()
-        {
-            var key = CreateTestApprenticeshipKey();
-            var payment1 = CreateTestPayment();
-            payment1.ContractType = ContractType.Act1;
-            var payment2 = CreateTestPayment();
-            payment2.ContractType = ContractType.Act1;
-            var payment3 = CreateTestPayment();
-            payment3.ContractType = ContractType.Act1;
-
-            context.Payment.Add(payment1);
-            context.Payment.Add(payment2);
-            context.Payment.Add(payment3);
-            await context.SaveChangesAsync();
-
-            var actual = await sut.FindRemovedAimContractTypes(2425, 101,
-                new Payments.Model.Core.Learner { ReferenceNumber = payment1.LearnerReferenceNumber },
-                new Payments.Model.Core.LearningAim
-                {
-                    FrameworkCode = payment1.LearningAimFrameworkCode,
-                    PathwayCode = payment1.LearningAimPathwayCode,
-                    StandardCode = payment1.LearningAimStandardCode,
-                    ProgrammeType = payment1.LearningAimProgrammeType,
-                    Reference = payment1.LearningAimReference
-                }, CancellationToken.None);
-
-            actual.Should().NotBeNull();
-            actual.Count.Should().Be(1);
-        }
-
-      
         [TestCase(FundingSourceType.Levy)]
         [TestCase(FundingSourceType.CoInvestedSfa)]
         [TestCase(FundingSourceType.FullyFundedSfa)]
@@ -202,10 +135,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.RepositoriesTe
             return new PaymentModel
             {
                 Ukprn = 101,
-                CollectionPeriod = new Payments.Model.Core.CollectionPeriod { AcademicYear = 2425, Period = 1},
+                LearningAimFrameworkCode = 102,
                 LearningAimReference = "ref",
                 LearnerReferenceNumber = "123456",
-                LearningAimFrameworkCode = 102,
                 LearningAimPathwayCode = 103,
                 LearningAimProgrammeType = 104,
                 LearningAimStandardCode = 105,
