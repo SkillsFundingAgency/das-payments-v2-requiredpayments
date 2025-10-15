@@ -50,6 +50,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
             if (employersRequiredPaymentAmount == 0) return new List<RequiredPayment>();
 
+            if (employersRequiredPaymentAmount is >= 0m and <= 0.01m && (!earning.SfaContributionPercentage.HasValue || earning.SfaContributionPercentage == null))
+            {
+                return new List<RequiredPayment>();
+            }
+
             if (employersRequiredPaymentAmount < 0) return refundService.GetRefund(employersRequiredPaymentAmount, employersPaymentHistory);
 
             if (!earning.SfaContributionPercentage.HasValue) throw new ArgumentException($"Trying to use a null SFA Contribution % for a positive earning, Earning Details: Amount: {employersRequiredPaymentAmount}, EarningType : {earning.EarningType}, PriceEpisodeIdentifier : {earning.PriceEpisodeIdentifier}");
