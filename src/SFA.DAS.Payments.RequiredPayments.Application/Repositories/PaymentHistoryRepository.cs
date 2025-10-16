@@ -20,7 +20,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
         Task<decimal> GetEmployerCoInvestedPaymentHistoryTotal(ApprenticeshipKey apprenticeshipKey, CancellationToken cancellationToken = default(CancellationToken));
 
         Task<List<IdentifiedRemovedLearningAim>> IdentifyRemovedLearnerAims(short academicYear, byte collectionPeriod, long ukprn, DateTime ilrSubmissionDateTime, CancellationToken cancellationToken);
-        Task<List<ContractType>> FindRemovedAimContractTypes(short academicYear, long ukprn, Learner learner, LearningAim learningAim, CancellationToken cancellationToken);
     }
 
     public class PaymentHistoryRepository : IPaymentHistoryRepository
@@ -183,23 +182,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
                 ContractType = p.ContractType
             })
                 .ToList();
-        }
-
-        public async Task<List<ContractType>> FindRemovedAimContractTypes(short academicYear, long ukprn, Learner learner, LearningAim learningAim, CancellationToken cancellationToken)
-        {
-            var contractTypes = await dataContext.Payment.Where(p => p.CollectionPeriod.AcademicYear == academicYear &&
-                    p.LearnerReferenceNumber == learner.ReferenceNumber &&
-                    p.Ukprn == ukprn &&
-                    p.LearningAimFrameworkCode == learningAim.FrameworkCode &&
-                    p.LearningAimPathwayCode == learningAim.PathwayCode &&
-                    p.LearningAimStandardCode == learningAim.StandardCode &&
-                    p.LearningAimProgrammeType == learningAim.ProgrammeType &&
-                    p.LearningAimReference == learningAim.Reference
-                )
-                .GroupBy(p => p.ContractType, p => p.ContractType)
-                .Select(g => g.Key)
-                .ToListAsync();
-            return contractTypes;
         }
 
         public void Dispose()
