@@ -5,10 +5,10 @@ trigger:
       - "main"
 
 variables:
-- name: BuildPlatform
-  value : 'x64'
-- name: BuildConfiguration
-  value: 'release'
+  - name: BuildPlatform
+    value: "x64"
+  - name: BuildConfiguration
+    value: "release"
 
 resources:
   repositories:
@@ -18,8 +18,7 @@ resources:
       endpoint: SkillsFundingAgency
 
 stages:
-- stage: Build
-  jobs:
-  - template: pipeline-templates/job/code-build.yml
-  # TODO - Readd back in once PV2-3711 is in main
-#- template: azure-pipelines-templates/deploy/stage/nuget-publish.yml
+  - stage: Build
+    jobs:
+      - template: pipeline-templates/job/code-build.yml
+  - template: azure-pipelines-templates/deploy/stage/nuget-publish.yml
