@@ -19,10 +19,11 @@
     <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="7.0.1001" />
     <PackageReference Include="Microsoft.ServiceFabric.Diagnostics.Internal" Version="7.0.1010" />
     <PackageReference Include="Microsoft.ServiceFabric.Data.Interfaces" Version="7.0.1010" />
-    <PackageReference Include="SFA.DAS.Payments.Application" Version="2.0.7-prerelease-39" />
-    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.0.7-prerelease-39" />
-    <PackageReference Include="SFA.DAS.Payments.Monitoring.Jobs.Client" Version="0.5.8" />
-    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="0.1.53-prerelease-12" />
+    <PackageReference Include="SFA.DAS.Payments.Application" Version="2.2.2" />
+    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.2.2" />
+    <PackageReference Include="SFA.DAS.Payments.EarningEvents.Messages" Version="2.0.1" />
+    <PackageReference Include="SFA.DAS.Payments.Monitoring.Jobs.Client" Version="2.0.6" />
+    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="2.0.5" />
   </ItemGroup>
   <ItemGroup>
 	  <ProjectReference Include="..\SFA.DAS.Payments.RequiredPayments.Application\SFA.DAS.Payments.RequiredPayments.Application.csproj" />

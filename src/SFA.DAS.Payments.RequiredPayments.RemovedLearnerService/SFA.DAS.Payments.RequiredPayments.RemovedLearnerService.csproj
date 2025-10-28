@@ -18,7 +18,7 @@
 	<PackageReference Include="Microsoft.ServiceFabric.Actors" Version="7.0.1001" />
     <PackageReference Include="Microsoft.ServiceFabric.Diagnostics.Internal" Version="7.0.1010" />
 	<PackageReference Include="Microsoft.ServiceFabric.Data.Interfaces" Version="7.0.1010" />
-    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="0.1.53-prerelease-12" />
+    <PackageReference Include="SFA.DAS.Payments.ServiceFabric.Core" Version="2.0.5" />
   </ItemGroup>
 
   <ItemGroup>
