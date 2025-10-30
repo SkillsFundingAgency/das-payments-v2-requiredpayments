@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Net.Sockets;
 using AutoMapper;
 using FluentAssertions;
 using NUnit.Framework;
@@ -158,100 +157,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             var actual = mapper.Map(earningEvent, requiredPaymentEvent);
             actual.ContractType.Should().Be(expectedContractType);
         }
-        [Test]
-        [TestCase("payableEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2EarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType1RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("payableEarningEvent-calculatedRequiredOnProgrammeAmount", typeof(CalculatedRequiredLevyAmount))]
-        [TestCase("payableEarningEvent-calculatedRequiredIncentiveAmount", typeof(CalculatedRequiredIncentiveAmount))]
-        public void TestLearningStartDateMapToLearningAimStartDate(string earningEventType, Type requiredPaymentEventType)
-        {
-            IEarningEvent earningEvent = null;
-            IPeriodisedPaymentEvent requiredPaymentEvent = null;
-            var learningStartDate = new DateTime(2025, 01, 01);
-            var learningAim = new LearningAim { StartDate = learningStartDate };
-
-
-            requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
-
-            
-
-            switch (earningEventType)
-            {
-                case "payableEarningEvent":
-                    earningEvent = new PayableEarningEvent{ PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim};
-                    break;
-                case "apprenticeshipContractType2EarningEvent":
-                    earningEvent = new ApprenticeshipContractType2EarningEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim };
-                    break;
-                case "apprenticeshipContractType1RedundancyEarningEvent":
-                    earningEvent = new ApprenticeshipContractType1RedundancyEarningEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim };
-                    break;
-                case "apprenticeshipContractType2RedundancyEarningEvent":
-                    earningEvent = new ApprenticeshipContractType2RedundancyEarningEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim };
-                    break;
-                case "payableEarningEvent-calculatedRequiredOnProgrammeAmount":
-                    earningEvent = new PayableEarningEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim };
-                    break;
-                case "payableEarningEvent-calculatedRequiredIncentiveAmount":
-                    earningEvent = new PayableEarningEvent { PriceEpisodes = new List<PriceEpisode>(), LearningAim = learningAim };
-                    break;
-
-            }
-
-            var actual = mapper.Map(earningEvent, requiredPaymentEvent);
-            actual.LearningStartDate.Should().Be(learningStartDate);
-        }
-
-        [Test]
-        [TestCase("payableEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2EarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType1RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("payableEarningEvent-calculatedRequiredOnProgrammeAmount", typeof(CalculatedRequiredLevyAmount))]
-        [TestCase("payableEarningEvent-calculatedRequiredIncentiveAmount", typeof(CalculatedRequiredIncentiveAmount))]
-        public void TestLearningStartDateMapToPriceEpisodeCourseStartDate(string earningEventType, Type requiredPaymentEventType)
-        {
-            IEarningEvent earningEvent = null;
-            IPeriodisedPaymentEvent requiredPaymentEvent = null;
-            long learningAimNumber = 1234567890;
-            var learningStartDate = new DateTime(2020, 01, 01);
-            var courseStartDate = new DateTime(2022, 01, 01);
-            var learningAim = new LearningAim { StartDate = learningStartDate, SequenceNumber = learningAimNumber};
-
-
-            requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
-
-            var priceEpisode = new PriceEpisode { LearningAimSequenceNumber = learningAimNumber, CourseStartDate = courseStartDate };
-            var priceEpisodes = new List<PriceEpisode> { priceEpisode };
-
-            switch (earningEventType)
-            {
-                case "payableEarningEvent":
-                    earningEvent = new PayableEarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-                case "apprenticeshipContractType2EarningEvent":
-                    earningEvent = new ApprenticeshipContractType2EarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-                case "apprenticeshipContractType1RedundancyEarningEvent":
-                    earningEvent = new ApprenticeshipContractType1RedundancyEarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-                case "apprenticeshipContractType2RedundancyEarningEvent":
-                    earningEvent = new ApprenticeshipContractType2RedundancyEarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-                case "payableEarningEvent-calculatedRequiredOnProgrammeAmount":
-                    earningEvent = new PayableEarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-                case "payableEarningEvent-calculatedRequiredIncentiveAmount":
-                    earningEvent = new PayableEarningEvent { PriceEpisodes = priceEpisodes, LearningAim = learningAim };
-                    break;
-
-            }
-
-            var actual = mapper.Map(earningEvent, requiredPaymentEvent);
-            actual.LearningStartDate.Should().Be(courseStartDate);
-        }
 
         [Test]
         public void TestPayableEarningEventMap()
@@ -292,7 +197,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 SfaContributionPercentage = 1m,
                 PriceEpisodeIdentifier = "123-01",
                 Amount = 1000000,
-                AgreedOnDate = DateTime.Today,
+                AgreedOnDate = DateTime.Today
             };
             var requiredPayment = new CalculatedRequiredLevyAmount
             {

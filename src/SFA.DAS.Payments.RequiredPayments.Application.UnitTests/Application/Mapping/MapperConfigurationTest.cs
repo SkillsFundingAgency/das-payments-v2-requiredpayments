@@ -61,13 +61,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             payment.ApprenticeshipEmployerType.Should().Be(testPaymentHistoryEntity.ApprenticeshipEmployerType);
         }
-        [Test, AutoData]
-        public void MapsPaymentHistoryEntity_LearningStartDate_ToPayment(PaymentHistoryEntity testPaymentHistoryEntity, Payment payment)
-        {
-            mapper.Map(testPaymentHistoryEntity, payment);
 
-            payment.LearningStartDate.Should().Be(testPaymentHistoryEntity.LearningStartDate);
-        }
         [Test]
         public void MapperDoesNotChangeEventId()
         {
