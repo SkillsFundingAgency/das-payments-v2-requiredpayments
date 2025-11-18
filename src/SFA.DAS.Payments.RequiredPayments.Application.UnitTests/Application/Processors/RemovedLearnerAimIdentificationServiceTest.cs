@@ -51,7 +51,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
-        public async Task Test_ServiceReturnsRemovedAims_Fo_Ineligible_Aim()
+        public async Task Test_ServiceReturnsRemovedAims_For_Ineligible_Aim()
         {
             // arrange
             var repositoryMock = new Mock<IPaymentHistoryRepository>();
