@@ -14,10 +14,10 @@
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
-    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.4.0-prerelease-7" />
-    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.4.0-prerelease-7" />
-    <PackageReference Include="SFA.DAS.Payments.Messaging" Version="2.4.0-prerelease-7" />
-    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.4.0-prerelease-7" />
+    <PackageReference Include="SFA.DAS.Payments.Core" Version="2.4.0" />
+    <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.4.0" />
+    <PackageReference Include="SFA.DAS.Payments.Messaging" Version="2.4.0" />
+    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
