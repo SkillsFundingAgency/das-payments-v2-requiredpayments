@@ -4,6 +4,7 @@ using SFA.DAS.Payments.AcceptanceTests.Core.Data;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers;
 
 namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
@@ -249,7 +250,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 CollectionYear = currentAcademicYear,
                 Ukprn = testSession.Provider.Ukprn,
                 JobId = testSession.JobId,
-                Learner = new Model.Core.Learner
+                Learner =
                 {
                     Uln = testSession.Learner.Uln,
                     ReferenceNumber = testSession.Learner.LearnRefNumber
@@ -285,9 +286,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 },
 
 
-                OnProgrammeEarnings = new List<Model.Core.OnProgramme.OnProgrammeEarning> {
-                    new Model.Core.OnProgramme.OnProgrammeEarning {
-                        Type = Model.Core.OnProgramme.OnProgrammeEarningType.Completion,
+                OnProgrammeEarnings = new List<OnProgrammeEarning> {
+                    new OnProgrammeEarning {
+                        Type = OnProgrammeEarningType.Completion,
                         Periods = new List<EarningPeriod>{
                             new EarningPeriod
                             {

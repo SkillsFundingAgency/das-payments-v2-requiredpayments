@@ -1,6 +1,7 @@
 ﻿using SFA.DAS.Payments.Messages.Common;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.Model.Core.Incentives;
+using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
 {
@@ -8,5 +9,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     {
         public IncentivePaymentType Type { get; set; }
         public override TransactionType TransactionType => (TransactionType) Type;
+        public LearningTypes LearningType { get; set; } = LearningTypes.Apprenticeship;
     }
 }
