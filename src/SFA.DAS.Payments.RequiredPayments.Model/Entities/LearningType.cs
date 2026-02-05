@@ -1,6 +1,6 @@
 ﻿namespace SFA.DAS.Payments.RequiredPayments.Model.Entities
 {
-    public enum LearningTypes
+    public enum LearningType
     {
         Apprenticeship,
         FoundationApprenticeship,

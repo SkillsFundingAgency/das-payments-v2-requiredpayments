@@ -6,6 +6,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     public class CalculatedRequiredCoInvestedAmount : CalculatedRequiredOnProgrammeAmount
     {
         public FundingPlatformType FundingPlatformType { get; set; } = FundingPlatformType.SubmitLearnerData;
-        public LearningTypes LearningType { get; set; } = LearningTypes.Apprenticeship;
+        public LearningType LearningType { get; set; } = LearningType.Apprenticeship;
     }
 }
