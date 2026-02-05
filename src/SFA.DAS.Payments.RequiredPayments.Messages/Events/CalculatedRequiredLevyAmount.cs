@@ -1,6 +1,7 @@
-﻿using System;
-using SFA.DAS.Payments.Messages.Common;
+﻿using SFA.DAS.Payments.Messages.Common;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.RequiredPayments.Model.Entities;
+using System;
 
 namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
 {
@@ -10,5 +11,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
         public string AgreementId { get; set; }
         public DateTime? AgreedOnDate { get; set; }
         public FundingPlatformType FundingPlatformType { get; set; } = FundingPlatformType.SubmitLearnerData;
+        public LearningType LearningType { get; set; } = LearningType.Apprenticeship;
     }
 }
