@@ -165,6 +165,11 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             }
         }
 
+        public Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleShortCoursesEarningEvent(GSLShortCourseEarningsEvent earningEvent, CancellationToken cancellationToken)
+        {
+            return null;
+        }
+
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandlePayableEarningEvent(PayableEarningEvent earningEvent, CancellationToken cancellationToken)
         {
             paymentLogger.LogVerbose($"Handling PayableEarningEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");

@@ -22,5 +22,6 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces
         Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleFunctionalSkillEarningsEvent(FunctionalSkillEarningsEvent earningEvent, CancellationToken cancellationToken);
         Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandlePayableFunctionalSkillEarningsEvent(PayableFunctionalSkillEarningEvent earningEvent, CancellationToken cancellationToken);
         Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>>  HandleAct1RedundancyEarningsEvent(ApprenticeshipContractType1RedundancyEarningEvent earningEvent,  CancellationToken cancellationToken);
+        Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>>  HandleShortCoursesEarningEvent(GSLShortCourseEarningsEvent earningEvent,  CancellationToken cancellationToken);
     }
 }
