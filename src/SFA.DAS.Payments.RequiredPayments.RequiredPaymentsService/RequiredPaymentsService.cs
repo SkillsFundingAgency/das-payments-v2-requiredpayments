@@ -37,6 +37,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
         private readonly IApprenticeshipAct1RedundancyEarningsEventProcessor act1RedundancyEarningsEventProcessor;
         private readonly IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor;
         private readonly IPayableEarningEventProcessor payableEarningEventProcessor;
+        private readonly IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor;
         readonly ITelemetry telemetry;
         private readonly string logSafeApprenticeshipKeyString;
         
@@ -51,6 +52,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             IApprenticeshipAct1RedundancyEarningsEventProcessor act1RedundancyEarningsEventProcessor, 
             IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor,
             IPayableEarningEventProcessor payableEarningEventProcessor,
+            IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor,
             ITelemetry telemetry)
             : base(actorService, actorId)
         {
@@ -60,6 +62,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             this.act1RedundancyEarningsEventProcessor = act1RedundancyEarningsEventProcessor;
             this.functionalSkillEarningsEventProcessor = functionalSkillEarningsEventProcessor;
             this.payableEarningEventProcessor = payableEarningEventProcessor;
+            this.shortCoursesEarningEventProcessor = shortCoursesEarningEventProcessor;
             this.telemetry = telemetry;
             apprenticeshipKeyString = actorId.GetStringId();
             apprenticeshipKey = apprenticeshipKeyService.ParseApprenticeshipKey(apprenticeshipKeyString);
@@ -165,9 +168,29 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             }
         }
 
-        public Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleShortCoursesEarningEvent(GSLShortCourseEarningsEvent earningEvent, CancellationToken cancellationToken)
+        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleShortCoursesEarningEvent(GSLShortCourseEarningsEvent earningEvent, CancellationToken cancellationToken)
         {
-            return null;
+            paymentLogger.LogVerbose($"Handling GSLShortCourseEarningsEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
+            try
+            {
+                using (var operation = telemetry.StartOperation("RequiredPaymentsService.HandleShortCoursesEarningEvent", earningEvent.EventId.ToString()))
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    await ResetPaymentHistoryCacheIfDifferentCollectionPeriod(earningEvent.CollectionPeriod)
+                        .ConfigureAwait(false);
+                    await Initialise(earningEvent.CollectionPeriod.Period).ConfigureAwait(false);
+                    var requiredPaymentEvents = await shortCoursesEarningEventProcessor.HandleEarningEvent(earningEvent, paymentHistoryCache, cancellationToken).ConfigureAwait(false);
+                    Log(requiredPaymentEvents);
+                    telemetry.TrackDuration("RequiredPaymentsService.HandleShortCoursesEarningEvent", stopwatch, earningEvent);
+                    telemetry.StopOperation(operation);
+                    return requiredPaymentEvents;
+                }
+            }
+            catch (Exception e)
+            {
+                paymentLogger.LogError($"Error handling GSLShortCourseEarningsEvent. Error: {e.Message}");
+                throw;
+            }
         }
 
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandlePayableEarningEvent(PayableEarningEvent earningEvent, CancellationToken cancellationToken)
