@@ -129,7 +129,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning,
                 LearningAim = earningEvent.LearningAim,
                 LearningStartDate = requiredPayment.LearningStartDate,
-                LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber
+                LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber,
+                CompletionAmount=requiredPayment.Amount
                 //TODO: Complete RequiredPaymentEvent mapping
 
 
