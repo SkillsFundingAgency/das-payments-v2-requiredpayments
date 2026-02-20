@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
@@ -10,11 +11,11 @@ using SFA.DAS.Payments.RequiredPayments.Domain;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework.Legacy;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
 {
@@ -53,13 +54,39 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                                 Amount = 100m,
                                 PriceEpisodeIdentifier = "PE-1",
                                 AccountId = 1,
-                                TransferSenderAccountId = null
+                                TransferSenderAccountId = null,
+                                ApprenticeshipId  = 1
                             }
                         },
                     }
                 },
                 LearningAim = new LearningAim { Reference = "ZPROG001" },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 }
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        Identifier = "PE-2",
+                        TotalNegotiatedPrice1 = 15000m,
+                        TotalNegotiatedPrice2 = 2000m,
+                        TotalNegotiatedPrice3 = null,
+                        TotalNegotiatedPrice4 = null,
+                        AgreedPrice = 17000m,
+                        CourseStartDate = new DateTime(2024, 9, 1),
+                        StartDate = new DateTime(2024, 9, 1),
+                        EffectiveTotalNegotiatedPriceStartDate = new DateTime(2024, 9, 1),
+                        PlannedEndDate = new DateTime(2026, 8, 31),
+                        ActualEndDate = null,
+                        NumberOfInstalments = 24,
+                        InstalmentAmount = 625m,
+                        CompletionAmount = 2000m,
+                        Completed = false,
+                        EmployerContribution = 500m,
+                        CompletionHoldBackExemptionCode = null,
+                        FundingLineType = "Apprenticeship Levy",
+                        LearningAimSequenceNumber = 1
+                    }
+                },
             };
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
@@ -101,9 +128,49 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             // Arrange
             var earningEvent = new GSLShortCourseEarningsEvent
             {
-                Earnings = new List<ShortCourseEarning>(),
+                Earnings = new List<ShortCourseEarning>
+                {
+                    new() {
+                        Periods = new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Period = 1,
+                                Amount = 100m,
+                                PriceEpisodeIdentifier = "PE-1",
+                                AccountId = 1,
+                                TransferSenderAccountId = null,
+                                ApprenticeshipId  = 1
+                            }
+                        },
+                    }
+                },
                 LearningAim = new LearningAim { Reference = "ZPROG001" },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 }
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new() {
+                        Identifier = "PE-1",
+                        TotalNegotiatedPrice1 = 15000m,
+                        TotalNegotiatedPrice2 = 2000m,
+                        TotalNegotiatedPrice3 = null,
+                        TotalNegotiatedPrice4 = null,
+                        AgreedPrice = 17000m,
+                        CourseStartDate = new DateTime(2024, 9, 1),
+                        StartDate = new DateTime(2024, 9, 1),
+                        EffectiveTotalNegotiatedPriceStartDate = new DateTime(2024, 9, 1),
+                        PlannedEndDate = new DateTime(2026, 8, 31),
+                        ActualEndDate = null,
+                        NumberOfInstalments = 24,
+                        InstalmentAmount = 625m,
+                        CompletionAmount = 2000m,
+                        Completed = false,
+                        EmployerContribution = 500m,
+                        CompletionHoldBackExemptionCode = null,
+                        FundingLineType = "Apprenticeship Levy",
+                        LearningAimSequenceNumber = 1
+                    }
+                },
             };
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
@@ -129,7 +196,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 });
 
             negativeEarningServiceMock
-                .Setup(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<byte>(), It.IsAny<string>()))
+                .Setup(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()))
                 .Returns(new List<RequiredPayment> { new RequiredPayment { Amount = -100m } });
 
             // Act
