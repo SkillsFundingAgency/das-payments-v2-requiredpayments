@@ -60,19 +60,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             //If a payment exists for a delivery period that doesn't exist in the earning event, then refund the original payment.
             foreach (var payment in academicYearPayments)
             {
-                var period = allPeriods.FirstOrDefault(p => p.Period == payment.CollectionPeriod.Period);
-     
-                if (period == null)
+                foreach (var period in allPeriods)
                 {
-                    var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
-                    //Generate Refund
-                    requiredPayments.AddRange(negativeEarningService
-                        .ProcessNegativeEarning(payment.Amount, academicYearPayments, payment.CollectionPeriod.Period, payment.PriceEpisodeIdentifier));
-                    foreach (var requiredPayment in requiredPayments)
+                    var paymentPeriod = allPeriods.FirstOrDefault(p => p.Period == payment.CollectionPeriod.Period);
+
+                    if (paymentPeriod == null)
                     {
-                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period));
+                        var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
+                        //Generate Refund
+                        requiredPayments.AddRange(negativeEarningService
+                            .ProcessNegativeEarning(payment.Amount, academicYearPayments, payment.CollectionPeriod.Period, payment.PriceEpisodeIdentifier));
+                        foreach (var requiredPayment in requiredPayments)
+                        {
+                            requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period));
+                        }
                     }
+
                 }
+
+
             }
 
             return requiredPaymentEvents;
@@ -130,11 +136,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 LearningAim = earningEvent.LearningAim,
                 LearningStartDate = requiredPayment.LearningStartDate,
                 LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber,
-                CompletionAmount=requiredPayment.Amount
-                //TODO: Complete RequiredPaymentEvent mapping
-
-
-
+                CompletionAmount = requiredPayment.Amount,
+                SfaContributionPercentage = requiredPayment.SfaContributionPercentage,
+                PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
+                CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
+                FundingPlatformType = earningEvent.FundingPlatformType,
+                LearningType = LearningType.Apprenticeship
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
