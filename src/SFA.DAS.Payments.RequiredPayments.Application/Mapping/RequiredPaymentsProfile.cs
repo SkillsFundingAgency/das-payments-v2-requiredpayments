@@ -25,6 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(dest => dest.Priority, opt => opt.Ignore())
                 .ForMember(dest => dest.AgeAtStartOfLearning, opt => opt.Ignore())
                 .ForMember(dest => dest.LearningType, opt => opt.Ignore())
+                .ForMember(dest => dest.CourseType, opt => opt.Ignore())
 
                 .ForMember(dest => dest.AgreementId, opt => opt.MapFrom(s => s.AgreementId))
                 .ForMember(dest => dest.AmountDue, opt => opt.MapFrom(s => s.Amount))

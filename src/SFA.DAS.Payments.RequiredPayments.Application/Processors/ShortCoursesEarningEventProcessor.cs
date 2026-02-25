@@ -141,7 +141,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
                 CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
                 FundingPlatformType = earningEvent.FundingPlatformType,
-                LearningType = LearningType.Apprenticeship
+                LearningType = LearningType.ApprenticeshipUnit,
+                CourseType = CourseType.ShortCourse
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
