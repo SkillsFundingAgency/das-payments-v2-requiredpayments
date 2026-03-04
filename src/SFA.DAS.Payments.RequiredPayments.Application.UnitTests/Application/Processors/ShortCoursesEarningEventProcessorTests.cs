@@ -145,7 +145,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZPROG001", LearningType = TrainingType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -310,7 +310,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZPROG001", LearningType = TrainingType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
