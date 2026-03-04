@@ -533,7 +533,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FrameworkCode)
                 .Ignore(x => x.PathwayCode)
                 .Ignore(x => x.SequenceNumber)
-                .Ignore(x => x.StartDate);
+                .Ignore(x => x.StartDate)
+                .Ignore(x => x.CourseCode)
+                .Ignore(x => x.LearningType);
 
 
             CreateMap<PriceEpisode, PeriodisedPaymentEvent>()
