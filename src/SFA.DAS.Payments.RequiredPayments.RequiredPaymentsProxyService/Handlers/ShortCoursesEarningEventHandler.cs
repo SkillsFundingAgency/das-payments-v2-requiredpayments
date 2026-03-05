@@ -44,7 +44,9 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
             );
 
             var actorId = new ActorId(key);
-            var actor = proxyFactory.CreateActorProxy<IRequiredPaymentsService>(new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RequiredPaymentsService"), actorId);
+            var actor = proxyFactory.CreateActorProxy<IRequiredPaymentsService>(
+                new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RequiredPaymentsServiceActorService"),
+                actorId);
             var requiredPaymentEvent = await actor.HandleShortCoursesEarningEvent(message, CancellationToken.None).ConfigureAwait(false);
 
             //Send RequiredPaymentEvents to ServiceBus for FundingSource to process
