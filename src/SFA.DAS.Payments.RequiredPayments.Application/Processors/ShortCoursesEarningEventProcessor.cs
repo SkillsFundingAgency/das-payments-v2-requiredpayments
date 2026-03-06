@@ -51,12 +51,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     ProgrammeType = 25,
                     StandardCode = 123,
                     FrameworkCode = 456,
-                    PathwayCode = 1
+                    PathwayCode = 1,
+                    LearningType = TrainingType.ApprenticeshipUnit,
+                    CourseCode = "CourseCode"
                 },
                 CollectionPeriod = new CollectionPeriod
                 {
                     AcademicYear = 2324,
-                    Period = 1
+                    Period = 1,
                 },
                 PriceEpisodeIdentifier = "PE-001",
                 SfaContributionPercentage = 0.9m,
@@ -66,6 +68,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 ApprenticeshipPriceEpisodeId = 2222,
                 ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
                 LearningStartDate = new DateTime(2024, 9, 1),
+                CourseCode = "CourseCode1234",
+                LearningType = LearningType.Apprenticeship,
+                ContractType = ContractType.Act1,
+                OnProgrammeEarningType = OnProgrammeEarningType.Learning
+                
             };
             // ----------------------------------------------
             requiredPaymentEvents.Add(calculatedRequiredLevyAmount);
