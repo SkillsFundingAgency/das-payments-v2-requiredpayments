@@ -72,8 +72,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 CourseCode = "CourseCode1234",
                 LearningType = LearningType.Apprenticeship,
                 ContractType = ContractType.Act1,
-                OnProgrammeEarningType = OnProgrammeEarningType.Learning,
-                StartDate= new DateTime(2024, 9, 1)
+                OnProgrammeEarningType = OnProgrammeEarningType.Learning
+                
             };
             // ----------------------------------------------
             requiredPaymentEvents.Add(calculatedRequiredLevyAmount);
