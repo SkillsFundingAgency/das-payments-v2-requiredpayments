@@ -53,7 +53,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     FrameworkCode = 456,
                     PathwayCode = 1,
                     LearningType = TrainingType.ApprenticeshipUnit,
-                    CourseCode = "CourseCode"
+                    CourseCode = "CourseCode",
+                    FundingLineType = "FundingLineTypeTest"
                 },
                 CollectionPeriod = new CollectionPeriod
                 {
