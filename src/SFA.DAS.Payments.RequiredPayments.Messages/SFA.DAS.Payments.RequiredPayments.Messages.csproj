@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="SFA.DAS.Payments.Messages.Common" Version="2.4.0" />
-    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.4.0" />
+    <PackageReference Include="SFA.DAS.Payments.Model.Core" Version="2.4.1-prerelease-13" />
   </ItemGroup>
 
   <ItemGroup>

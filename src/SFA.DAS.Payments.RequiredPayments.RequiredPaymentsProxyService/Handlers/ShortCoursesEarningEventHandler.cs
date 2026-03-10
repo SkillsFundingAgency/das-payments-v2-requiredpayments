@@ -1,4 +1,5 @@
-﻿using Microsoft.ServiceFabric.Actors;
+﻿using ESFA.DC.Logging.Interfaces;
+using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Client;
 using NServiceBus;
 using SFA.DAS.Payments.Application.Infrastructure.Logging;
@@ -8,6 +9,7 @@ using SFA.DAS.Payments.RequiredPayments.Domain;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,15 +21,19 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
         private readonly IActorProxyFactory proxyFactory;
         private readonly IPaymentLogger paymentLogger;
         private readonly IApprenticeshipKeyService apprenticeshipKeyService;
+        private readonly ESFA.DC.Logging.ExecutionContext executionContext;
 
-        public ShortCoursesEarningEventHandler(IActorProxyFactory proxyFactory, IPaymentLogger paymentLogger, IApprenticeshipKeyService apprenticeshipKeyService)
+        public ShortCoursesEarningEventHandler(IActorProxyFactory proxyFactory, IPaymentLogger paymentLogger, IApprenticeshipKeyService apprenticeshipKeyService, IExecutionContext executionContext)
         {
             this.proxyFactory = proxyFactory;
             this.paymentLogger = paymentLogger;
             this.apprenticeshipKeyService = apprenticeshipKeyService;
+            this.executionContext = (ESFA.DC.Logging.ExecutionContext)executionContext;
         }
         public async Task Handle(GSLShortCourseEarningsEvent message, IMessageHandlerContext context)
         {
+            executionContext.JobId = message.JobId.ToString();
+
             paymentLogger.LogInfo($"Processing GSLShortCourseEarningsEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
 
             var contractType = ContractType.Act1;
@@ -44,12 +50,14 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
             );
 
             var actorId = new ActorId(key);
-            var actor = proxyFactory.CreateActorProxy<IRequiredPaymentsService>(new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RequiredPaymentsService"), actorId);
-            var requiredPaymentEvent = await actor.HandleShortCoursesEarningEvent(message, CancellationToken.None).ConfigureAwait(false);
-
-            //Send RequiredPaymentEvents to ServiceBus for FundingSource to process
+            var actor = proxyFactory.CreateActorProxy<IRequiredPaymentsService>(
+                new Uri("fabric:/SFA.DAS.Payments.RequiredPayments.ServiceFabric/RequiredPaymentsServiceActorService"),
+                actorId);
+            IReadOnlyCollection<PeriodisedRequiredPaymentEvent> requiredPaymentEvent;
             try
             {
+                requiredPaymentEvent = await actor.HandleShortCoursesEarningEvent(message, CancellationToken.None).ConfigureAwait(false);
+
                 if (requiredPaymentEvent != null)
                     await Task.WhenAll(requiredPaymentEvent.Select(context.Publish)).ConfigureAwait(false);
 
