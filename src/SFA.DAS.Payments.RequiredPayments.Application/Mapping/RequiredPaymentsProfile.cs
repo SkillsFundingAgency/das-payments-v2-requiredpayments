@@ -529,6 +529,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
                 .Ignore(x => x.CourseType)
+                .Ignore(x => x.CourseCode)
                 ;
 
             CreateMap<PriceEpisode, LearningAim>()
