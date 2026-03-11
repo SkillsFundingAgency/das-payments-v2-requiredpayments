@@ -146,7 +146,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     TrainingType.ApprenticeshipUnit => LearningType.ApprenticeshipUnit,
                     _ => throw new ArgumentOutOfRangeException(nameof(earningEvent), earningEvent.LearningAim.LearningType, "Unsupported LearningType value.")
                 },
-                CourseType = CourseType.ShortCourse
+                CourseType = CourseType.ShortCourse,
+                CourseCode = earningEvent.LearningAim.CourseCode
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
