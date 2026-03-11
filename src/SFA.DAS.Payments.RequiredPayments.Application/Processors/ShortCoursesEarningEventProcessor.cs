@@ -141,7 +141,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
                 CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
                 FundingPlatformType = earningEvent.FundingPlatformType,
-                LearningType = LearningType.Apprenticeship
+                LearningType = earningEvent.LearningAim.LearningType switch
+                {
+                    TrainingType.ApprenticeshipUnit => LearningType.ApprenticeshipUnit,
+                    _ => throw new ArgumentOutOfRangeException(nameof(earningEvent), earningEvent.LearningAim.LearningType, "Unsupported LearningType value.")
+                },
+                CourseType = CourseType.ShortCourse,
+                CourseCode = earningEvent.LearningAim.CourseCode
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
