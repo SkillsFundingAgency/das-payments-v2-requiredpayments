@@ -25,6 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(dest => dest.Priority, opt => opt.Ignore())
                 .ForMember(dest => dest.AgeAtStartOfLearning, opt => opt.Ignore())
                 .ForMember(dest => dest.LearningType, opt => opt.Ignore())
+                .ForMember(dest => dest.CourseType, opt => opt.Ignore())
 
                 .ForMember(dest => dest.AgreementId, opt => opt.MapFrom(s => s.AgreementId))
                 .ForMember(dest => dest.AmountDue, opt => opt.MapFrom(s => s.Amount))
@@ -278,6 +279,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
                 .Ignore(x => x.CourseCode)
+                .Ignore(x => x.CourseType)
                 ;
             // End Earning Event --> Required Payment Event
 
@@ -341,6 +343,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
                 .Ignore(x => x.CourseCode)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<EarningPeriod, CalculatedRequiredIncentiveAmount>()
@@ -411,6 +414,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
                 .Ignore(x => x.CourseCode)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<IdentifiedRemovedLearningAim, PeriodisedRequiredPaymentEvent>()
@@ -470,6 +474,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
                 .Ignore(x => x.CourseCode)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<PaymentHistoryEntity, PeriodisedRequiredPaymentEvent>()
@@ -523,6 +528,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.FundingPlatformType)
                 .Ignore(x => x.LearningType)
+                .Ignore(x => x.CourseType)
                 .Ignore(x => x.CourseCode)
                 ;
 

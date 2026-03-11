@@ -12,6 +12,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
         public DateTime? AgreedOnDate { get; set; }
         public FundingPlatformType FundingPlatformType { get; set; } = FundingPlatformType.SubmitLearnerData;
         public LearningType LearningType { get; set; } = LearningType.Apprenticeship;
+        public CourseType CourseType { get; set; } = CourseType.Apprenticeship;
         public string CourseCode { get; set; }
     }
 }

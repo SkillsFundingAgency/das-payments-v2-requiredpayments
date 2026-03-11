@@ -60,7 +60,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZSC0001" },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -93,7 +93,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             {
                 new PaymentHistoryEntity
                 {
-                    LearnAimReference = "ZPROG001",
+                    LearnAimReference = "ZSC0001",
                     CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
                     PriceEpisodeIdentifier = "PE-1"
                 }
@@ -145,7 +145,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = TrainingType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -178,7 +178,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             {
                 new PaymentHistoryEntity
                 {
-                    LearnAimReference = "ZPROG001",
+                    LearnAimReference = "ZSC0001",
                     CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 2 }, // Not matching period
                     PriceEpisodeIdentifier = "PE-1"
                 }
@@ -230,7 +230,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             var earningEvent = new GSLShortCourseEarningsEvent
             {
                 Earnings = new List<ShortCourseEarning>(),
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZSC0001" },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>()
             };
@@ -270,7 +270,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZSC0001" },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>()
             };
@@ -310,7 +310,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZPROG001" },
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = TrainingType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -326,7 +326,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             {
                 new PaymentHistoryEntity
                 {
-                    LearnAimReference = "ZPROG001",
+                    LearnAimReference = "ZSC0001",
                     CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
                     PriceEpisodeIdentifier = "PE-1"
                 }
