@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
 {
@@ -40,6 +42,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         public async Task HandleEarningEvent_Returns_RequiredPayments_For_ValidEarnings()
         {
             // Arrange
+            var period = new EarningPeriod
+            {
+                Period = 1,
+                Amount = 100m,
+                PriceEpisodeIdentifier = "PE-1",
+                AccountId = 1,
+                TransferSenderAccountId = null,
+                ApprenticeshipId = 1,
+                SfaContributionPercentage = 0m
+            };
+
             var earningEvent = new GSLShortCourseEarningsEvent
             {
                 Earnings = new List<ShortCourseEarning>
@@ -48,15 +61,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     {
                         Periods = new List<EarningPeriod>
                         {
-                            new EarningPeriod
-                            {
-                                Period = 1,
-                                Amount = 100m,
-                                PriceEpisodeIdentifier = "PE-1",
-                                AccountId = 1,
-                                TransferSenderAccountId = null,
-                                ApprenticeshipId  = 1
-                            }
+                            period
                         },
                     }
                 },
@@ -126,6 +131,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         public async Task HandleEarningEvent_Refunds_When_Payment_Not_In_Earnings()
         {
             // Arrange
+            var period = new EarningPeriod
+            {
+                Period = 1,
+                Amount = 100m,
+                PriceEpisodeIdentifier = "PE-1",
+                AccountId = 1,
+                TransferSenderAccountId = null,
+                ApprenticeshipId = 1,
+                SfaContributionPercentage = 0m,
+            };
+
             var earningEvent = new GSLShortCourseEarningsEvent
             {
                 Earnings = new List<ShortCourseEarning>
@@ -133,19 +149,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     new() {
                         Periods = new List<EarningPeriod>
                         {
-                            new EarningPeriod
-                            {
-                                Period = 1,
-                                Amount = 100m,
-                                PriceEpisodeIdentifier = "PE-1",
-                                AccountId = 1,
-                                TransferSenderAccountId = null,
-                                ApprenticeshipId  = 1
-                            }
+                            period
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = TrainingType.ApprenticeshipUnit },
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -179,8 +187,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 new PaymentHistoryEntity
                 {
                     LearnAimReference = "ZSC0001",
-                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 2 }, // Not matching period
-                    PriceEpisodeIdentifier = "PE-1"
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 }, 
+                    PriceEpisodeIdentifier = "PE-1",
+                    CompletionAmount = 101m
                 }
             };
 
@@ -194,7 +203,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     CollectionPeriod = phe.CollectionPeriod,
                     PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier,
-                    Amount = 100m
+                    Amount = 101m
                 });
 
             negativeEarningServiceMock
@@ -203,26 +212,30 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     new RequiredPayment
                     {
-                        Amount = -100m,
+                        Amount = -101m,
                         EarningType = EarningType.Levy,
                         PriceEpisodeIdentifier = "PE-1",
                         AccountId = 1,
-                        TransferSenderAccountId = null
+                        TransferSenderAccountId = null,
+                        LearningStartDate = new DateTime(2024, 9, 1),
+                        ApprenticeshipId = 1,
                     }
-                });
+                }).Verifiable();
 
             // Act
             var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
 
             // Assert
             ClassicAssert.IsTrue(result.Count > 0);
-            var requiredPaymentEvent = result[0];
-            ClassicAssert.IsTrue(requiredPaymentEvent.CompletionAmount < 0);
+            negativeEarningServiceMock.Verify(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
 
-            // Check mapping from GSLShortCourseEarningsEvent to RequiredPaymentEvent
-            ClassicAssert.AreEqual("PE-1", requiredPaymentEvent.PriceEpisodeIdentifier);
-            ClassicAssert.AreEqual(1, requiredPaymentEvent.AccountId);
-            ClassicAssert.IsNull(requiredPaymentEvent.TransferSenderAccountId);
+            // Check for refund
+            var refund = result[0];
+            ClassicAssert.IsTrue(refund.CompletionAmount == -101);
+
+            var requiredPaymentEvent = result[1];
+
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], period, requiredPaymentEvent);
         }
         [Test]
         public async Task HandleEarningEvent_Returns_Empty_When_NoEarnings()
@@ -250,6 +263,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         [Test]
         public async Task HandleEarningEvent_Returns_Empty_When_NoPaymentHistory()
         {
+            var period = new EarningPeriod
+            {
+                Period = 1,
+                Amount = 100m,
+                PriceEpisodeIdentifier = "PE-1",
+                AccountId = 1,
+                TransferSenderAccountId = null,
+                ApprenticeshipId = 1
+            };
+
             var earningEvent = new GSLShortCourseEarningsEvent
             {
                 Earnings = new List<ShortCourseEarning>
@@ -258,15 +281,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     {
                         Periods = new List<EarningPeriod>
                         {
-                            new EarningPeriod
-                            {
-                                Period = 1,
-                                Amount = 100m,
-                                PriceEpisodeIdentifier = "PE-1",
-                                AccountId = 1,
-                                TransferSenderAccountId = null,
-                                ApprenticeshipId  = 1
-                            }
+                            period
                         },
                     }
                 },
@@ -290,6 +305,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         [Test]
         public async Task HandleEarningEvent_Refunds_When_Amount_Differs()
         {
+            var period = new EarningPeriod
+            {
+                Period = 1,
+                Amount = 200m,
+                PriceEpisodeIdentifier = "PE-1",
+                AccountId = 1,
+                TransferSenderAccountId = null,
+                ApprenticeshipId = 1,
+                SfaContributionPercentage = 0m
+            };
+
             var earningEvent = new GSLShortCourseEarningsEvent
             {
                 Earnings = new List<ShortCourseEarning>
@@ -298,19 +324,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     {
                         Periods = new List<EarningPeriod>
                         {
-                            new EarningPeriod
-                            {
-                                Period = 1,
-                                Amount = 200m,
-                                PriceEpisodeIdentifier = "PE-1",
-                                AccountId = 1,
-                                TransferSenderAccountId = null,
-                                ApprenticeshipId  = 1
-                            }
+                            period
                         },
                     }
                 },
-                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = TrainingType.ApprenticeshipUnit },
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
                 PriceEpisodes = new List<PriceEpisode>
                 {
@@ -357,7 +375,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         AccountId = 1,
                         TransferSenderAccountId = null
                     }
-                });
+                }).Verifiable();
 
             // Act
             var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
@@ -367,54 +385,48 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             // Check for refund
             var refund = result[0];
-            ClassicAssert.IsTrue(refund.CompletionAmount < 0, "First event should be a refund.");
+            ClassicAssert.IsTrue(refund.CompletionAmount == -100, "First event should be a refund.");
             ClassicAssert.AreEqual("PE-1", refund.PriceEpisodeIdentifier);
+            negativeEarningServiceMock.Verify(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
 
             // Check for new payment
             var newPayment = result[1];
             ClassicAssert.IsTrue(newPayment.CompletionAmount > 0, "Second event should be a new payment.");
-            ClassicAssert.AreEqual("PE-1", newPayment.PriceEpisodeIdentifier);
-            ClassicAssert.AreEqual(200m, newPayment.CompletionAmount);
+
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], period, newPayment);
         }
 
-        [Test]
-        public void GenerateRefund_Calls_NegativeEarningService()
+        private void AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(
+            GSLShortCourseEarningsEvent earningEvent,
+            PriceEpisode priceEpisode,
+            EarningPeriod period,
+            PeriodisedRequiredPaymentEvent periodisedRequiredPaymentEvent)
         {
-            // Arrange
-            var period = new EarningPeriod
-            {
-                Period = 1,
-                Amount = 100m,
-                PriceEpisodeIdentifier = "PE-1",
-                AccountId = 1,
-                TransferSenderAccountId = null,
-                ApprenticeshipId = 1
-            };
-            var academicYearPayments = new List<Payment>
-            {
-                new Payment
-                {
-                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
-                    PriceEpisodeIdentifier = "PE-1"
-                }
-            };
+            var actualEvent = (CalculatedRequiredLevyAmount) periodisedRequiredPaymentEvent;
+            // Check mappings from EarningEvent
+            ClassicAssert.AreEqual(earningEvent.AgeAtStartOfLearning, actualEvent.AgeAtStartOfLearning, "AgeAtStartOfLearning mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim, actualEvent.LearningAim, "LearningAim mismatch");
+            ClassicAssert.AreEqual(earningEvent.FundingPlatformType, actualEvent.FundingPlatformType, "FundingPlatformType mismatch");
 
-            negativeEarningServiceMock
-                .Setup(x => x.ProcessNegativeEarning(period.Amount, academicYearPayments, period.Period, period.PriceEpisodeIdentifier))
-                .Returns(new List<RequiredPayment> { new RequiredPayment { Amount = -100m } })
-                .Verifiable();
+            // Check mappings from PriceEpisode
+            ClassicAssert.AreEqual(priceEpisode.LearningAimSequenceNumber, actualEvent.LearningAimSequenceNumber, "LearningAimSequenceNumber mismatch");
+            ClassicAssert.AreEqual(priceEpisode.CourseStartDate, actualEvent.LearningStartDate, "LearningStartDate mismatch");
 
-            // Use reflection to call private method
-            var result = (List<RequiredPayment>)processor.GetType()
-                .GetMethod("GenerateRefund", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .Invoke(processor, new object[] { period, academicYearPayments });
+            // Check mappings from Period
+            ClassicAssert.AreEqual(period.Period, actualEvent.CollectionPeriod.Period, "CollectionPeriod.Period mismatch");
+            ClassicAssert.AreEqual(earningEvent.CollectionPeriod.AcademicYear, actualEvent.CollectionPeriod.AcademicYear, "CollectionPeriod.AcademicYear mismatch");
+            ClassicAssert.AreEqual(period.AccountId, actualEvent.AccountId, "AccountId mismatch");
+            ClassicAssert.AreEqual(period.TransferSenderAccountId, actualEvent.TransferSenderAccountId, "TransferSenderAccountId mismatch");
+            ClassicAssert.AreEqual(period.ApprenticeshipEmployerType, actualEvent.ApprenticeshipEmployerType, "ApprenticeshipEmployerType mismatch");
+            ClassicAssert.AreEqual(period.ApprenticeshipId, actualEvent.ApprenticeshipId, "ApprenticeshipId mismatch");
+            ClassicAssert.AreEqual(period.ApprenticeshipPriceEpisodeId, actualEvent.ApprenticeshipPriceEpisodeId, "ApprenticeshipPriceEpisodeId mismatch");
+            ClassicAssert.AreEqual(period.SfaContributionPercentage, actualEvent.SfaContributionPercentage, "SfaContributionPercentage mismatch");
+            ClassicAssert.AreEqual(period.PriceEpisodeIdentifier, actualEvent.PriceEpisodeIdentifier, "PriceEpisodeIdentifier mismatch");
+            ClassicAssert.AreEqual(period.Amount, actualEvent.CompletionAmount, "CompletionAmount mismatch");
 
-            // Assert
-            negativeEarningServiceMock.Verify();
-            ClassicAssert.IsTrue(result.Count > 0);
-            ClassicAssert.IsTrue(result[0].Amount < 0);
+            // Check constant mapping
+            ClassicAssert.AreEqual(CourseType.ShortCourse, actualEvent.CourseType, "CourseType mismatch");
         }
-
 
     }
 }
