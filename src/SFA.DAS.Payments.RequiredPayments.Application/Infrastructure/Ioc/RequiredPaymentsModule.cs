@@ -26,6 +26,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Infrastructure.Ioc
             builder.RegisterType<HoldingBackCompletionPaymentService>().AsImplementedInterfaces();
             builder.RegisterType<ShortCoursesEarningEventProcessor>().AsImplementedInterfaces();
 
+
         }
     }
 }
