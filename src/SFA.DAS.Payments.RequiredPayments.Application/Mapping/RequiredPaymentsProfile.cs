@@ -52,7 +52,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                     Reference = s.LearningAimReference,
                     StandardCode = s.LearningAimStandardCode,
                     StartDate = s.StartDate,
-                    LearningType = s.LearningType,
+                    LearningType = s.LearningType ?? LearningType.Apprenticeship,
                     CourseCode = s.CourseCode
                     
                 }))
