@@ -9,6 +9,5 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     {
         public IncentivePaymentType Type { get; set; }
         public override TransactionType TransactionType => (TransactionType) Type;
-        public LearningType LearningType { get; set; } = LearningType.Apprenticeship;
     }
 }

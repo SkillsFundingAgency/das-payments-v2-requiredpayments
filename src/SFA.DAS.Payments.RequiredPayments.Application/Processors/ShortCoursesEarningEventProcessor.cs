@@ -20,7 +20,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
     public class ShortCoursesEarningEventProcessor : IShortCoursesEarningEventProcessor
     {
-        public readonly INegativeEarningService negativeEarningService;
+        private readonly INegativeEarningService negativeEarningService;
         private readonly IMapper mapper;
         public ShortCoursesEarningEventProcessor(INegativeEarningService negativeEarningService, IMapper mapper)
         {
@@ -142,20 +142,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
                 CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
                 FundingPlatformType = earningEvent.FundingPlatformType,
-                LearningType = earningEvent.LearningAim.LearningType switch
-                {
-                    TrainingType.ApprenticeshipUnit => LearningType.ApprenticeshipUnit,
-                    _ => throw new ArgumentOutOfRangeException(nameof(earningEvent), earningEvent.LearningAim.LearningType, "Unsupported LearningType value.")
-                },
                 CourseType = CourseType.ShortCourse,
-                CourseCode = earningEvent.LearningAim.CourseCode
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
         {
             return new RequiredPayment
             {
-                Amount = priceEpisode.TotalNegotiatedPrice1,
+                Amount = period.Amount,
                 EarningType = EarningType.Levy,
                 PriceEpisodeIdentifier = period.PriceEpisodeIdentifier,
                 AccountId = period.AccountId,
@@ -164,15 +158,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 ApprenticeshipId = period.ApprenticeshipId,
                 ApprenticeshipPriceEpisodeId = period.ApprenticeshipPriceEpisodeId,
                 SfaContributionPercentage = period.SfaContributionPercentage ?? 0,
-                LearningStartDate = priceEpisode.CourseStartDate
+                LearningStartDate = priceEpisode.CourseStartDate,
 
             };
-        }
-
-        private List<RequiredPayment> GenerateRefund(EarningPeriod period, List<Payment> academicYearPayments)
-        {
-            return negativeEarningService
-                .ProcessNegativeEarning(period.Amount, academicYearPayments, period.Period, period.PriceEpisodeIdentifier);
         }
     }
 }
