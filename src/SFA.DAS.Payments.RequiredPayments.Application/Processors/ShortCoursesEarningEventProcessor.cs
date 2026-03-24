@@ -1,6 +1,11 @@
 ﻿using AutoMapper;
+using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
+using SFA.DAS.Payments.Model.Core;
+using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Application.Infrastructure;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
@@ -12,9 +17,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using SFA.DAS.Payments.Model.Core;
-using SFA.DAS.Payments.Model.Core.OnProgramme;
-using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
@@ -22,36 +24,81 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
     {
         private readonly INegativeEarningService negativeEarningService;
         private readonly IMapper mapper;
-        public ShortCoursesEarningEventProcessor(INegativeEarningService negativeEarningService, IMapper mapper)
+        private readonly IDuplicateEarningEventService duplicateEarningEventService;
+
+        public ShortCoursesEarningEventProcessor(INegativeEarningService negativeEarningService, IMapper mapper, IDuplicateEarningEventService duplicateEarningEventService)
         {
             this.negativeEarningService = negativeEarningService;
             this.mapper = mapper;
+            this.duplicateEarningEventService = duplicateEarningEventService;
         }
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(
             GSLShortCourseEarningsEvent earningEvent, IDataCache<PaymentHistoryEntity[]> paymentHistoryCache,
             CancellationToken cancellationToken)
         {
-            var requiredPaymentEvents = new List<PeriodisedRequiredPaymentEvent>();
+            try
+            {
+                var requiredPaymentEvents = new List<PeriodisedRequiredPaymentEvent>();
 
-            var allPeriods = earningEvent.Earnings
-                .SelectMany(e => e.Periods)
-                .ToList();
+                if (await duplicateEarningEventService.IsDuplicate(earningEvent, cancellationToken)
+                        .ConfigureAwait(false))
+                {
+                    return requiredPaymentEvents.AsReadOnly();
+                }
 
-            //Get payment history for short course, minus the current period
-            var cachedPayments = await paymentHistoryCache.TryGet(CacheKeys.PaymentHistoryKey, cancellationToken);
-            var academicYearPayments = cachedPayments.HasValue
-                ? cachedPayments.Value
-                    .Where(p => p.LearnAimReference.Equals(earningEvent.LearningAim.Reference, StringComparison.OrdinalIgnoreCase) && p.CollectionPeriod.AcademicYear == earningEvent.CollectionPeriod.AcademicYear)
-                    .Select(p => mapper.Map<PaymentHistoryEntity, Payment>(p))
-                    .ToList()
-                : new List<Payment>();
+                var allPeriods = earningEvent.Earnings
+                    .SelectMany(e => e.Periods)
+                    .ToList();
 
-            requiredPaymentEvents.AddRange(CheckDeliveryPeriodAgainstPayments(allPeriods, earningEvent, academicYearPayments));
-            requiredPaymentEvents.AddRange(CheckPaymentsAgainstDeliveryPeriods(allPeriods, earningEvent, academicYearPayments));
+                //Get payment history for short course, minus the current period
+                var cachedPayments = await paymentHistoryCache.TryGet(CacheKeys.PaymentHistoryKey, cancellationToken);
+                var academicYearPayments = cachedPayments.HasValue
+                    ? cachedPayments.Value
+                        .Where(p => p.LearnAimReference.Equals(earningEvent.LearningAim.Reference, StringComparison.OrdinalIgnoreCase) && p.CollectionPeriod.AcademicYear == earningEvent.CollectionPeriod.AcademicYear)
+                        .Select(p => mapper.Map<PaymentHistoryEntity, Payment>(p))
+                        .ToList()
+                    : new List<Payment>();
 
-            return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
+                foreach (var (period, type) in GetPeriods(earningEvent))
+                {
+                    if (period.Period > earningEvent.CollectionPeriod.Period) // cut off future periods
+                        continue;
+
+                    //Get list of payments from Payment history for the same period and transaction type
+                    var payments = academicYearPayments.Where(payment => payment.DeliveryPeriod == period.Period &&
+                                                                         payment.TransactionType == type)
+                        .ToList();
+
+                    //Generate new payment
+                    if (payments.Count == 0)
+                    {
+                        requiredPaymentEvents.Add(GenerateShortCoursesPayment(period, earningEvent));
+                        continue;
+                    }
+                    //For existing payments, check if the delivery period matches the earning event,
+                    //if not generate a refund for the original payment and a new payment for the amount in the earning event.
+                    requiredPaymentEvents.AddRange(CheckDeliveryPeriodAgainstPayments(period, payments, earningEvent));
+
+                }
+                requiredPaymentEvents.AddRange(CheckPaymentsAgainstDeliveryPeriods(allPeriods, earningEvent, academicYearPayments));
+
+                return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error processing GSLShortCourseEarningsEvent for LearningAimReference: {earningEvent.LearningAim.Reference}, " +
+                    $"CollectionPeriod: Year: {earningEvent.CollectionPeriod.AcademicYear} Period: {earningEvent.CollectionPeriod.Period}", ex);
+            }
+
         }
 
+        private PeriodisedRequiredPaymentEvent GenerateShortCoursesPayment(EarningPeriod period, GSLShortCourseEarningsEvent earningEvent)
+        {
+            var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
+            var requiredPayment = GenerateRequiredPayment(priceEpisode, period);
+            return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period);
+
+        }
         private List<PeriodisedRequiredPaymentEvent> CheckPaymentsAgainstDeliveryPeriods(List<EarningPeriod> allPeriods, GSLShortCourseEarningsEvent earningEvent,
             List<Payment> academicYearPayments)
         {
@@ -85,29 +132,30 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return requiredPaymentEvents;
         }
 
-        private List<PeriodisedRequiredPaymentEvent> CheckDeliveryPeriodAgainstPayments(List<EarningPeriod> allPeriods, GSLShortCourseEarningsEvent earningEvent,
-            List<Payment> academicYearPayments)
+        private List<PeriodisedRequiredPaymentEvent> CheckDeliveryPeriodAgainstPayments(EarningPeriod period, List<Payment> payments, GSLShortCourseEarningsEvent earningEvent)
         {
             var requiredPayments = new List<RequiredPayment>();
             var requiredPaymentEvents = new List<PeriodisedRequiredPaymentEvent>();
-            //Loop through all delivery periods (excluding current) specified in earning event
-            //if the value in the earningevent is different to the payment history:
+            //if the value in the EarningEvent is different to the payment history:
             // 1. Original payment should be refunded
             // 2. New payment made to the amount requested in the earnings
 
-            foreach (var period in allPeriods)
+            foreach (var payment in payments)
             {
+                if(payment.DeliveryPeriod != period.Period)
+                {
+                    continue;
+                }
                 var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
 
-                var payment = academicYearPayments.FirstOrDefault(x => x.CollectionPeriod.Period == period.Period);
 
-                if (priceEpisode != null && payment != null)
+                if (priceEpisode != null)
                 {
                     if (payment.Amount != period.Amount)
                     {
                         //Generate Refund
                         requiredPayments.AddRange(negativeEarningService
-                            .ProcessNegativeEarning(period.Amount, academicYearPayments, period.Period, period.PriceEpisodeIdentifier));
+                            .ProcessNegativeEarning(period.Amount, payments, period.Period, period.PriceEpisodeIdentifier));
 
                         //Generate new payment 
                         requiredPayments.Add(GenerateRequiredPayment(priceEpisode, period));
@@ -161,6 +209,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 LearningStartDate = priceEpisode.CourseStartDate,
 
             };
+        }
+        private IReadOnlyCollection<(EarningPeriod period, int type)> GetPeriods(GSLShortCourseEarningsEvent earningEvent)
+        {
+            var result = new List<(EarningPeriod period, int type)>();
+
+            foreach (var earning in earningEvent.Earnings)
+            {
+                foreach (var period in earning.Periods)
+                {
+                    result.Add((period, (int)earning.Type));
+                }
+            }
+
+            return result;
         }
     }
 }

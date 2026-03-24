@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
@@ -27,6 +28,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         private Mock<INegativeEarningService> negativeEarningServiceMock;
         private Mock<IMapper> mapperMock;
         private Mock<IDataCache<PaymentHistoryEntity[]>> paymentHistoryCacheMock;
+        private Mock<IDuplicateEarningEventService> duplicateEarningEventServiceMock;
         private ShortCoursesEarningEventProcessor processor;
 
         [SetUp]
@@ -35,7 +37,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             negativeEarningServiceMock = new Mock<INegativeEarningService>();
             mapperMock = new Mock<IMapper>();
             paymentHistoryCacheMock = new Mock<IDataCache<PaymentHistoryEntity[]>>();
-            processor = new ShortCoursesEarningEventProcessor(negativeEarningServiceMock.Object, mapperMock.Object);
+            duplicateEarningEventServiceMock = new Mock<IDuplicateEarningEventService>();
+            processor = new ShortCoursesEarningEventProcessor(negativeEarningServiceMock.Object, mapperMock.Object, duplicateEarningEventServiceMock.Object);
         }
 
         [Test]
@@ -151,10 +154,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         {
                             period
                         },
+                        Type = ShortCourseEarningType.Completion
                     }
                 },
                 LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1},
                 PriceEpisodes = new List<PriceEpisode>
                 {
                     new()
@@ -189,7 +193,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     LearnAimReference = "ZSC0001",
                     CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 }, 
                     PriceEpisodeIdentifier = "PE-1",
-                    CompletionAmount = 101m
+                    CompletionAmount = 101m,
+                    DeliveryPeriod = 1,
+                    TransactionType = 2
                 }
             };
 
@@ -203,7 +209,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     CollectionPeriod = phe.CollectionPeriod,
                     PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier,
-                    Amount = 101m
+                    Amount = 101m,
+                    DeliveryPeriod = phe.DeliveryPeriod,
+                    TransactionType = phe.TransactionType
                 });
 
             negativeEarningServiceMock
@@ -261,7 +269,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
-        public async Task HandleEarningEvent_Returns_Empty_When_NoPaymentHistory()
+        public async Task HandleEarningEvent_Creates_Payment_When_NoPaymentHistory()
         {
             var period = new EarningPeriod
             {
@@ -270,7 +278,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 PriceEpisodeIdentifier = "PE-1",
                 AccountId = 1,
                 TransferSenderAccountId = null,
-                ApprenticeshipId = 1
+                ApprenticeshipId = 1,
+                SfaContributionPercentage = 0m,
             };
 
             var earningEvent = new GSLShortCourseEarningsEvent
@@ -283,11 +292,36 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         {
                             period
                         },
+                        Type = ShortCourseEarningType.Completion,
                     }
                 },
                 LearningAim = new LearningAim { Reference = "ZSC0001" },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
-                PriceEpisodes = new List<PriceEpisode>()
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new()
+                    {
+                        Identifier = "PE-1",
+                        TotalNegotiatedPrice1 = 15000m,
+                        TotalNegotiatedPrice2 = 2000m,
+                        TotalNegotiatedPrice3 = null,
+                        TotalNegotiatedPrice4 = null,
+                        AgreedPrice = 17000m,
+                        CourseStartDate = new DateTime(2024, 9, 1),
+                        StartDate = new DateTime(2024, 9, 1),
+                        EffectiveTotalNegotiatedPriceStartDate = new DateTime(2024, 9, 1),
+                        PlannedEndDate = new DateTime(2026, 8, 31),
+                        ActualEndDate = null,
+                        NumberOfInstalments = 24,
+                        InstalmentAmount = 625m,
+                        CompletionAmount = 2000m,
+                        Completed = false,
+                        EmployerContribution = 500m,
+                        CompletionHoldBackExemptionCode = null,
+                        FundingLineType = "Apprenticeship Levy",
+                        LearningAimSequenceNumber = 1
+                    }
+                },
             };
 
             paymentHistoryCacheMock
@@ -299,7 +333,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             // Assert
             ClassicAssert.IsNotNull(result);
-            ClassicAssert.AreEqual(0, result.Count);
+            ClassicAssert.AreEqual(1, result.Count);
+            var newPayment = result[0];
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], period, newPayment);
         }
 
         [Test]
@@ -313,7 +349,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 AccountId = 1,
                 TransferSenderAccountId = null,
                 ApprenticeshipId = 1,
-                SfaContributionPercentage = 0m
+                SfaContributionPercentage = 0m,
             };
 
             var earningEvent = new GSLShortCourseEarningsEvent
@@ -326,10 +362,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         {
                             period
                         },
+                        Type = ShortCourseEarningType.Completion
                     }
                 },
                 LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324 },
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1},
                 PriceEpisodes = new List<PriceEpisode>
                 {
                     new PriceEpisode
@@ -346,7 +383,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     LearnAimReference = "ZSC0001",
                     CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
-                    PriceEpisodeIdentifier = "PE-1"
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 2,
+                    DeliveryPeriod = 1,
                 }
             };
 
@@ -360,7 +399,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     CollectionPeriod = phe.CollectionPeriod,
                     PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier,
-                    Amount = 100m // Simulate payment history with different amount
+                    Amount = 100m, // Simulate payment history with different amount
+                    TransactionType = phe.TransactionType,
+                    DeliveryPeriod = phe.DeliveryPeriod
                 });
 
             negativeEarningServiceMock
