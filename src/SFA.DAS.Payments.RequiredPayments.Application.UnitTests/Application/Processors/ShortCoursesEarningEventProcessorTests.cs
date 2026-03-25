@@ -467,6 +467,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             // Check constant mapping
             ClassicAssert.AreEqual(CourseType.ShortCourse, actualEvent.CourseType, "CourseType mismatch");
+
+            ClassicAssert.AreEqual(earningEvent.Learner, actualEvent.Learner, "Learner mismatch");
+            ClassicAssert.AreEqual(period.AgreedOnDate, actualEvent.AgreedOnDate, "AgreedOnDate mismatch");
+            ClassicAssert.AreEqual(earningEvent.EventId, actualEvent.EarningEventId, "EarningEventId mismatch");
+            ClassicAssert.AreEqual(period.Amount, actualEvent.AmountDue, "AmountDue mismatch");
+            ClassicAssert.AreEqual(period.Period, actualEvent.DeliveryPeriod, "DeliveryPeriod mismatch");
+            ClassicAssert.AreEqual(priceEpisode.StartDate, actualEvent.StartDate, "StartDate mismatch");
+            ClassicAssert.AreEqual(priceEpisode.PlannedEndDate, actualEvent.PlannedEndDate, "PlannedEndDate mismatch");
+            ClassicAssert.AreEqual(priceEpisode.ActualEndDate, actualEvent.ActualEndDate, "ActualEndDate mismatch");
+            ClassicAssert.AreEqual(priceEpisode.InstalmentAmount, actualEvent.InstalmentAmount, "InstalmentAmount mismatch");
+            ClassicAssert.AreEqual((short)priceEpisode.NumberOfInstalments, actualEvent.NumberOfInstalments, "NumberOfInstalments mismatch");
+            ClassicAssert.AreEqual(earningEvent.JobId, actualEvent.JobId, "JobId mismatch");
+            ClassicAssert.AreEqual(earningEvent.EventId, actualEvent.EventId, "EventId mismatch");
+            ClassicAssert.AreEqual(earningEvent.Ukprn, actualEvent.Ukprn, "Ukprn mismatch");
         }
 
     }

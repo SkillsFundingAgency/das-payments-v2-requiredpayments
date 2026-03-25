@@ -96,7 +96,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         {
             var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
             var requiredPayment = GenerateRequiredPayment(priceEpisode, period);
-            return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period);
+            return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, null);
 
         }
         private List<PeriodisedRequiredPaymentEvent> CheckPaymentsAgainstDeliveryPeriods(List<EarningPeriod> allPeriods, GSLShortCourseEarningsEvent earningEvent,
@@ -120,7 +120,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                             .ProcessNegativeEarning(payment.Amount, academicYearPayments, payment.CollectionPeriod.Period, payment.PriceEpisodeIdentifier));
                         foreach (var requiredPayment in requiredPayments)
                         {
-                            requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period));
+                            requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, payment));
                         }
                     }
 
@@ -163,7 +163,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                     foreach (var requiredPayment in requiredPayments)
                     {
-                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period));
+                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, payment));
                     }
                 }
             }
@@ -171,7 +171,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return requiredPaymentEvents;
         }
 
-        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(RequiredPayment requiredPayment, GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period)
+        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(RequiredPayment requiredPayment, GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, Payment payment)
         {
             return new CalculatedRequiredLevyAmount
             {
@@ -192,8 +192,24 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 FundingPlatformType = earningEvent.FundingPlatformType,
                 CourseType = CourseType.ShortCourse,
                 ContractType = ContractType.Act1,
+
+                Learner = earningEvent.Learner,
+                AgreedOnDate = period.AgreedOnDate,
+                EarningEventId = earningEvent.EventId,
+                AmountDue = period.Amount,
+                DeliveryPeriod = period.Period,
+                StartDate = priceEpisode.StartDate,
+                PlannedEndDate = priceEpisode.PlannedEndDate,
+                ActualEndDate = priceEpisode.ActualEndDate,
+                CompletionStatus = payment?.CompletionStatus ?? 0,
+                InstalmentAmount = priceEpisode.InstalmentAmount,
+                NumberOfInstalments = (short)priceEpisode.NumberOfInstalments,
+                JobId = earningEvent.JobId,
+                EventId = earningEvent.EventId,
+                Ukprn = earningEvent.Ukprn
             };
         }
+
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
         {
             return new RequiredPayment
