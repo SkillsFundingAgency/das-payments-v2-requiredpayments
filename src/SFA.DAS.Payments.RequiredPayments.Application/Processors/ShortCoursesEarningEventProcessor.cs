@@ -87,14 +87,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             catch (Exception ex)
             {
                 throw new Exception($"Error processing GSLShortCourseEarningsEvent for LearningAimReference: {earningEvent.LearningAim.Reference}, " +
-                    $"CollectionPeriod: Year: {earningEvent.CollectionPeriod.AcademicYear} Period: {earningEvent.CollectionPeriod.Period}", ex);
+                    $"CollectionPeriod: Year: {earningEvent.CollectionPeriod.AcademicYear} Period: {earningEvent.CollectionPeriod.Period}. Exception: {ex.Message}", ex);
             }
 
         }
 
         private PeriodisedRequiredPaymentEvent GenerateShortCoursesPayment(EarningPeriod period, GSLShortCourseEarningsEvent earningEvent)
         {
-            var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
+            var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
             var requiredPayment = GenerateRequiredPayment(priceEpisode, period);
             return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period);
 
@@ -114,7 +114,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                     if (paymentPeriod == null)
                     {
-                        var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier);
+                        var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
                         //Generate Refund
                         requiredPayments.AddRange(negativeEarningService
                             .ProcessNegativeEarning(payment.Amount, academicYearPayments, payment.CollectionPeriod.Period, payment.PriceEpisodeIdentifier));
@@ -175,7 +175,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         {
             return new CalculatedRequiredLevyAmount
             {
-                OnProgrammeEarningType = (OnProgrammeEarningType)requiredPayment.EarningType,
+                OnProgrammeEarningType = OnProgrammeEarningType.Learning,
                 AccountId = requiredPayment.AccountId,
                 TransferSenderAccountId = requiredPayment.TransferSenderAccountId,
                 ApprenticeshipEmployerType = requiredPayment.ApprenticeshipEmployerType,
@@ -191,6 +191,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
                 FundingPlatformType = earningEvent.FundingPlatformType,
                 CourseType = CourseType.ShortCourse,
+                ContractType = ContractType.Act1,
             };
         }
         private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
