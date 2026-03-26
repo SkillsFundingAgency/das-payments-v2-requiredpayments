@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SFA.DAS.Payments.EarningEvents.Messages;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
@@ -69,15 +70,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                                                                          payment.TransactionType == type)
                         .ToList();
 
+                    var completionPayment = type == (int)ShortCourseEarningType.Completion;
                     //Generate new payment
                     if (payments.Count == 0)
                     {
-                        requiredPaymentEvents.Add(GenerateShortCoursesPayment(period, earningEvent));
+                        requiredPaymentEvents.Add(GenerateShortCoursesPayment(period, earningEvent, completionPayment));
                         continue;
                     }
                     //For existing payments, check if the delivery period matches the earning event,
                     //if not generate a refund for the original payment and a new payment for the amount in the earning event.
-                    requiredPaymentEvents.AddRange(CheckDeliveryPeriodAgainstPayments(period, payments, earningEvent));
+                    requiredPaymentEvents.AddRange(CheckDeliveryPeriodAgainstPayments(period, payments, earningEvent, completionPayment));
 
                 }
                 requiredPaymentEvents.AddRange(CheckPaymentsAgainstDeliveryPeriods(allPeriods, earningEvent, academicYearPayments));
@@ -92,11 +94,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
         }
 
-        private PeriodisedRequiredPaymentEvent GenerateShortCoursesPayment(EarningPeriod period, GSLShortCourseEarningsEvent earningEvent)
+        private PeriodisedRequiredPaymentEvent GenerateShortCoursesPayment(EarningPeriod period, GSLShortCourseEarningsEvent earningEvent, bool completionPayment = false)
         {
             var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
             var requiredPayment = GenerateRequiredPayment(priceEpisode, period);
-            return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, null);
+            return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, completionPayment);
 
         }
         private List<PeriodisedRequiredPaymentEvent> CheckPaymentsAgainstDeliveryPeriods(List<EarningPeriod> allPeriods, GSLShortCourseEarningsEvent earningEvent,
@@ -114,13 +116,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                     if (paymentPeriod == null)
                     {
+                        var completionPayment = payment.CompletionStatus == 1;
                         var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
                         //Generate Refund
                         requiredPayments.AddRange(negativeEarningService
                             .ProcessNegativeEarning(payment.Amount, academicYearPayments, payment.CollectionPeriod.Period, payment.PriceEpisodeIdentifier));
                         foreach (var requiredPayment in requiredPayments)
                         {
-                            requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, payment));
+                            requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, completionPayment));
                         }
                     }
 
@@ -132,7 +135,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return requiredPaymentEvents;
         }
 
-        private List<PeriodisedRequiredPaymentEvent> CheckDeliveryPeriodAgainstPayments(EarningPeriod period, List<Payment> payments, GSLShortCourseEarningsEvent earningEvent)
+        private List<PeriodisedRequiredPaymentEvent> CheckDeliveryPeriodAgainstPayments(EarningPeriod period, List<Payment> payments, GSLShortCourseEarningsEvent earningEvent, bool completionPayment = false)
         {
             var requiredPayments = new List<RequiredPayment>();
             var requiredPaymentEvents = new List<PeriodisedRequiredPaymentEvent>();
@@ -163,7 +166,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                     foreach (var requiredPayment in requiredPayments)
                     {
-                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, payment));
+                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, completionPayment));
                     }
                 }
             }
@@ -171,11 +174,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return requiredPaymentEvents;
         }
 
-        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(RequiredPayment requiredPayment, GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, Payment payment)
+        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(RequiredPayment requiredPayment, GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, bool completionPayment = false)
         {
             return new CalculatedRequiredLevyAmount
             {
-                OnProgrammeEarningType = OnProgrammeEarningType.Learning,
+                OnProgrammeEarningType = completionPayment ? OnProgrammeEarningType.Completion :OnProgrammeEarningType.Learning,
                 AccountId = requiredPayment.AccountId,
                 TransferSenderAccountId = requiredPayment.TransferSenderAccountId,
                 ApprenticeshipEmployerType = requiredPayment.ApprenticeshipEmployerType,
@@ -201,7 +204,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 StartDate = priceEpisode.StartDate,
                 PlannedEndDate = priceEpisode.PlannedEndDate,
                 ActualEndDate = priceEpisode.ActualEndDate,
-                CompletionStatus = payment?.CompletionStatus ?? 0,
+                CompletionStatus = completionPayment ? (byte) 1: (byte) 0,
                 InstalmentAmount = priceEpisode.InstalmentAmount,
                 NumberOfInstalments = (short)priceEpisode.NumberOfInstalments,
                 JobId = earningEvent.JobId,
