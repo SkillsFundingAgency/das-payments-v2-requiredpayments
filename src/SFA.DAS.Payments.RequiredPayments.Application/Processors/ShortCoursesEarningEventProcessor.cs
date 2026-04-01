@@ -18,6 +18,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SFA.DAS.Payments.EarningEvents.Messages;
+using Earning = SFA.DAS.Payments.Model.Core.OnProgramme.Earning;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
@@ -97,7 +98,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         private PeriodisedRequiredPaymentEvent GenerateShortCoursesPayment(EarningPeriod period, GSLShortCourseEarningsEvent earningEvent, bool completionPayment = false)
         {
             var priceEpisode = earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
-            var requiredPayment = GenerateRequiredPayment(priceEpisode, period);
+            var requiredPayment = GenerateRequiredPayment(earningEvent, priceEpisode, period);
             return GenerateRequiredPaymentEvent(requiredPayment, earningEvent, priceEpisode, period, completionPayment);
 
         }
@@ -161,7 +162,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                             .ProcessNegativeEarning(period.Amount, payments, period.Period, period.PriceEpisodeIdentifier));
 
                         //Generate new payment 
-                        requiredPayments.Add(GenerateRequiredPayment(priceEpisode, period));
+                        requiredPayments.Add(GenerateRequiredPayment(earningEvent, priceEpisode, period));
                     }
 
                     foreach (var requiredPayment in requiredPayments)
@@ -178,24 +179,35 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         {
             return new CalculatedRequiredLevyAmount
             {
-                OnProgrammeEarningType = completionPayment ? OnProgrammeEarningType.Completion :OnProgrammeEarningType.Learning,
+                OnProgrammeEarningType = completionPayment ? OnProgrammeEarningType.Completion :OnProgrammeEarningType.Milestone1,
                 AccountId = requiredPayment.AccountId,
                 TransferSenderAccountId = requiredPayment.TransferSenderAccountId,
                 ApprenticeshipEmployerType = requiredPayment.ApprenticeshipEmployerType,
                 ApprenticeshipId = requiredPayment.ApprenticeshipId,
                 ApprenticeshipPriceEpisodeId = requiredPayment.ApprenticeshipPriceEpisodeId,
                 AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning,
-                LearningAim = earningEvent.LearningAim,
+                LearningAim = new LearningAim
+                {
+                    CourseCode = earningEvent.LearningAim.CourseCode,
+                    FrameworkCode = earningEvent.LearningAim.FrameworkCode,
+                    FundingLineType = priceEpisode.FundingLineType,             // Funding Line Type not populated on LearningAim for GSL
+                    LearningType = earningEvent.LearningAim.LearningType,
+                    PathwayCode = earningEvent.LearningAim.PathwayCode,
+                    ProgrammeType = earningEvent.LearningAim.ProgrammeType,
+                    Reference = earningEvent.LearningAim.Reference,
+                    SequenceNumber = earningEvent.LearningAim.SequenceNumber,
+                    StandardCode = earningEvent.LearningAim.StandardCode,
+                    StartDate = earningEvent.LearningAim.StartDate
+                },
                 LearningStartDate = requiredPayment.LearningStartDate,
                 LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber,
                 CompletionAmount = requiredPayment.Amount,
                 SfaContributionPercentage = requiredPayment.SfaContributionPercentage,
                 PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = period.Period },
+                CollectionPeriod = new CollectionPeriod { AcademicYear = earningEvent.CollectionPeriod.AcademicYear, Period = earningEvent.CollectionPeriod.Period },
                 FundingPlatformType = earningEvent.FundingPlatformType,
                 CourseType = CourseType.ShortCourse,
                 ContractType = ContractType.Act1,
-
                 Learner = earningEvent.Learner,
                 AgreedOnDate = period.AgreedOnDate,
                 EarningEventId = earningEvent.EventId,
@@ -208,13 +220,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 InstalmentAmount = priceEpisode.InstalmentAmount,
                 NumberOfInstalments = (short)priceEpisode.NumberOfInstalments,
                 JobId = earningEvent.JobId,
-                EventId = earningEvent.EventId,
+                EventId = Guid.NewGuid(),
                 Ukprn = earningEvent.Ukprn
             };
         }
 
-        private RequiredPayment GenerateRequiredPayment(PriceEpisode priceEpisode, EarningPeriod period)
+        private RequiredPayment GenerateRequiredPayment(GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period)
         {
+            // replicate logic in RequiredPaymentsProfile
+            var learningStartDate = priceEpisode.CourseStartDate;
+            if (!earningEvent.PriceEpisodes.Any(x => x.LearningAimSequenceNumber == earningEvent.LearningAim.SequenceNumber))
+            {
+                learningStartDate = earningEvent.LearningAim.StartDate;
+            }
+
             return new RequiredPayment
             {
                 Amount = period.Amount,
@@ -226,8 +245,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 ApprenticeshipId = period.ApprenticeshipId,
                 ApprenticeshipPriceEpisodeId = period.ApprenticeshipPriceEpisodeId,
                 SfaContributionPercentage = period.SfaContributionPercentage ?? 0,
-                LearningStartDate = priceEpisode.CourseStartDate,
-
+                LearningStartDate = learningStartDate
             };
         }
         private IReadOnlyCollection<(EarningPeriod period, int type)> GetPeriods(GSLShortCourseEarningsEvent earningEvent)
