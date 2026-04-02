@@ -450,10 +450,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(earningEvent.LearningAim.FrameworkCode, actualEvent.LearningAim.FrameworkCode, "LearningAim FrameworkCode mismatch");
             ClassicAssert.AreEqual(priceEpisode.FundingLineType, actualEvent.LearningAim.FundingLineType, "LearningAim FundingLineType mismatch");
             ClassicAssert.AreEqual(earningEvent.LearningAim.LearningType, actualEvent.LearningAim.LearningType, "LearningAim LearningType mismatch");
-            ClassicAssert.AreEqual(earningEvent.LearningAim.ProgrammeType, actualEvent.LearningAim.ProgrammeType, "LearningAim mismatch");
-            ClassicAssert.AreEqual(earningEvent.LearningAim.PathwayCode, actualEvent.LearningAim.PathwayCode, "LearningAim mismatch");
-            ClassicAssert.AreEqual(earningEvent.LearningAim.SequenceNumber, actualEvent.LearningAim.SequenceNumber, "LearningAim mismatch");
-            ClassicAssert.AreEqual(earningEvent.LearningAim.StandardCode, actualEvent.LearningAim.StandardCode, "LearningAim mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.PathwayCode, actualEvent.LearningAim.PathwayCode, "LearningAim PathwayCode mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.ProgrammeType, actualEvent.LearningAim.ProgrammeType, "LearningAim ProgrammeType mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.Reference, actualEvent.LearningAim.Reference, "LearningAim Reference mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.SequenceNumber, actualEvent.LearningAim.SequenceNumber, "LearningAim SequenceNumber mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.StandardCode, actualEvent.LearningAim.StandardCode, "LearningAim StandardCode mismatch");
+            ClassicAssert.AreEqual(earningEvent.LearningAim.StartDate, actualEvent.LearningAim.StartDate, "LearningAim StartDate mismatch");
             ClassicAssert.AreEqual(earningEvent.FundingPlatformType, actualEvent.FundingPlatformType, "FundingPlatformType mismatch");
 
             // Check mappings from PriceEpisode
