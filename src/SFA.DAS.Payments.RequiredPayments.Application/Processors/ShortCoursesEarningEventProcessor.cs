@@ -221,7 +221,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 NumberOfInstalments = (short)priceEpisode.NumberOfInstalments,
                 JobId = earningEvent.JobId,
                 EventId = Guid.NewGuid(),
-                Ukprn = earningEvent.Ukprn
+                Ukprn = earningEvent.Ukprn,
+                IlrSubmissionDateTime = earningEvent.IlrSubmissionDateTime
             };
         }
 

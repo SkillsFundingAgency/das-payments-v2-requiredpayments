@@ -184,6 +184,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                         LearningAimSequenceNumber = 1
                     }
                 },
+                IlrSubmissionDateTime = DateTime.Now
             };
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
@@ -490,6 +491,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(earningEvent.JobId, actualEvent.JobId, "JobId mismatch");
             ClassicAssert.AreNotEqual(earningEvent.EventId, actualEvent.EventId, "EventId mismatch");
             ClassicAssert.AreEqual(earningEvent.Ukprn, actualEvent.Ukprn, "Ukprn mismatch");
+            ClassicAssert.AreEqual(earningEvent.IlrSubmissionDateTime, actualEvent.IlrSubmissionDateTime, "IlrSubmissionDateTime mismatch");
         }
 
     }
