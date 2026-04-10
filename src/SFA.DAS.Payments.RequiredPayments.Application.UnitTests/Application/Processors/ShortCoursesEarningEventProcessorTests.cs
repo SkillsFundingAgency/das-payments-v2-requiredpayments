@@ -1,14 +1,13 @@
-﻿using AutoMapper;
-using Moq;
+﻿using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
+using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Application.Processors;
-using SFA.DAS.Payments.RequiredPayments.Domain;
-using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 using System;
@@ -16,17 +15,20 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
-using SFA.DAS.Payments.Application.Messaging;
-using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
 {
+    internal class ShortCoursesTestValues
+    {
+        public new List<ShortCourseEarning> ShortCourseEarnings { get; set; }
+        public short Year { get; set; }
+        public byte CollectionPeriod { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime PlannedEndDate { get; set; }
+    }
     [TestFixture]
     public class ShortCoursesEarningEventProcessorTests
     {
-        private Mock<INegativeEarningService> negativeEarningServiceMock;
-        private Mock<IMapper> mapperMock;
         private Mock<IDataCache<PaymentHistoryEntity[]>> paymentHistoryCacheMock;
         private Mock<IDuplicateEarningEventService> duplicateEarningEventServiceMock;
         private ShortCoursesEarningEventProcessor processor;
@@ -34,11 +36,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         [SetUp]
         public void SetUp()
         {
-            negativeEarningServiceMock = new Mock<INegativeEarningService>();
-            mapperMock = new Mock<IMapper>();
             paymentHistoryCacheMock = new Mock<IDataCache<PaymentHistoryEntity[]>>();
             duplicateEarningEventServiceMock = new Mock<IDuplicateEarningEventService>();
-            processor = new ShortCoursesEarningEventProcessor(negativeEarningServiceMock.Object, mapperMock.Object, duplicateEarningEventServiceMock.Object);
+            processor = new ShortCoursesEarningEventProcessor(duplicateEarningEventServiceMock.Object);
+        }
+        [TearDown]
+        public void TearDown()
+        {
+            paymentHistoryCacheMock = new Mock<IDataCache<PaymentHistoryEntity[]>>();
+            duplicateEarningEventServiceMock = new Mock<IDuplicateEarningEventService>();
+            processor = new ShortCoursesEarningEventProcessor(duplicateEarningEventServiceMock.Object);
         }
 
         [Test]
@@ -110,18 +117,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             paymentHistoryCacheMock
                 .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
-
-            mapperMock
-                .Setup(x => x.Map<PaymentHistoryEntity, Payment>(It.IsAny<PaymentHistoryEntity>()))
-                .Returns((PaymentHistoryEntity phe) => new Payment
-                {
-                    CollectionPeriod = phe.CollectionPeriod,
-                    PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier
-                });
-
-            negativeEarningServiceMock
-                .Setup(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<byte>(), It.IsAny<string>()))
-                .Returns(new List<RequiredPayment>());
 
             // Act
             var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
@@ -196,7 +191,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     PriceEpisodeIdentifier = "PE-1",
                     CompletionAmount = 101m,
                     DeliveryPeriod = 1,
-                    TransactionType = 2
+                    TransactionType = 2,
+                    Amount = 101m
                 }
             };
 
@@ -204,39 +200,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
 
-            mapperMock
-                .Setup(x => x.Map<PaymentHistoryEntity, Payment>(It.IsAny<PaymentHistoryEntity>()))
-                .Returns((PaymentHistoryEntity phe) => new Payment
-                {
-                    CollectionPeriod = phe.CollectionPeriod,
-                    PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier,
-                    Amount = 101m,
-                    DeliveryPeriod = phe.DeliveryPeriod,
-                    TransactionType = phe.TransactionType
-                });
-
-            negativeEarningServiceMock
-                .Setup(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()))
-                .Returns(new List<RequiredPayment>
-                {
-                    new RequiredPayment
-                    {
-                        Amount = -101m,
-                        EarningType = EarningType.Levy,
-                        PriceEpisodeIdentifier = "PE-1",
-                        AccountId = 1,
-                        TransferSenderAccountId = null,
-                        LearningStartDate = new DateTime(2024, 9, 1),
-                        ApprenticeshipId = 1,
-                    }
-                }).Verifiable();
-
             // Act
             var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
 
             // Assert
             ClassicAssert.IsTrue(result.Count > 0);
-            negativeEarningServiceMock.Verify(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
 
             // Check for refund
             var refund = result[0];
@@ -367,13 +335,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     }
                 },
                 LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
-                CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1},
+                CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1},
                 PriceEpisodes = new List<PriceEpisode>
                 {
                     new PriceEpisode
                     {
                         Identifier = "PE-1",
-                        TotalNegotiatedPrice1 = 200m
+                        TotalNegotiatedPrice1 = 200m,
                     }
                 }
             };
@@ -383,41 +351,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 new PaymentHistoryEntity
                 {
                     LearnAimReference = "ZSC0001",
-                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2324, Period = 1 },
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
                     PriceEpisodeIdentifier = "PE-1",
                     TransactionType = 2,
                     DeliveryPeriod = 1,
+                    Amount = 100m,
                 }
             };
 
             paymentHistoryCacheMock
                 .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
-
-            mapperMock
-                .Setup(x => x.Map<PaymentHistoryEntity, Payment>(It.IsAny<PaymentHistoryEntity>()))
-                .Returns((PaymentHistoryEntity phe) => new Payment
-                {
-                    CollectionPeriod = phe.CollectionPeriod,
-                    PriceEpisodeIdentifier = phe.PriceEpisodeIdentifier,
-                    Amount = 100m, // Simulate payment history with different amount
-                    TransactionType = phe.TransactionType,
-                    DeliveryPeriod = phe.DeliveryPeriod
-                });
-
-            negativeEarningServiceMock
-                .Setup(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()))
-                .Returns(new List<RequiredPayment>
-                {
-                    new RequiredPayment
-                    {
-                        Amount = -100m,
-                        EarningType = EarningType.Levy,
-                        PriceEpisodeIdentifier = "PE-1",
-                        AccountId = 1,
-                        TransferSenderAccountId = null
-                    }
-                }).Verifiable();
 
             // Act
             var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
@@ -429,7 +373,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             var refund = result[0];
             ClassicAssert.IsTrue(refund.CompletionAmount == -100, "First event should be a refund.");
             ClassicAssert.AreEqual("PE-1", refund.PriceEpisodeIdentifier);
-            negativeEarningServiceMock.Verify(x => x.ProcessNegativeEarning(It.IsAny<decimal>(), It.IsAny<List<Payment>>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
 
             // Check for new payment
             var newPayment = result[1];
@@ -438,11 +381,435 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], period, newPayment);
         }
 
+        [Test]
+        public async Task Initial_Payment_For_ShortCourse_Training_Delivery()
+        {
+            // Arrange
+            var amount = 300m;
+            byte collectionPeriod = 1;
+            var period = GenerateTestEarningPeriod(collectionPeriod, amount);
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ShortCourseEarning
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        period
+                    },
+                }
+            };
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = collectionPeriod,
+                    Amount = 1000m,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+
+            var paymentHistoryEntities = Array.Empty<PaymentHistoryEntity>();
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should have a new payment.");
+
+            // Check for new payment
+            var newPayment = result[0];
+            ValidateRequiredPaymentEvents(newPayment, amount, 1, TransactionType.Milestone1, 2526, 1);
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], period, newPayment);
+        }
+
+        [Test]
+        public async Task Short_Courses_Delivery_Recorded_Completion()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(1, 300m);
+            var deliveryPeriod2 = GenerateTestEarningPeriod(2, 700m);
+
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                },
+                new()
+                {
+                    Type = ShortCourseEarningType.Completion,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod2
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    Amount = 1000m,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 17,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should have a new payment.");
+
+            // Check for new payment
+            var newPayment = result[0];
+            ValidateRequiredPaymentEvents(newPayment, 700m, 2, TransactionType.Completion, 2526, 2);
+
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod2, newPayment);
+        }
+
+        [Test]
+        public async Task Short_Courses_That_Starts_And_Completes_In_Same_Period()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(1, 300m);
+            var deliveryPeriod2 = GenerateTestEarningPeriod(1, 700m);
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                },
+                new()
+                {
+                    Type = ShortCourseEarningType.Completion,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod2
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 1,
+                    Amount = 1000m,
+                    PlannedEndDate = new DateTime(2026, 8, 31)
+
+                });
+
+            var paymentHistoryEntities = Array.Empty<PaymentHistoryEntity>();
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 2, "Should have 2 new payments.");
+
+            // Check for new milestone 1 payment
+            var newMilestone1 = result[0];
+            ValidateRequiredPaymentEvents(newMilestone1, 300m, 1, TransactionType.Milestone1, 2526, 1);
+
+
+            // Check for new completion payment
+            var newCompletion = result[1];
+            ValidateRequiredPaymentEvents(newCompletion, 700m, 1, TransactionType.Completion, 2526, 1);
+
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod1, newMilestone1);
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod2, newCompletion);
+        }
+
+        [Test]
+        public async Task Provider_Retrospectively_Changes_Start_Completion_Date()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m);
+            var deliveryPeriod2 = GenerateTestEarningPeriod(2, 700m);
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                },
+                new()
+                {
+                    Type = ShortCourseEarningType.Completion,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod2
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    Amount = 1000m,
+                    PlannedEndDate = new DateTime(2026, 8, 31)
+
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 17,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    AccountId = 1,
+                    ApprenticeshipId = 1,
+                    PlannedEndDate = new DateTime(2026,08,31),
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 2,
+                    DeliveryPeriod = 1,
+                    Amount = 700m,
+                    AccountId = 1,
+                    ApprenticeshipId = 1,
+                    PlannedEndDate = new DateTime(2026,08,31),
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 4);
+
+            // Check for milestone 1 refund
+            var refundMilestone1 = result[0];
+            ValidateRequiredPaymentEvents(refundMilestone1, -300m, 1, TransactionType.Milestone1, 2526, 2);
+
+            // Check for new milestone 1 payment
+            var newMilestone1 = result[1];
+            ValidateRequiredPaymentEvents(newMilestone1, 300m, 2, TransactionType.Milestone1, 2526, 2);
+
+            // Check for new completion payment
+            var refundCompletion = result[2];
+            ValidateRequiredPaymentEvents(refundCompletion, -700m, 1, TransactionType.Completion, 2526, 2);
+
+            // Check for new completion payment
+            var newCompletion = result[3];
+            ValidateRequiredPaymentEvents(newCompletion, 700m, 2, TransactionType.Completion, 2526, 2);
+
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod1, refundMilestone1, paymentHistoryEntities[0], true);
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod1, newMilestone1);
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod2, refundCompletion, paymentHistoryEntities[1], true);
+            AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod2, newCompletion);
+        }
+
+        [Test]
+        public async Task Learner_Withdraws_From_Course_Prior_To_Completion()
+        {
+            // Arrange
+            var earningEvent = new GSLShortCourseEarningsEvent
+            {
+                Earnings = new List<ShortCourseEarning>(),
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
+                CollectionPeriod = new CollectionPeriod
+                {
+                    AcademicYear = 2526,
+                    Period = 2
+                },
+                PriceEpisodes = new List<PriceEpisode>(),
+            };
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 17,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    PlannedEndDate = new DateTime(2026,08,31),
+                },
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1);
+
+            // Check for milestone 1 refund
+            var refundMilestone1 = result[0];
+            ValidateRequiredPaymentEvents(refundMilestone1, -300m, 1, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
+        public async Task Learner_Withdraws_From_CoInvested_Course_Prior_To_Completion()
+        {
+            // Arrange
+            var earningEvent = new GSLShortCourseEarningsEvent
+            {
+                Earnings = new List<ShortCourseEarning>(),
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
+                CollectionPeriod = new CollectionPeriod
+                {
+                    AcademicYear = 2526,
+                    Period = 1
+                },
+                PriceEpisodes = new List<PriceEpisode>(),
+            };
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 17,
+                    DeliveryPeriod = 1,
+                    Amount = 285m,
+                    PlannedEndDate = new DateTime(2026,08,31),
+                    FundingSource = FundingSourceType.CoInvestedSfa
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = 17,
+                    DeliveryPeriod = 1,
+                    Amount = 15m,
+                    PlannedEndDate = new DateTime(2026,08,31),
+                    FundingSource = FundingSourceType.CoInvestedEmployer
+                },
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1);
+
+            // Check for milestone 1 refund
+            var refundMilestone1 = result[0];
+            ValidateRequiredPaymentEvents(refundMilestone1, -300m, 1, TransactionType.Milestone1, 2526, 1);
+        }
+
+        private void ValidateRequiredPaymentEvents(PeriodisedRequiredPaymentEvent rpe, decimal amount, byte deliveryPeriod, TransactionType type, int academicYear, byte period)
+        {
+            ClassicAssert.IsTrue(rpe.CompletionAmount == amount);
+            ClassicAssert.IsTrue(rpe.DeliveryPeriod == deliveryPeriod);
+            ClassicAssert.IsTrue(rpe.TransactionType == type);
+            ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear);
+            ClassicAssert.IsTrue(rpe.CollectionPeriod.Period == period);
+        }
+        private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, decimal? sfaContribution = 0m)
+        {
+            return new EarningPeriod
+            {
+                Period = period,
+                Amount = amount,
+                PriceEpisodeIdentifier = "PE-1",
+                TransferSenderAccountId = null,
+                AccountId = 1,
+                ApprenticeshipId = 1,
+                SfaContributionPercentage = sfaContribution,
+            };
+        }
+
+        private GSLShortCourseEarningsEvent GenerateTestShortCourseEarningsEvent(ShortCoursesTestValues testValues)
+        {
+            return new GSLShortCourseEarningsEvent
+            {
+                Earnings = testValues.ShortCourseEarnings,
+                LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
+                CollectionPeriod = new CollectionPeriod { AcademicYear = testValues.Year, Period = testValues.CollectionPeriod },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        Identifier = "PE-1",
+                        TotalNegotiatedPrice1 = testValues.Amount,
+                        PlannedEndDate = testValues.PlannedEndDate
+                    }
+                },
+            };
+        }
         private void AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(
             GSLShortCourseEarningsEvent earningEvent,
             PriceEpisode priceEpisode,
             EarningPeriod period,
-            PeriodisedRequiredPaymentEvent periodisedRequiredPaymentEvent)
+            PeriodisedRequiredPaymentEvent periodisedRequiredPaymentEvent,
+            PaymentHistoryEntity phe = null,
+            bool refund = false)
         {
             var actualEvent = (CalculatedRequiredLevyAmount) periodisedRequiredPaymentEvent;
             // Check mappings from EarningEvent
@@ -473,7 +840,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(period.ApprenticeshipPriceEpisodeId, actualEvent.ApprenticeshipPriceEpisodeId, "ApprenticeshipPriceEpisodeId mismatch");
             ClassicAssert.AreEqual(period.SfaContributionPercentage, actualEvent.SfaContributionPercentage, "SfaContributionPercentage mismatch");
             ClassicAssert.AreEqual(period.PriceEpisodeIdentifier, actualEvent.PriceEpisodeIdentifier, "PriceEpisodeIdentifier mismatch");
-            ClassicAssert.AreEqual(period.Amount, actualEvent.CompletionAmount, "CompletionAmount mismatch");
+            ClassicAssert.AreEqual((refund ? -period.Amount : period.Amount), actualEvent.CompletionAmount, "CompletionAmount mismatch");
 
             // Check constant mapping
             ClassicAssert.AreEqual(CourseType.ShortCourse, actualEvent.CourseType, "CourseType mismatch");
@@ -481,8 +848,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(earningEvent.Learner, actualEvent.Learner, "Learner mismatch");
             ClassicAssert.AreEqual(period.AgreedOnDate, actualEvent.AgreedOnDate, "AgreedOnDate mismatch");
             ClassicAssert.AreEqual(earningEvent.EventId, actualEvent.EarningEventId, "EarningEventId mismatch");
-            ClassicAssert.AreEqual(period.Amount, actualEvent.AmountDue, "AmountDue mismatch");
-            ClassicAssert.AreEqual(period.Period, actualEvent.DeliveryPeriod, "DeliveryPeriod mismatch");
+            ClassicAssert.AreEqual((refund ? -period.Amount : period.Amount), actualEvent.AmountDue, "AmountDue mismatch");
+            ClassicAssert.AreEqual(period.Period, actualEvent.CollectionPeriod.Period, "CollectionPeriod mismatch");
+            ClassicAssert.AreEqual((refund ? phe?.DeliveryPeriod : period.Period), actualEvent.DeliveryPeriod, "DeliveryPeriod mismatch");
             ClassicAssert.AreEqual(priceEpisode.StartDate, actualEvent.StartDate, "StartDate mismatch");
             ClassicAssert.AreEqual(priceEpisode.PlannedEndDate, actualEvent.PlannedEndDate, "PlannedEndDate mismatch");
             ClassicAssert.AreEqual(priceEpisode.ActualEndDate, actualEvent.ActualEndDate, "ActualEndDate mismatch");

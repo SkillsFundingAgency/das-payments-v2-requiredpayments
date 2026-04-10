@@ -34,9 +34,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
         {
             executionContext.JobId = message.JobId.ToString();
 
-            paymentLogger.LogInfo($"Processing GSLShortCourseEarningsEvent, UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo($"Processing GSLShortCourseEarningsEvent, UKPRN: {message.Ukprn}, Period: {message.CollectionPeriod}");
 
-            var contractType = ContractType.Act1;
             var key = apprenticeshipKeyService.GenerateApprenticeshipKey(
                 message.Ukprn,
                 message.Learner.ReferenceNumber,
@@ -46,7 +45,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                 message.LearningAim.StandardCode,
                 message.LearningAim.Reference,
                 message.CollectionPeriod.AcademicYear,
-                contractType
+                ContractType.Act1
             );
 
             var actorId = new ActorId(key);
@@ -62,21 +61,21 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                     await Task.WhenAll(requiredPaymentEvent.Select(context.Publish)).ConfigureAwait(false);
 
                 paymentLogger.LogInfo("Successfully processed RequiredPaymentsProxyService event for Actor for " +
-                                      $"jobId:{message.JobId}, learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
+                                      $"learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
                                       $"pathwayCode:{message.LearningAim.PathwayCode}, programmeType:{message.LearningAim.ProgrammeType}, " +
                                       $"standardCode:{message.LearningAim.StandardCode}, learningAimReference:{message.LearningAim.Reference}, " +
-                                      $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{contractType}");
+                                      $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{ContractType.Act1}");
             }
             catch (Exception ex)
             {
                 paymentLogger.LogError("Failed to process Payable Earnings event for Actor for " +
-                                       $"jobId:{message.JobId}, learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
+                                       $"learnerRef:{message.Learner.ReferenceNumber}, frameworkCode:{message.LearningAim.FrameworkCode}, " +
                                        $"pathwayCode:{message.LearningAim.PathwayCode}, programmeType:{message.LearningAim.ProgrammeType}, " +
                                        $"standardCode:{message.LearningAim.StandardCode}, learningAimReference:{message.LearningAim.Reference}, " +
-                                       $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{contractType}, Exception: {ex.Message}");
+                                       $"academicYear:{message.CollectionPeriod.AcademicYear}, contractType:{ContractType.Act1}, Exception: {ex.Message}");
                 throw;
             }
-            paymentLogger.LogInfo($"Finished GSLShortCourseEarningsEvent. UKPRN: {message.Ukprn}, JobId: {message.JobId}, Period: {message.CollectionPeriod}, ILR: {message.IlrSubmissionDateTime}");
+            paymentLogger.LogInfo($"Finished GSLShortCourseEarningsEvent. UKPRN: {message.Ukprn}, Period: {message.CollectionPeriod}");
         }
     }
 }
