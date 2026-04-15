@@ -1,8 +1,10 @@
 ﻿using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
+using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Application.Infrastructure;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
@@ -60,21 +62,26 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     if (period.Period > earningEvent.CollectionPeriod.Period) // cut off future periods
                         continue;
 
-                    //Get list of payments from Payment history for the same transaction type
-                    var payments = academicYearPayments.Where(payment => payment.TransactionType == type)
+                    //Get list of payments from Payment history for the same transaction type and delivery period
+                    var payments = academicYearPayments.Where(payment => payment.DeliveryPeriod == period.Period && payment.TransactionType == type )
                         .ToList();
 
-                    if (payments.Count == 0)
+             
+                    if (payments.Count != 0)
                     {
-                        //Generate new payment
-                        var priceEpisode =
-                            earningEvent.PriceEpisodes.FirstOrDefault(x =>
-                                x.Identifier == period.PriceEpisodeIdentifier) ??
-                            new PriceEpisode();
-                        var requiredPayment = GenerateRequiredPayment(earningEvent, priceEpisode, period, type);
-                        requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(requiredPayment, earningEvent,
-                            priceEpisode));
+                        var amountPaid = payments.Sum(x => x.Amount);
+                        if (amountPaid == period.Amount)
+                        {
+                            continue; // payment already made for this period and type
+                        }
                     }
+                    //Generate new payment
+                    var priceEpisode =
+                        earningEvent.PriceEpisodes.FirstOrDefault(x =>
+                            x.Identifier == period.PriceEpisodeIdentifier) ??
+                        new PriceEpisode();
+                    requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(earningEvent,
+                        priceEpisode, period, type));
                 }
 
                 return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
@@ -89,64 +96,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
         }
 
-        private CalculatedRequiredLevyAmount GenerateRequiredPaymentEvent(ShortCourseRequiredPayment requiredPayment,
-            GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode)
+        private CalculatedRequiredOnProgrammeAmount GenerateRequiredPaymentEvent(
+            GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, int type)
         {
-            return new CalculatedRequiredLevyAmount
-            {
-                OnProgrammeEarningType = (OnProgrammeEarningType) requiredPayment.Type,
-                AccountId = requiredPayment.AccountId,
-                TransferSenderAccountId = requiredPayment.TransferSenderAccountId,
-                ApprenticeshipEmployerType = requiredPayment.ApprenticeshipEmployerType,
-                ApprenticeshipId = requiredPayment.ApprenticeshipId,
-                ApprenticeshipPriceEpisodeId = requiredPayment.ApprenticeshipPriceEpisodeId,
-                AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning,
-                LearningAim = new LearningAim
-                {
-                    CourseCode = earningEvent.LearningAim.CourseCode,
-                    FrameworkCode = earningEvent.LearningAim.FrameworkCode,
-                    FundingLineType = priceEpisode.FundingLineType,
-                    LearningType = earningEvent.LearningAim.LearningType,
-                    PathwayCode = earningEvent.LearningAim.PathwayCode,
-                    ProgrammeType = earningEvent.LearningAim.ProgrammeType,
-                    Reference = earningEvent.LearningAim.Reference,
-                    SequenceNumber = earningEvent.LearningAim.SequenceNumber,
-                    StandardCode = earningEvent.LearningAim.StandardCode,
-                    StartDate = earningEvent.LearningAim.StartDate
-                },
-                LearningStartDate = requiredPayment.LearningStartDate,
-                LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber,
-                CompletionAmount = requiredPayment.Amount,
-                SfaContributionPercentage = requiredPayment.SfaContributionPercentage,
-                PriceEpisodeIdentifier = requiredPayment.PriceEpisodeIdentifier,
-                CollectionPeriod = new CollectionPeriod
-                {
-                    AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
-                    Period = earningEvent.CollectionPeriod.Period
-                },
-                CourseType = CourseType.ShortCourse,
-                FundingPlatformType = earningEvent.FundingPlatformType,
-                ContractType = ContractType.Act1,
-                Learner = earningEvent.Learner,
-                EarningEventId = earningEvent.EventId,
-                AmountDue = requiredPayment.Amount,
-                DeliveryPeriod = requiredPayment.DeliveryPeriod,
-                StartDate = priceEpisode.StartDate,
-                PlannedEndDate = priceEpisode.PlannedEndDate,
-                ActualEndDate = priceEpisode.ActualEndDate,
-                CompletionStatus = (OnProgrammeEarningType)requiredPayment.Type == OnProgrammeEarningType.Completion ? (byte)1 : (byte)0,
-                InstalmentAmount = priceEpisode.InstalmentAmount,
-                NumberOfInstalments = (short)priceEpisode.NumberOfInstalments,
-                JobId = earningEvent.JobId,
-                EventId = Guid.NewGuid(),
-                Ukprn = earningEvent.Ukprn,
-                IlrSubmissionDateTime = earningEvent.IlrSubmissionDateTime
-                };
-        }
-
-        private ShortCourseRequiredPayment GenerateRequiredPayment(GSLShortCourseEarningsEvent earningEvent,
-            PriceEpisode priceEpisode, EarningPeriod period, int type)
-        {
+            var requiredPayment = InitialiseRequiredPaymentEvent(type, earningEvent);
             // replicate logic in RequiredPaymentsProfile
             var learningStartDate = priceEpisode.CourseStartDate;
             if (earningEvent.PriceEpisodes.All(x =>
@@ -155,21 +108,52 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 learningStartDate = earningEvent.LearningAim.StartDate;
             }
 
-            return new ShortCourseRequiredPayment
+            requiredPayment.AccountId = period.AccountId;
+            requiredPayment.TransferSenderAccountId = period.TransferSenderAccountId;
+            requiredPayment.ApprenticeshipEmployerType = period.ApprenticeshipEmployerType;
+            requiredPayment.ApprenticeshipId = period.ApprenticeshipId;
+            requiredPayment.ApprenticeshipPriceEpisodeId = period.ApprenticeshipPriceEpisodeId;
+            requiredPayment.LearningAim = new LearningAim
             {
-                Amount = period.Amount,
-                EarningType = EarningType.Levy,
-                PriceEpisodeIdentifier = period.PriceEpisodeIdentifier,
-                AccountId = period.AccountId,
-                TransferSenderAccountId = period.TransferSenderAccountId,
-                ApprenticeshipEmployerType = period.ApprenticeshipEmployerType,
-                ApprenticeshipId = period.ApprenticeshipId,
-                ApprenticeshipPriceEpisodeId = period.ApprenticeshipPriceEpisodeId,
-                SfaContributionPercentage = period.SfaContributionPercentage ?? 0,
-                LearningStartDate = learningStartDate,
-                Type = type,
-                DeliveryPeriod = period.Period
+                CourseCode = earningEvent.LearningAim.CourseCode,
+                FrameworkCode = earningEvent.LearningAim.FrameworkCode,
+                FundingLineType = priceEpisode.FundingLineType,
+                LearningType = earningEvent.LearningAim.LearningType,
+                PathwayCode = earningEvent.LearningAim.PathwayCode,
+                ProgrammeType = earningEvent.LearningAim.ProgrammeType,
+                Reference = earningEvent.LearningAim.Reference,
+                SequenceNumber = earningEvent.LearningAim.SequenceNumber,
+                StandardCode = earningEvent.LearningAim.StandardCode,
+                StartDate = earningEvent.LearningAim.StartDate
             };
+            requiredPayment.LearningStartDate = learningStartDate;
+            requiredPayment.LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber;
+            requiredPayment.CompletionAmount = period.Amount;
+            requiredPayment.SfaContributionPercentage = period.SfaContributionPercentage ?? 0;
+            requiredPayment.PriceEpisodeIdentifier = period.PriceEpisodeIdentifier;
+            requiredPayment.AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning;
+            requiredPayment.CollectionPeriod = new CollectionPeriod
+            {
+                AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
+                Period = earningEvent.CollectionPeriod.Period
+            };
+            requiredPayment.ContractType = ContractType.Act1;
+            requiredPayment.Learner = earningEvent.Learner;
+            requiredPayment.EarningEventId = earningEvent.EventId;
+            requiredPayment.AmountDue = period.Amount;
+            requiredPayment.DeliveryPeriod = period.Period;
+            requiredPayment.StartDate = priceEpisode.StartDate;
+            requiredPayment.PlannedEndDate = priceEpisode.PlannedEndDate;
+            requiredPayment.ActualEndDate = priceEpisode.ActualEndDate;
+            requiredPayment.CompletionStatus = (OnProgrammeEarningType)type == OnProgrammeEarningType.Completion ? (byte)1 : (byte)0;
+            requiredPayment.InstalmentAmount = priceEpisode.InstalmentAmount;
+            requiredPayment.NumberOfInstalments = (short)priceEpisode.NumberOfInstalments;
+            requiredPayment.JobId = earningEvent.JobId;
+            requiredPayment.EventId = Guid.NewGuid();
+            requiredPayment.Ukprn = earningEvent.Ukprn;
+            requiredPayment.IlrSubmissionDateTime = earningEvent.IlrSubmissionDateTime;
+
+            return requiredPayment;
         }
 
         private IReadOnlyCollection<(EarningPeriod period, int type)> GetPeriods(
@@ -186,6 +170,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             }
 
             return result;
+        }
+
+        protected CalculatedRequiredOnProgrammeAmount InitialiseRequiredPaymentEvent(int transactionType, GSLShortCourseEarningsEvent earningEvent)
+        {
+            return new CalculatedRequiredLevyAmount
+            {
+                OnProgrammeEarningType = (OnProgrammeEarningType)transactionType,
+                CourseType = CourseType.ShortCourse,
+                FundingPlatformType = earningEvent.FundingPlatformType,
+            };
         }
     }
 }
