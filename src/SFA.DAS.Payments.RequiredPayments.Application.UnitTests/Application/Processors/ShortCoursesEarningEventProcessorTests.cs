@@ -25,7 +25,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         public new List<ShortCourseEarning> ShortCourseEarnings { get; set; }
         public short Year { get; set; }
         public byte CollectionPeriod { get; set; }
-        public decimal Amount { get; set; }
         public DateTime PlannedEndDate { get; set; }
     }
     [TestFixture]
@@ -79,6 +78,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         public async Task Initial_Payment_For_ShortCourse_Training_Delivery()
         {
             // Arrange
+            var completionAmount = 1000m;
             var amount = 300m;
             byte collectionPeriod = 1;
             var period = GenerateTestEarningPeriod(collectionPeriod, amount, ApprenticeshipEmployerType.Levy);
@@ -99,7 +99,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     ShortCourseEarnings = shortCourses,
                     Year = 2526,
                     CollectionPeriod = collectionPeriod,
-                    Amount = 1000m,
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
@@ -156,7 +155,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     ShortCourseEarnings = shortCourses,
                     Year = 2526,
                     CollectionPeriod = 2,
-                    Amount = 1000m,
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
@@ -234,7 +232,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     ShortCourseEarnings = shortCourses,
                     Year = 2526,
                     CollectionPeriod = 1,
-                    Amount = 1000m,
                     PlannedEndDate = new DateTime(2026, 8, 31)
 
                 });
@@ -289,7 +286,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     ShortCourseEarnings = shortCourses,
                     Year = 2526,
                     CollectionPeriod = 1,
-                    Amount = 1000m,
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
@@ -362,7 +358,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     ShortCourseEarnings = shortCourses,
                     Year = 2526,
                     CollectionPeriod = 2,
-                    Amount = 1000m,
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
@@ -409,7 +404,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
         private void ValidateRequiredPaymentEvents(PeriodisedRequiredPaymentEvent rpe, decimal amount, byte deliveryPeriod, TransactionType type, int academicYear, byte period)
         {
-            ClassicAssert.IsTrue(rpe.CompletionAmount == amount);
+            ClassicAssert.IsTrue(rpe.AmountDue == amount);
             ClassicAssert.IsTrue(rpe.DeliveryPeriod == deliveryPeriod);
             ClassicAssert.IsTrue(rpe.TransactionType == type);
             ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear);
@@ -442,7 +437,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     new PriceEpisode
                     {
                         Identifier = "PE-1",
-                        TotalNegotiatedPrice1 = testValues.Amount,
+                        TotalNegotiatedPrice1 = 1000m,
                         PlannedEndDate = testValues.PlannedEndDate
                     }
                 },
@@ -495,7 +490,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.AreEqual(period.ApprenticeshipPriceEpisodeId, actualEvent.ApprenticeshipPriceEpisodeId, "ApprenticeshipPriceEpisodeId mismatch");
             ClassicAssert.AreEqual(period.SfaContributionPercentage, actualEvent.SfaContributionPercentage, "SfaContributionPercentage mismatch");
             ClassicAssert.AreEqual(period.PriceEpisodeIdentifier, actualEvent.PriceEpisodeIdentifier, "PriceEpisodeIdentifier mismatch");
-            ClassicAssert.AreEqual((refund ? -period.Amount : period.Amount), actualEvent.CompletionAmount, "CompletionAmount mismatch");
+            ClassicAssert.AreEqual(priceEpisode.CompletionAmount, actualEvent.CompletionAmount, "CompletionAmount mismatch");
 
             ClassicAssert.AreEqual(earningEvent.Learner, actualEvent.Learner, "Learner mismatch");
             ClassicAssert.AreEqual(earningEvent.EventId, actualEvent.EarningEventId, "EarningEventId mismatch");

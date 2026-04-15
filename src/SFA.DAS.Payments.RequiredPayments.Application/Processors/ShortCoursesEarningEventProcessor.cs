@@ -128,7 +128,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             };
             requiredPayment.LearningStartDate = learningStartDate;
             requiredPayment.LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber;
-            requiredPayment.CompletionAmount = period.Amount;
+            requiredPayment.CompletionAmount = priceEpisode.CompletionAmount;
             requiredPayment.SfaContributionPercentage = period.SfaContributionPercentage ?? 0;
             requiredPayment.PriceEpisodeIdentifier = period.PriceEpisodeIdentifier;
             requiredPayment.AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning;
