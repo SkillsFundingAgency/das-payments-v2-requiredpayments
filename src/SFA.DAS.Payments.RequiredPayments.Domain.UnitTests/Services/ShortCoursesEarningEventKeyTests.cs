@@ -8,7 +8,7 @@ using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
 using SFA.DAS.Payments.ServiceFabric.Core.Messaging;
 
-namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests
+namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 {
     [TestFixture]
     public class ShortCoursesEarningEventKeyTests
