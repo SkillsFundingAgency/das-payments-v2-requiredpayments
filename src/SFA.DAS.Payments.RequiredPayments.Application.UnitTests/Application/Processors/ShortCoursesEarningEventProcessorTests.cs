@@ -527,18 +527,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CancellationToken.None);
 
             // Assert
-            ClassicAssert.IsTrue(result.Count == 2, "Should have refunds and new payments for Milestone1.");
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Milestone1.");
 
-            // Check payments and refunds
-            var previousMilestone1Payment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
+            // Check refunds
             var refundMilestone1Payment = result.FirstOrDefault(x =>
                 x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
 
-            ClassicAssert.IsNotNull(previousMilestone1Payment);
             ClassicAssert.IsNotNull(refundMilestone1Payment);
 
-            ValidateRequiredPaymentEvents(previousMilestone1Payment, 300m, 1, TransactionType.Milestone1, 2526, 1);
             ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 1);
         }
 
@@ -589,23 +585,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CancellationToken.None);
 
             // Assert
-            ClassicAssert.IsTrue(result.Count == 4, "Should have refunds for Milestone1 co-invested payments.");
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Milestone1 co-invested payments.");
 
-            // Check payments and refunds
-            var previousMilestone1EmployerPayment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Milestone1 && x.AmountDue == 15m);
-            var previousMilestone1SfaPayment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Milestone1 && x.AmountDue == 285m);
+            // Check refunds
             var refundMilestone1Payment = result.FirstOrDefault(x =>
                 x.TransactionType == TransactionType.Milestone1 && x.AmountDue == -300m);
             
-            ClassicAssert.IsNotNull(previousMilestone1EmployerPayment);
-            ClassicAssert.IsNotNull(previousMilestone1SfaPayment);
             ClassicAssert.IsNotNull(refundMilestone1Payment);
 
-            ValidateRequiredPaymentEvents(previousMilestone1EmployerPayment, 15m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(previousMilestone1SfaPayment, 285m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(previousMilestone1EmployerPayment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
         }
 
         [Test]
@@ -658,7 +646,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CancellationToken.None);
 
             // Assert
-            ClassicAssert.IsTrue(result.Count == 4, "Should have refund and new payment for Milestone1.");
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refund and new payment for Milestone1.");
 
             // Check payments and refunds
             var refundMilestone1Payment = result.FirstOrDefault(x =>
@@ -732,26 +720,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CancellationToken.None);
 
             // Assert
-            ClassicAssert.IsTrue(result.Count == 3, "Should have refund for Completion payment.");
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Completion payment.");
 
-            // Check payments and refunds
-            
-            var existingMilestone1Payment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
-            var existingCompletionPayment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Completion && x.AmountDue > 0m);
+            // Check refunds
             var refundCompletionPayment = result.FirstOrDefault(x =>
                 x.TransactionType == TransactionType.Completion && x.AmountDue < 0m);
-            ClassicAssert.IsNotNull(existingMilestone1Payment);
-            ClassicAssert.IsNotNull(existingCompletionPayment);
             ClassicAssert.IsNotNull(refundCompletionPayment);
-            ValidateRequiredPaymentEvents(existingMilestone1Payment, 300m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(existingCompletionPayment, 700m, 1, TransactionType.Completion, 2526, 1);
             ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
         }
 
         [Test]
-        public async Task Change_Of_Circumstances_Learner_Withdrawn_Before_Milestone_And_Completion_Payments_Made()
+        public async Task Change_Of_Circumstances_Learner_Withdrawn_Date_Changed_To_Date_Before_Milestone_And_Completion_Payments_Made()
         {
             // Arrange
             var earningEvent = GenerateTestShortCourseEarningsEvent(
@@ -795,28 +774,18 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CancellationToken.None);
 
             // Assert
-            ClassicAssert.IsTrue(result.Count == 4, "Should have refunds for Milestone 1 and Completion payments.");
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refunds for Milestone 1 and Completion payments.");
 
-            // Check payments and refunds
-
-            var existingMilestone1Payment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
-            var existingCompletionPayment = result.FirstOrDefault(x =>
-                x.TransactionType == TransactionType.Completion && x.AmountDue > 0m);
+            // Check refunds
             var refundMilestone1Payment = result.FirstOrDefault(x =>
                 x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
             var refundCompletionPayment = result.FirstOrDefault(x =>
                 x.TransactionType == TransactionType.Completion && x.AmountDue < 0m);
-            ClassicAssert.IsNotNull(existingMilestone1Payment);
-            ClassicAssert.IsNotNull(existingCompletionPayment);
             ClassicAssert.IsNotNull(refundMilestone1Payment);
             ClassicAssert.IsNotNull(refundCompletionPayment);
 
-            ValidateRequiredPaymentEvents(existingMilestone1Payment, 300m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(existingCompletionPayment, 700m, 1, TransactionType.Completion, 2526, 1);
             ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
             ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
-
         }
 
         private void ValidateRequiredPaymentEvents(PeriodisedRequiredPaymentEvent rpe, decimal amount, byte deliveryPeriod, TransactionType type, int academicYear, byte period)
@@ -827,6 +796,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear, "Academic year mismatch");
             ClassicAssert.IsTrue(rpe.CollectionPeriod.Period == period, "Collection period mismatch");
         }
+
         private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, ApprenticeshipEmployerType employerType, decimal? sfaContribution = 0m)
         {
             return new EarningPeriod
