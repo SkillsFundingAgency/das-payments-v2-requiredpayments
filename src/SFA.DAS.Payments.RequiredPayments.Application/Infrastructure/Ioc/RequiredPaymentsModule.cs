@@ -18,7 +18,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Infrastructure.Ioc
             builder.RegisterType<NegativeEarningsService>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<RemovedLearnerAimIdentificationService>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CoInvestmentCalculationService>().AsImplementedInterfaces();
-            builder.RegisterType<ILogger>().AsImplementedInterfaces();
             builder.RegisterType<ActorReliableCollectionCache<ShortCoursesEarningEventKey>>().AsImplementedInterfaces()
                 .InstancePerLifetimeScope();
             builder.RegisterType<DuplicateShortCoursesEarningEventService>().AsImplementedInterfaces();
