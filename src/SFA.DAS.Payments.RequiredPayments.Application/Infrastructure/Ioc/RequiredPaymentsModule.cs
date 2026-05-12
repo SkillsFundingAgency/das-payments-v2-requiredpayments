@@ -1,6 +1,8 @@
 ﻿using Autofac;
+using Microsoft.Extensions.Logging;
 using SFA.DAS.Payments.RequiredPayments.Application.Processors;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
+using SFA.DAS.Payments.ServiceFabric.Core.Infrastructure.Cache;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Infrastructure.Ioc
 {
@@ -16,6 +18,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Infrastructure.Ioc
             builder.RegisterType<NegativeEarningsService>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<RemovedLearnerAimIdentificationService>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CoInvestmentCalculationService>().AsImplementedInterfaces();
+            builder.RegisterType<ILogger>().AsImplementedInterfaces();
+            builder.RegisterType<ActorReliableCollectionCache<ShortCoursesEarningEventKey>>().AsImplementedInterfaces()
+                .InstancePerLifetimeScope();
             builder.RegisterType<DuplicateShortCoursesEarningEventService>().AsImplementedInterfaces();
 
             // app layer event handlers

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using System;
@@ -9,10 +9,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
     public class DuplicateShortCoursesEarningEventService : IDuplicateShortCoursesEarningEventService
     {
-        private readonly ILogger<DuplicateShortCoursesEarningEventService> logger;
+        private readonly IPaymentLogger logger;
         private readonly IActorDataCache<ShortCoursesEarningEventKey> cache;
 
-        public DuplicateShortCoursesEarningEventService(ILogger<DuplicateShortCoursesEarningEventService> logger, IActorDataCache<ShortCoursesEarningEventKey> cache)
+        public DuplicateShortCoursesEarningEventService(IPaymentLogger logger, IActorDataCache<ShortCoursesEarningEventKey> cache)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -30,7 +30,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
             }
             logger.LogDebug($"New short courses earning event. Event key: {shortCoursesEarningEventKey.LogSafeKey}, event id: {shortCoursesEarningEvent.EventId}");
             await cache.Add(shortCoursesEarningEventKey.Key, shortCoursesEarningEventKey, cancellationToken);
-            logger.LogInformation($"Added new short courses earning event to cache. Key: {shortCoursesEarningEventKey.LogSafeKey}");
+            logger.LogInfo($"Added new short courses earning event to cache. Key: {shortCoursesEarningEventKey.LogSafeKey}");
             return false;
         }
     }
