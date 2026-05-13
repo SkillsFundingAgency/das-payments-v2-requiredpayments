@@ -535,7 +535,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             ClassicAssert.IsNotNull(refundMilestone1Payment);
 
-            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 1);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
         }
 
         [Test]
@@ -592,6 +592,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 x.TransactionType == TransactionType.Milestone1 && x.AmountDue == -300m);
             
             ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsInstanceOf<CalculatedRequiredCoInvestedAmount>(refundMilestone1Payment);
 
             ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
         }
@@ -658,14 +659,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsNotNull(newMilestone1Payment);
             
             ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(newMilestone1Payment, 330m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(newMilestone1Payment, 330m, 2, TransactionType.Milestone1, 2526, 2);
         }
 
         [Test]
         public async Task Change_Of_Circumstances_Learner_Withdrawn_After_Milestone_Payment_Made_But_Before_Completion_Payment()
         {
             // Arrange
-            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m, ApprenticeshipEmployerType.Levy);
+            var deliveryPeriod1 = GenerateTestEarningPeriod(1, 300m, ApprenticeshipEmployerType.Levy);
             
             var shortCourses = new List<ShortCourseEarning>
             {
