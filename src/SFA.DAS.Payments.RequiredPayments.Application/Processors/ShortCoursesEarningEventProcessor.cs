@@ -205,7 +205,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(
                  GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, int type, bool isCoInvested)
         {
-            var fundingSource = isCoInvested ? FundingSourceType.CoInvestedSfa: FundingSourceType.Levy;
             var requiredPayment = InitialiseRequiredPaymentEvent(type, earningEvent, isCoInvested);
             // replicate logic in RequiredPaymentsProfile
             var learningStartDate = priceEpisode.CourseStartDate;
