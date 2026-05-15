@@ -34,8 +34,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             public byte DeliveryPeriod { get; set; }
         }
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(
-            GSLShortCourseEarningsEvent earningEvent, IDataCache<PaymentHistoryEntity[]> paymentHistoryCache,
-            CancellationToken cancellationToken)
+                    GSLShortCourseEarningsEvent earningEvent, IDataCache<PaymentHistoryEntity[]> paymentHistoryCache,
+                    CancellationToken cancellationToken)
         {
             try
             {
@@ -48,29 +48,81 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 }
                 //Get payment history for short course, minus the current period
                 var cachedPayments = await paymentHistoryCache.TryGet(CacheKeys.PaymentHistoryKey, cancellationToken);
+
+                //Loading all historical payments for this learner and academic year.This give milestone payments, completion payments, previous collection period payments.
                 var academicYearPayments = cachedPayments.HasValue
                     ? cachedPayments.Value
                         .Where(p =>
                             p.LearnAimReference.Equals(earningEvent.LearningAim.Reference,
                                 StringComparison.OrdinalIgnoreCase) && p.CollectionPeriod.AcademicYear ==
-                            earningEvent.CollectionPeriod.AcademicYear)
+                               earningEvent.CollectionPeriod.AcademicYear)
                         .ToList()
                     : new List<PaymentHistoryEntity>();
 
-                foreach (var (period, type) in GetPeriods(earningEvent))
-                {
-                    if (period.Period > earningEvent.CollectionPeriod.Period) // cut off future periods
-                        continue;
+                //Extracting the latest earnings from the incoming submission.
+                var currentPeriods = GetPeriods(earningEvent).ToList();
 
-                    //Get list of payments from Payment history for the same transaction type and delivery period
-                    var payments = academicYearPayments.Where(payment => payment.DeliveryPeriod == period.Period && payment.TransactionType == type )
+                //Step 1:- Refunds calculation. Refund historic payments that no longer match. Comparing historic payments against the latest earnings.
+                foreach (var historicGroup in academicYearPayments
+                             .GroupBy(x => new
+                             {
+                                 x.TransactionType,
+                                 x.DeliveryPeriod
+                             }))
+                {
+                    var historicPayments = historicGroup.ToList();
+                    var historicAmount = historicPayments.Sum(x => x.Amount);
+
+                    var currentMatch = currentPeriods.FirstOrDefault(x =>
+                        x.type == historicGroup.Key.TransactionType &&
+                        x.period.Period == historicGroup.Key.DeliveryPeriod);
+
+                    // Refund happens when earning disappeared entirely or amount changed. In both cases we refund the whole amount and generate new payment if needed in step 2.
+                    var needsRefund = currentMatch.period == null || currentMatch.period.Amount != historicAmount;
+
+                    if (!needsRefund)
+                    {
+                        continue;
+                    }
+
+                    var firstPayment = historicPayments.First();
+                    var refundPeriod = new EarningPeriod
+                    {
+                        Period = firstPayment.DeliveryPeriod,
+                        Amount = -historicAmount,
+                        PriceEpisodeIdentifier = firstPayment.PriceEpisodeIdentifier
+                    };
+
+                    var isCoInvested = historicPayments.Any(x =>x.FundingSource == FundingSourceType.CoInvestedSfa ||
+                                                                x.FundingSource == FundingSourceType.CoInvestedEmployer);
+
+                    requiredPaymentEvents.Add(
+                        GenerateRequiredPaymentEvent(
+                            earningEvent,
+                            earningEvent.PriceEpisodes.FirstOrDefault()
+                                ?? new PriceEpisode(),
+                            refundPeriod,
+                            firstPayment.TransactionType,
+                            isCoInvested));
+                }
+
+                //Step 2:- After refunds are calculated, we generate any new valid payments from the latest earnings.
+                foreach (var (period, type) in currentPeriods)
+                {
+                    if (period.Period > earningEvent.CollectionPeriod.Period)
+                    {
+                        continue;
+                    }
+
+                    var historicPayments = academicYearPayments.Where(payment => payment.DeliveryPeriod == period.Period && payment.TransactionType == type )
                         .ToList();
 
-             
-                    if (payments.Count != 0)
+                    var isCoInvested = historicPayments.Any(x => x.FundingSource == FundingSourceType.CoInvestedSfa ||
+                                                                                    x.FundingSource == FundingSourceType.CoInvestedEmployer);
+                    if (historicPayments.Any())
                     {
-                        var amountPaid = payments.Sum(x => x.Amount);
-                        if (amountPaid == period.Amount)
+                        var historicAmount = historicPayments.Sum(x => x.Amount);
+                        if (historicAmount == period.Amount)
                         {
                             continue; // payment already made for this period and type
                         }
@@ -78,10 +130,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     //Generate new payment
                     var priceEpisode =
                         earningEvent.PriceEpisodes.FirstOrDefault(x =>
-                            x.Identifier == period.PriceEpisodeIdentifier) ??
-                        new PriceEpisode();
+                            x.Identifier == period.PriceEpisodeIdentifier) ?? 
+                            new PriceEpisode();
                     requiredPaymentEvents.Add(GenerateRequiredPaymentEvent(earningEvent,
-                        priceEpisode, period, type));
+                        priceEpisode, period, type, isCoInvested));
                 }
 
                 return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
@@ -96,10 +148,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
         }
 
-        private CalculatedRequiredOnProgrammeAmount GenerateRequiredPaymentEvent(
-            GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, int type)
+        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(
+                 GSLShortCourseEarningsEvent earningEvent, PriceEpisode priceEpisode, EarningPeriod period, int type, bool isCoInvested)
         {
-            var requiredPayment = InitialiseRequiredPaymentEvent(type, earningEvent);
+            var fundingSource = isCoInvested ? FundingSourceType.CoInvestedSfa: FundingSourceType.Levy;
+            var requiredPayment = InitialiseRequiredPaymentEvent(type, earningEvent, isCoInvested);
             // replicate logic in RequiredPaymentsProfile
             var learningStartDate = priceEpisode.CourseStartDate;
             if (earningEvent.PriceEpisodes.All(x =>
@@ -133,10 +186,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             requiredPayment.PriceEpisodeIdentifier = period.PriceEpisodeIdentifier;
             requiredPayment.AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning;
             requiredPayment.CollectionPeriod = new CollectionPeriod
-            {
-                AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
-                Period = earningEvent.CollectionPeriod.Period
-            };
+                                                    {
+                                                        AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
+                                                        Period = earningEvent.CollectionPeriod.Period
+                                                    };
             requiredPayment.ContractType = ContractType.Act1;
             requiredPayment.Learner = earningEvent.Learner;
             requiredPayment.EarningEventId = earningEvent.EventId;
@@ -172,14 +225,26 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             return result;
         }
 
-        protected CalculatedRequiredOnProgrammeAmount InitialiseRequiredPaymentEvent(int transactionType, GSLShortCourseEarningsEvent earningEvent)
+        protected CalculatedRequiredOnProgrammeAmount InitialiseRequiredPaymentEvent(
+                        int transactionType,
+                        GSLShortCourseEarningsEvent earningEvent,
+                        bool isCoInvested)
         {
-            return new CalculatedRequiredLevyAmount
-            {
-                OnProgrammeEarningType = (OnProgrammeEarningType)transactionType,
-                CourseType = CourseType.ShortCourse,
-                FundingPlatformType = earningEvent.FundingPlatformType,
-            };
+            var earningType = (OnProgrammeEarningType)transactionType;
+
+            return isCoInvested
+                ? new CalculatedRequiredCoInvestedAmount
+                {
+                    OnProgrammeEarningType = earningType,
+                    //CourseType = CourseType.ShortCourse,
+                    FundingPlatformType = earningEvent.FundingPlatformType,
+                }
+                : new CalculatedRequiredLevyAmount
+                {
+                    OnProgrammeEarningType = earningType,
+                    CourseType = CourseType.ShortCourse,
+                    FundingPlatformType = earningEvent.FundingPlatformType,
+                };
         }
     }
 }

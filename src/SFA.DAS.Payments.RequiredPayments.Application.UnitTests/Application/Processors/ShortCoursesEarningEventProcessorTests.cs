@@ -485,8 +485,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsNotNull(refundCompletionPayment);
             ClassicAssert.IsNotNull(newMilestone1Payment);
             ClassicAssert.IsNotNull(newCompletionPayment);
-            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 1);
-            ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 1);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
             ValidateRequiredPaymentEvents(newMilestone1Payment, 300m, 2, TransactionType.Milestone1, 2526, 2);
             ValidateRequiredPaymentEvents(newCompletionPayment, 700m, 2, TransactionType.Completion, 2526, 2);
         }
@@ -658,7 +658,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsNotNull(refundMilestone1Payment);
             ClassicAssert.IsNotNull(newMilestone1Payment);
             
-            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 1);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
             ValidateRequiredPaymentEvents(newMilestone1Payment, 330m, 2, TransactionType.Milestone1, 2526, 2);
         }
 
