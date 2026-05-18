@@ -190,8 +190,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                         earningEvent,
                         priceEpisode,
                         period,
-                        type,
-                        IsCoInvested(historicPayments)));
+                        type, 
+                        false));
             }
         }
 
