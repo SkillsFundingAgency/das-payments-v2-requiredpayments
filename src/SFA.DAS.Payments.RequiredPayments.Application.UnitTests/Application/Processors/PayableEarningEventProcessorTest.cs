@@ -11,10 +11,10 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.Application.Infrastructure.Telemetry;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
-using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Factories;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
@@ -44,6 +44,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         private Mock<IHoldingBackCompletionPaymentService> holdingBackCompletionPaymentServiceMock;
         private Mock<ICoInvestmentCalculationService> coInvestmentCalculationServiceMock;
         protected internal Mock<IPaymentKeyService> paymentKeyServiceMock;
+        private Mock<IPaymentLogger> paymentLoggerMock;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -64,6 +65,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             holdingBackCompletionPaymentServiceMock = mocker.Mock<IHoldingBackCompletionPaymentService>();
             paymentKeyServiceMock = mocker.Mock<IPaymentKeyService>();
             coInvestmentCalculationServiceMock = mocker.Mock<ICoInvestmentCalculationService>();
+            paymentLoggerMock = mocker.Mock<IPaymentLogger>();
 
             processor = mocker.Create<PayableEarningEventProcessor>(new NamedParameter("mapper", mapper));
         }
@@ -633,6 +635,96 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             // assert
             actualRequiredPayment.Should().HaveCount(2);
             actualRequiredPayment.Sum(x => x.AmountDue).Should().Be(0);
+        }
+
+        [Test]
+        public async Task PaymentIsNotGeneratedIfValueIsLessThanOnePenny()
+        {
+            // Arrange
+            var earningEvent = GeneratePayableDataLockEvent(1920, 2, 0m);
+            var requiredPayments = new List<RequiredPayment>
+            {
+                new RequiredPayment
+                {
+                    Amount = 0.001m, // 0.1p
+                    EarningType = EarningType.Levy,
+                },
+            };
+            foreach (var earning in earningEvent.OnProgrammeEarnings)
+            {
+                foreach (var period in earning.Periods)
+                {
+                    period.Amount = 0.001m;
+                    period.SfaContributionPercentage = null;
+                }
+            }
+
+            var periods = GeneratePeriods(earningEvent);
+
+            coInvestmentCalculationServiceMock.Setup(x =>
+                x.ProcessPeriodsForRecalculation(It.IsAny<PayableEarningEvent>(),
+                    It.IsAny<IReadOnlyCollection<(EarningPeriod period, int type)>>())).Returns(periods);
+
+            paymentHistoryCacheMock
+                .Setup(c => c.TryGet(It.Is<string>(key => key == CacheKeys.PaymentHistoryKey),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, new PaymentHistoryEntity[] { }));
+                
+            requiredPaymentsService.Setup(p => p.GetRequiredPayments(It.IsAny<Earning>(), It.IsAny<List<Payment>>()))
+                .Returns(requiredPayments);
+                
+            paymentLoggerMock.Setup(x => x.LogWarning(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .Verifiable();
+
+            // Act           
+            var actualRequiredPayments = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
+
+            // Assert
+            actualRequiredPayments.Should().BeEmpty();
+            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith("Payment amount is a fraction of a penny for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+        }
+
+        [Test]
+        public async Task RefundIsNotGeneratedIfValueIsLessThanOnePenny()
+        {
+            // Arrange
+            var earningEvent = GeneratePayableDataLockEvent(1920, 2, 0m);
+            var requiredPayments = new List<RequiredPayment>
+            {
+                new RequiredPayment
+                {
+                    Amount = -0.001m,
+                    EarningType = EarningType.Levy,
+                },
+            };
+            foreach (var earning in earningEvent.OnProgrammeEarnings)
+            {
+                foreach (var period in earning.Periods)
+                {
+                    period.Amount = -0.001m;
+                    period.SfaContributionPercentage = null;
+                }
+            }
+
+            var periods = GeneratePeriods(earningEvent);
+            
+            coInvestmentCalculationServiceMock.Setup(x =>
+                x.ProcessPeriodsForRecalculation(It.IsAny<PayableEarningEvent>(),
+                    It.IsAny<IReadOnlyCollection<(EarningPeriod period, int type)>>())).Returns(periods);
+
+            paymentHistoryCacheMock
+                .Setup(c => c.TryGet(It.Is<string>(key => key == CacheKeys.PaymentHistoryKey), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, new PaymentHistoryEntity[] { }));
+                
+            requiredPaymentsService.Setup(p => p.GetRequiredPayments(It.IsAny<Earning>(), It.IsAny<List<Payment>>()))
+                .Returns(requiredPayments);
+                
+            // Act           
+            var actualRequiredPayment = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
+
+            // Assert
+            actualRequiredPayment.Should().BeEmpty();
+            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith("Refund amount is a fraction of a penny for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
         }
 
         private PayableEarningEvent GeneratePayableDataLockEvent(short academicYear,byte deliveryPeriod, decimal periodAmount)
