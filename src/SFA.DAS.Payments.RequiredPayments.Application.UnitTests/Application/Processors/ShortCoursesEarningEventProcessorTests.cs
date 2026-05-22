@@ -17,6 +17,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
 {
@@ -31,21 +32,21 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
     public class ShortCoursesEarningEventProcessorTests
     {
         private Mock<IDataCache<PaymentHistoryEntity[]>> paymentHistoryCacheMock;
-        private Mock<IDuplicateEarningEventService> duplicateEarningEventServiceMock;
+        private Mock<IDuplicateShortCoursesEarningEventService> duplicateEarningEventServiceMock;
         private ShortCoursesEarningEventProcessor processor;
 
         [SetUp]
         public void SetUp()
         {
             paymentHistoryCacheMock = new Mock<IDataCache<PaymentHistoryEntity[]>>();
-            duplicateEarningEventServiceMock = new Mock<IDuplicateEarningEventService>();
+            duplicateEarningEventServiceMock = new Mock<IDuplicateShortCoursesEarningEventService>();
             processor = new ShortCoursesEarningEventProcessor(duplicateEarningEventServiceMock.Object);
         }
         [TearDown]
         public void TearDown()
         {
             paymentHistoryCacheMock = new Mock<IDataCache<PaymentHistoryEntity[]>>();
-            duplicateEarningEventServiceMock = new Mock<IDuplicateEarningEventService>();
+            duplicateEarningEventServiceMock = new Mock<IDuplicateShortCoursesEarningEventService>();
             processor = new ShortCoursesEarningEventProcessor(duplicateEarningEventServiceMock.Object);
         }
 

@@ -250,7 +250,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 CollectionYear = currentAcademicYear,
                 Ukprn = testSession.Provider.Ukprn,
                 JobId = testSession.JobId,
-                Learner =
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
                 {
                     Uln = testSession.Learner.Uln,
                     ReferenceNumber = testSession.Learner.LearnRefNumber
