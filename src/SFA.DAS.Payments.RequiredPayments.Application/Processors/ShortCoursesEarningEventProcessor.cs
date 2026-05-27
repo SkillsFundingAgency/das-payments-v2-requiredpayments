@@ -16,22 +16,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
     public class ShortCoursesEarningEventProcessor : IShortCoursesEarningEventProcessor
     {
-        private readonly IDuplicateEarningEventService duplicateEarningEventService;
+        private readonly IDuplicateShortCoursesEarningEventService duplicateShortCoursesEarningEventService;
 
-        public ShortCoursesEarningEventProcessor(IDuplicateEarningEventService duplicateEarningEventService)
+        public ShortCoursesEarningEventProcessor(IDuplicateShortCoursesEarningEventService duplicateShortCoursesEarningEventService)
         {
-            this.duplicateEarningEventService = duplicateEarningEventService;
-        }
-
-        internal class ShortCourseRequiredPayment : RequiredPayment
-        {
-            public int Type { get; set; }
-            public byte DeliveryPeriod { get; set; }
+            this.duplicateShortCoursesEarningEventService = duplicateShortCoursesEarningEventService;
         }
 
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(GSLShortCourseEarningsEvent earningEvent,
@@ -42,8 +37,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             {
                 var requiredPaymentEvents = new List<PeriodisedRequiredPaymentEvent>();
 
-                if (await duplicateEarningEventService
-                        .IsDuplicate(earningEvent, cancellationToken)
+                if (await duplicateShortCoursesEarningEventService.IsDuplicate(earningEvent, cancellationToken)
                         .ConfigureAwait(false))
                 {
                     return requiredPaymentEvents.AsReadOnly();
