@@ -1,7 +1,6 @@
 ﻿using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
-using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
@@ -12,11 +11,9 @@ using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
@@ -170,6 +167,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -179,6 +177,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -301,7 +300,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
-                    FundingSource = FundingSourceType.CoInvestedSfa
+                    FundingSource = FundingSourceType.CoInvestedSfa,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -311,7 +311,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
-                    FundingSource = FundingSourceType.CoInvestedEmployer
+                    FundingSource = FundingSourceType.CoInvestedEmployer,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -326,6 +327,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             // Assert
             ClassicAssert.IsTrue(result.Count == 0, "Should have no payment.");
         }
+
         [Test]
         public async Task Payments_Made_In_Different_Delivery_Period_Generates_New_Payment()
         {
@@ -373,6 +375,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -382,6 +385,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -439,7 +443,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
-
+            
             var paymentHistoryEntities = new PaymentHistoryEntity[]
             {
                 new PaymentHistoryEntity
@@ -450,6 +454,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -459,6 +464,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Completion,
                     DeliveryPeriod = 1,
                     Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -503,8 +509,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     Year = 2526,
                     CollectionPeriod = 2,
                     PlannedEndDate = new DateTime(2026, 9, 30)
-
                 });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
             {
@@ -516,6 +522,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -552,6 +559,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
             {
@@ -563,7 +571,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
-                    FundingSource = FundingSourceType.CoInvestedSfa
+                    FundingSource = FundingSourceType.CoInvestedSfa,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -573,7 +582,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
-                    FundingSource = FundingSourceType.CoInvestedEmployer
+                    FundingSource = FundingSourceType.CoInvestedEmployer,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -636,6 +646,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -690,6 +701,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     PlannedEndDate = new DateTime(2026, 9, 30)
 
                 });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
             {
@@ -701,6 +713,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -710,6 +723,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Completion,
                     DeliveryPeriod = 1,
                     Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -742,8 +756,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     Year = 2526,
                     CollectionPeriod = 2,
                     PlannedEndDate = new DateTime(2026, 9, 30)
-
                 });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
 
             var paymentHistoryEntities = new PaymentHistoryEntity[]
             {
@@ -755,6 +769,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -764,6 +779,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Completion,
                     DeliveryPeriod = 1,
                     Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -797,6 +813,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsTrue(rpe.TransactionType == type, "Transaction type mismatch");
             ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear, "Academic year mismatch");
             ClassicAssert.IsTrue(rpe.CollectionPeriod.Period == period, "Collection period mismatch");
+            ClassicAssert.IsNotNull(rpe.LearningAim.FundingLineType, "Invalid LearningAim FundingLineType");
         }
 
         private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, ApprenticeshipEmployerType employerType, decimal? sfaContribution = 0m)
@@ -827,7 +844,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     {
                         Identifier = "PE-1",
                         TotalNegotiatedPrice1 = 1000m,
-                        PlannedEndDate = testValues.PlannedEndDate
+                        PlannedEndDate = testValues.PlannedEndDate,
+                        FundingLineType = "funding line type"
                     }
                 },
             };

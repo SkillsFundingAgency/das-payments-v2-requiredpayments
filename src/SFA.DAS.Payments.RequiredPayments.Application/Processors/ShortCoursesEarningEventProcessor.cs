@@ -126,7 +126,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 }
 
                 var firstHistoricPayment = historicPayments.First();
-
+                
+                // Map the funding line type from the previous payment
+                var paymentToBeRefunded = historicPayments.First(x => x.TransactionType == historicGroup.Key.TransactionType);
+                    
                 var refundPeriod = new EarningPeriod
                 {
                     Period = firstHistoricPayment.DeliveryPeriod,
@@ -138,7 +141,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     GenerateRequiredPaymentEvent(
                         earningEvent,
                         earningEvent.PriceEpisodes.FirstOrDefault()
-                            ?? new PriceEpisode(),
+                            ?? new PriceEpisode { FundingLineType = paymentToBeRefunded.LearningAimFundingLineType },
                         refundPeriod,
                         firstHistoricPayment.TransactionType,
                         IsCoInvested(historicPayments)));
@@ -178,7 +181,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     earningEvent.PriceEpisodes.FirstOrDefault(x =>
                         x.Identifier == period.PriceEpisodeIdentifier)
                     ?? new PriceEpisode();
-
+                
                 requiredPaymentEvents.Add(
                     GenerateRequiredPaymentEvent(
                         earningEvent,
