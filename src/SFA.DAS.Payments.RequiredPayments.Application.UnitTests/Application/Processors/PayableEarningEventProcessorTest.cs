@@ -681,7 +681,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             // Assert
             actualRequiredPayments.Should().BeEmpty();
-            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith("Payment amount is a fraction of a penny for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith("Payment amount is a fraction of a penny (£0.001) for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
         }
 
         [Test]
@@ -724,7 +724,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             // Assert
             actualRequiredPayment.Should().BeEmpty();
-            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith("Refund amount is a fraction of a penny for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+            paymentLoggerMock.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith($"Refund amount is a fraction of a penny (-£0.001) for ULN")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
         }
 
         private PayableEarningEvent GeneratePayableDataLockEvent(short academicYear,byte deliveryPeriod, decimal periodAmount)

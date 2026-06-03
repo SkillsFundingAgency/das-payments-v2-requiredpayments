@@ -89,13 +89,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     {
                         if (period.Amount > 0 && period.Amount < 0.01m)
                         {
-                            paymentLogger.LogWarning($"Payment amount is a fraction of a penny for ULN {earningEvent.Learner.Uln} UKPRN {earningEvent.Ukprn}. Skipping processing.");
+                            paymentLogger.LogWarning($"Payment amount is a fraction of a penny (£{period.Amount}) for ULN {earningEvent.Learner.Uln} UKPRN {earningEvent.Ukprn}. Skipping processing.");
                             continue;
                         }
 
                         if (period.Amount < 0 && period.Amount > -0.01m)
                         {
-                            paymentLogger.LogWarning($"Refund amount is a fraction of a penny for ULN {earningEvent.Learner.Uln} UKPRN {earningEvent.Ukprn}. Skipping processing.");
+                            paymentLogger.LogWarning($"Refund amount is a fraction of a penny (-£{period.Amount * -1}) for ULN {earningEvent.Learner.Uln} UKPRN {earningEvent.Ukprn}. Skipping processing.");
                             continue;
                         }
 
