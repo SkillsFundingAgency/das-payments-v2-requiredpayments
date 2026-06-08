@@ -116,6 +116,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     x.type == historicGroup.Key.TransactionType &&
                     x.period.Period == historicGroup.Key.DeliveryPeriod);
 
+                // refund if delivery period does not match or if the amount does not match
                 var requiresRefund =
                     currentMatch.period == null ||
                     currentMatch.period.Amount != historicAmount;
@@ -125,16 +126,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     continue;
                 }
 
-                var firstHistoricPayment = historicPayments.First();
-                
                 // Map the funding line type from the previous payment
                 var paymentToBeRefunded = historicPayments.First(x => x.TransactionType == historicGroup.Key.TransactionType);
                     
                 var refundPeriod = new EarningPeriod
                 {
-                    Period = firstHistoricPayment.DeliveryPeriod,
+                    Period = paymentToBeRefunded.DeliveryPeriod,
                     Amount = -historicAmount,
-                    PriceEpisodeIdentifier = firstHistoricPayment.PriceEpisodeIdentifier
+                    PriceEpisodeIdentifier = paymentToBeRefunded.PriceEpisodeIdentifier
                 };
 
                 requiredPaymentEvents.Add(
@@ -143,7 +142,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                         earningEvent.PriceEpisodes.FirstOrDefault()
                             ?? new PriceEpisode { FundingLineType = paymentToBeRefunded.LearningAimFundingLineType },
                         refundPeriod,
-                        firstHistoricPayment.TransactionType,
+                        paymentToBeRefunded.TransactionType,
                         IsCoInvested(historicPayments)));
             }
         }
