@@ -408,6 +408,70 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
+        public async Task Change_Of_Circumstances_Updated_Start_Date_Generates_Refund_And_New_Payment()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m, ApprenticeshipEmployerType.Levy);
+            
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refund and new payment for Milestone1.");
+
+            // Check payments and refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+            var newMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsNotNull(newMilestone1Payment);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(newMilestone1Payment, 300m, 2, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
         public async Task Change_Of_Circumstances_Updated_Start_And_Completion_Dates_Generate_Refunds_And_New_Payments()
         {
             // Arrange
