@@ -133,7 +133,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 {
                     Period = paymentToBeRefunded.DeliveryPeriod,
                     Amount = -historicAmount,
-                    PriceEpisodeIdentifier = paymentToBeRefunded.PriceEpisodeIdentifier
+                    PriceEpisodeIdentifier = paymentToBeRefunded.PriceEpisodeIdentifier,
+                    AccountId = paymentToBeRefunded.AccountId,
+                    TransferSenderAccountId = paymentToBeRefunded.TransferSenderAccountId,
+                    SfaContributionPercentage = paymentToBeRefunded.SfaContributionPercentage,
+                    ApprenticeshipEmployerType = paymentToBeRefunded.ApprenticeshipEmployerType,
+                    ApprenticeshipId = paymentToBeRefunded.ApprenticeshipId
                 };
 
                 requiredPaymentEvents.Add(

@@ -445,7 +445,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 300m,
-                    LearningAimFundingLineType = "funding line type"
+                    LearningAimFundingLineType = "funding line type",
+                    AccountId = 12345,
+                    TransferSenderAccountId = 23456,
+                    SfaContributionPercentage = 0.95m,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                    ApprenticeshipId = 123456789
                 }
             };
 
@@ -469,6 +474,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsNotNull(newMilestone1Payment);
             ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
             ValidateRequiredPaymentEvents(newMilestone1Payment, 300m, 2, TransactionType.Milestone1, 2526, 2);
+            var calculatedrequiredLevyAmount = refundMilestone1Payment as CalculatedRequiredLevyAmount;
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.AccountId == paymentHistoryEntities[0].AccountId);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.SfaContributionPercentage == paymentHistoryEntities[0].SfaContributionPercentage);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.TransferSenderAccountId == paymentHistoryEntities[0].TransferSenderAccountId);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.ApprenticeshipEmployerType == paymentHistoryEntities[0].ApprenticeshipEmployerType);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.ApprenticeshipId == paymentHistoryEntities[0].ApprenticeshipId);
         }
 
         [Test]
