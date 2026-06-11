@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.3.1" />
+    <PackageReference Include="SFA.DAS.Payments.Application" Version="2.4.1-prerelease-34" />
 
     <PackageReference Include="SFA.DAS.Payments.Core" Version="2.4.1-prerelease-34" />
 
