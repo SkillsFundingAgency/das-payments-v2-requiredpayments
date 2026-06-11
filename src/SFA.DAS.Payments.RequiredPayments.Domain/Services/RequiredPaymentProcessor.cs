@@ -62,7 +62,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
             if (employersRequiredPaymentAmount < 0 && employersRequiredPaymentAmount > -0.01m)
             {
-                paymentLogger.LogWarning($"Refund amount is a fraction of a penny (-£{employersRequiredPaymentAmount * -1}) for Account Id {earning.AccountId} UKPRN. Skipping processing.");
+                paymentLogger.LogWarning($"Refund amount is a fraction of a penny (-£{employersRequiredPaymentAmount * -1}) for Account Id {earning.AccountId}. Skipping processing.");
                 return new List<RequiredPayment>();
             }
 
