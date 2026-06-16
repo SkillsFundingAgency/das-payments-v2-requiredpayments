@@ -31,7 +31,7 @@ In order to run SFA.DAS.Payments.RequiredPayments.Tests.Specs successfully you w
 
 Within the project:
 - Within SFA.DAS.Payments.RequiredPayments.Tests.Specs create a file called appSettings.local.Json. Copy and paste the contents of appSettings.json into this file and populate the following values: 
-StorageConnectionString, ServiceBusConnectionString and PaymentsConnectionString.abric
+StorageConnectionString, ServiceBusConnectionString and PaymentsConnectionString.
 
 On the Azure Portal:
 - Go to https://portal.azure.com/#home or https://portal.azure.com/#browse/Microsoft.ServiceBus%2Fnamespaces, search das-pv2-dev-{your initials} , should be a service bus namespace.
