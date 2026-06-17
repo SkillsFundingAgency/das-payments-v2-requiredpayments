@@ -153,7 +153,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Include<ApprenticeshipContractType1RedundancyEarningEvent, CalculatedRequiredOnProgrammeAmount>()
                 .ForMember(requiredPayment => requiredPayment.AgeAtStartOfLearning, opt => opt.Ignore())
                 .ForMember(requiredPayment => requiredPayment.OnProgrammeEarningType, opt => opt.Ignore())
-                .ForMember(requiredPayment => requiredPayment.SfaContributionPercentage, opt => opt.Ignore());
+                .ForMember(requiredPayment => requiredPayment.SfaContributionPercentage, opt => opt.Ignore())
+                .ForMember(requiredPayment => requiredPayment.CourseType, opt => opt.Ignore());
 
             CreateMap<IEarningEvent, CalculatedRequiredIncentiveAmount>()
                 .Include<PayableEarningEvent, CalculatedRequiredIncentiveAmount>()
@@ -273,7 +274,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.AgeAtStartOfLearning, opt => opt.MapFrom(source => source.AgeAtStartOfLearning))
                 .Ignore(x => x.ClawbackSourcePaymentEventId)
                 .Ignore(x => x.FundingPlatformType)
-                .Ignore(x => x.CourseType)
                 ;
             // End Earning Event --> Required Payment Event
 
@@ -319,6 +319,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.AgeAtStartOfLearning)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<EarningPeriod, CalculatedRequiredCoInvestedAmount>()
@@ -334,7 +335,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.AgreementId, opt => opt.Ignore())
                 .Ignore(x => x.ClawbackSourcePaymentEventId)
                 .Ignore(x => x.FundingPlatformType)
-                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<EarningPeriod, CalculatedRequiredIncentiveAmount>()
@@ -385,6 +385,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.FundingPlatformType)
+                .Ignore(x=> x.CourseType)
                 ;
             CreateMap<RequiredPayment, CalculatedRequiredIncentiveAmount>()
                 .Ignore(x => x.ContractType)
@@ -440,6 +441,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.FundingPlatformType)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<IdentifiedRemovedLearningAim, CalculatedRequiredIncentiveAmount>()
@@ -490,6 +492,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.OnProgrammeEarningType)
                 .Ignore(x => x.AgeAtStartOfLearning)
                 .Ignore(x => x.FundingPlatformType)
+                .Ignore(x => x.CourseType)
                 ;
 
             CreateMap<PaymentHistoryEntity, CalculatedRequiredIncentiveAmount>()

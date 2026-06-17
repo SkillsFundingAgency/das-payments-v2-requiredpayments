@@ -1,7 +1,6 @@
 ﻿using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
-using SFA.DAS.Payments.Application.Messaging;
 using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
@@ -12,11 +11,9 @@ using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Processors
@@ -170,6 +167,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -179,6 +177,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -301,7 +300,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
-                    FundingSource = FundingSourceType.CoInvestedSfa
+                    FundingSource = FundingSourceType.CoInvestedSfa,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -311,7 +311,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
-                    FundingSource = FundingSourceType.CoInvestedEmployer
+                    FundingSource = FundingSourceType.CoInvestedEmployer,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -326,6 +327,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             // Assert
             ClassicAssert.IsTrue(result.Count == 0, "Should have no payment.");
         }
+
         [Test]
         public async Task Payments_Made_In_Different_Delivery_Period_Generates_New_Payment()
         {
@@ -373,6 +375,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 285m,
+                    LearningAimFundingLineType = "funding line type"
                 },
                 new PaymentHistoryEntity
                 {
@@ -382,6 +385,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     TransactionType = (int)TransactionType.Milestone1,
                     DeliveryPeriod = 1,
                     Amount = 15m,
+                    LearningAimFundingLineType = "funding line type"
                 }
             };
 
@@ -403,14 +407,490 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             AssertMappingFromGslShortCourseEarningsEventToRequiredPaymentEvent(earningEvent, earningEvent.PriceEpisodes[0], deliveryPeriod2, newPayment);
         }
 
+        [Test]
+        public async Task Change_Of_Circumstances_Updated_Start_Date_Generates_Refund_And_New_Payment()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m, ApprenticeshipEmployerType.Levy);
+            
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type",
+                    AccountId = 12345,
+                    TransferSenderAccountId = 23456,
+                    SfaContributionPercentage = 0.95m,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                    ApprenticeshipId = 123456789
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refund and new payment for Milestone1.");
+
+            // Check payments and refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+            var newMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsNotNull(newMilestone1Payment);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(newMilestone1Payment, 300m, 2, TransactionType.Milestone1, 2526, 2);
+            var calculatedrequiredLevyAmount = refundMilestone1Payment as CalculatedRequiredLevyAmount;
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.AccountId == paymentHistoryEntities[0].AccountId);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.SfaContributionPercentage == paymentHistoryEntities[0].SfaContributionPercentage);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.TransferSenderAccountId == paymentHistoryEntities[0].TransferSenderAccountId);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.ApprenticeshipEmployerType == paymentHistoryEntities[0].ApprenticeshipEmployerType);
+            ClassicAssert.IsTrue(calculatedrequiredLevyAmount.ApprenticeshipId == paymentHistoryEntities[0].ApprenticeshipId);
+        }
+
+        [Test]
+        public async Task Change_Of_Circumstances_Updated_Start_And_Completion_Dates_Generate_Refunds_And_New_Payments()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m, ApprenticeshipEmployerType.Levy);
+            var deliveryPeriod2 = GenerateTestEarningPeriod(2, 700m, ApprenticeshipEmployerType.Levy);
+
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                },
+                new()
+                {
+                    Type = ShortCourseEarningType.Completion,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod2
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+            
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Completion,
+                    DeliveryPeriod = 1,
+                    Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 4, "Should have refunds and new payments for Milestone1 and Completion.");
+
+            // Check payments and refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+            var refundCompletionPayment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Completion && x.AmountDue < 0m);
+            var newMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
+            var newCompletionPayment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Completion && x.AmountDue > 0m);
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsNotNull(refundCompletionPayment);
+            ClassicAssert.IsNotNull(newMilestone1Payment);
+            ClassicAssert.IsNotNull(newCompletionPayment);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
+            ValidateRequiredPaymentEvents(newMilestone1Payment, 300m, 2, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(newCompletionPayment, 700m, 2, TransactionType.Completion, 2526, 2);
+        }
+
+        [Test]
+        public async Task Change_Of_Circumstances_Learner_Withdrawn_After_Milestone_Payment_Made_Generates_Refund()
+        {
+            // Arrange
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Milestone1.");
+
+            // Check refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
+        public async Task Change_Of_Circumstances_Learner_Withdrawn_After_Milestone_CoInvested_Payment_Made_Generates_Refund()
+        {
+            // Arrange
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 285m,
+                    FundingSource = FundingSourceType.CoInvestedSfa,
+                    LearningAimFundingLineType = "funding line type"
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 15m,
+                    FundingSource = FundingSourceType.CoInvestedEmployer,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Milestone1 co-invested payments.");
+
+            // Check refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue == -300m);
+            
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsInstanceOf<CalculatedRequiredCoInvestedAmount>(refundMilestone1Payment);
+
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
+        public async Task Change_Of_Milestone_Payment_Price_Generates_Refund_Of_Original_Payment_And_New_Payment()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 330m, ApprenticeshipEmployerType.Levy);
+            
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refund and new payment for Milestone1.");
+
+            // Check payments and refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+            var newMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue > 0m);
+            
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsNotNull(newMilestone1Payment);
+            
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(newMilestone1Payment, 330m, 2, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
+        public async Task Change_Of_Circumstances_Learner_Withdrawn_After_Milestone_Payment_Made_But_Before_Completion_Payment()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(1, 300m, ApprenticeshipEmployerType.Levy);
+            
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    }
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Completion,
+                    DeliveryPeriod = 1,
+                    Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should have refund for Completion payment.");
+
+            // Check refunds
+            var refundCompletionPayment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Completion && x.AmountDue < 0m);
+            ClassicAssert.IsNotNull(refundCompletionPayment);
+            ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
+        }
+
+        [Test]
+        public async Task Change_Of_Circumstances_Learner_Withdrawn_Date_Changed_To_Date_Before_Milestone_And_Completion_Payments_Made()
+        {
+            // Arrange
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                },
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Completion,
+                    DeliveryPeriod = 1,
+                    Amount = 700m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 2, "Should have refunds for Milestone 1 and Completion payments.");
+
+            // Check refunds
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+            var refundCompletionPayment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Completion && x.AmountDue < 0m);
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ClassicAssert.IsNotNull(refundCompletionPayment);
+
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+            ValidateRequiredPaymentEvents(refundCompletionPayment, -700m, 1, TransactionType.Completion, 2526, 2);
+        }
+
         private void ValidateRequiredPaymentEvents(PeriodisedRequiredPaymentEvent rpe, decimal amount, byte deliveryPeriod, TransactionType type, int academicYear, byte period)
         {
-            ClassicAssert.IsTrue(rpe.AmountDue == amount);
-            ClassicAssert.IsTrue(rpe.DeliveryPeriod == deliveryPeriod);
-            ClassicAssert.IsTrue(rpe.TransactionType == type);
-            ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear);
-            ClassicAssert.IsTrue(rpe.CollectionPeriod.Period == period);
+            ClassicAssert.IsTrue(rpe.AmountDue == amount, "Amount mismatch");
+            ClassicAssert.IsTrue(rpe.DeliveryPeriod == deliveryPeriod, "Delivery period mismatch");
+            ClassicAssert.IsTrue(rpe.TransactionType == type, "Transaction type mismatch");
+            ClassicAssert.IsTrue(rpe.CollectionPeriod.AcademicYear == academicYear, "Academic year mismatch");
+            ClassicAssert.IsTrue(rpe.CollectionPeriod.Period == period, "Collection period mismatch");
+            ClassicAssert.IsNotNull(rpe.LearningAim.FundingLineType, "Invalid LearningAim FundingLineType");
         }
+
         private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, ApprenticeshipEmployerType employerType, decimal? sfaContribution = 0m)
         {
             return new EarningPeriod
@@ -439,7 +919,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     {
                         Identifier = "PE-1",
                         TotalNegotiatedPrice1 = 1000m,
-                        PlannedEndDate = testValues.PlannedEndDate
+                        PlannedEndDate = testValues.PlannedEndDate,
+                        FundingLineType = "funding line type"
                     }
                 },
             };
