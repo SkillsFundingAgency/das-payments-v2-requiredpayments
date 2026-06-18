@@ -329,6 +329,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             ilrLearningStartDate = new DateTime(2026, 8, 1);
         }
 
+        [Given("the learning start date is before 1 August 2026")]
         [Given("the learning start date is before 1 August 2026 and after 1 Apr 2024")]
         public void GivenTheLearningStartDateIsBefore1August2026AndAfter1Apr2024()
         {
@@ -340,6 +341,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void GivenTheLearnerIsAgedBetweenOnTheStartDate(int minimumAge, int maximumAge)
         {
             ageAtStartOfLearning = maximumAge;
+        }
+
+        [Given("the learner is aged 25 or over on the start date")]
+        public void GivenTheLearnerIsAged25OrOverOnTheStartDate()
+        {
+            ageAtStartOfLearning = 25;
         }
 
         [Given("the transaction type is a {word} payment")]
