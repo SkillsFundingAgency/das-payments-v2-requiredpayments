@@ -1,7 +1,9 @@
-﻿using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
+﻿using SFA.DAS.Payments.Messages.Common.Events;
+using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SFA.DAS.Payments.Application.Infrastructure.Logging;
 
 namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
@@ -9,11 +11,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
     {
         private readonly IPaymentDueProcessor paymentsDueProcessor;
         private readonly IRefundService refundService;
+        private readonly IPaymentLogger paymentLogger;
 
-        public RequiredPaymentProcessor(IPaymentDueProcessor paymentsDueProcessor, IRefundService refundService)
+        public RequiredPaymentProcessor(IPaymentDueProcessor paymentsDueProcessor, IRefundService refundService, IPaymentLogger paymentLogger)
         {
             this.paymentsDueProcessor = paymentsDueProcessor;
             this.refundService = refundService;
+            this.paymentLogger = paymentLogger;
         }
 
         public List<RequiredPayment> GetRequiredPayments(Earning earning, List<Payment> paymentHistory)
@@ -47,8 +51,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
         private List<RequiredPayment> GenerateRequiredPaymentForEmployer(Earning earning, decimal amountDue, List<Payment> employersPaymentHistory)
         {
             var employersRequiredPaymentAmount = paymentsDueProcessor.CalculateRequiredPaymentAmount(amountDue, employersPaymentHistory);
-
+            
             if (employersRequiredPaymentAmount == 0) return new List<RequiredPayment>();
+
+            if (employersRequiredPaymentAmount > 0 && employersRequiredPaymentAmount < 0.01m)
+            {
+                paymentLogger.LogWarning($"Payment amount is a fraction of a penny (£{employersRequiredPaymentAmount}) for Account Id {earning.AccountId}. Skipping processing.");
+                return new List<RequiredPayment>();
+            }
+
+            if (employersRequiredPaymentAmount < 0 && employersRequiredPaymentAmount > -0.01m)
+            {
+                paymentLogger.LogWarning($"Refund amount is a fraction of a penny (-£{employersRequiredPaymentAmount * -1}) for Account Id {earning.AccountId}. Skipping processing.");
+                return new List<RequiredPayment>();
+            }
 
             if (employersRequiredPaymentAmount < 0) return refundService.GetRefund(employersRequiredPaymentAmount, employersPaymentHistory);
 

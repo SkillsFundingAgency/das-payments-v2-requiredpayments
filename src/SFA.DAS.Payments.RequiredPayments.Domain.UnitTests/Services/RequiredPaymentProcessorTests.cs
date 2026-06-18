@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture.NUnit3;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
+using SFA.DAS.Payments.Application.Infrastructure.Logging;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
@@ -17,6 +19,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
         protected List<Payment> paymentHistory;
         protected decimal expectedAmount;
         protected Earning testEarning;
+        protected Mock<IPaymentLogger> paymentLogger;
         
         [SetUp]
         public void Setup()
@@ -31,7 +34,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 EarningType = EarningType.Levy,
             };
 
-            sut = new RequiredPaymentProcessor(new PaymentDueProcessor(), new RefundService());
+            paymentLogger = new Mock<IPaymentLogger>();
+
+            sut = new RequiredPaymentProcessor(new PaymentDueProcessor(), new RefundService(), paymentLogger.Object);
             expectedAmount = 50;
         }
         
@@ -256,6 +261,62 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 requiredPayments.Count(rp => rp.SfaContributionPercentage == .95M).Should().Be(1);
                 requiredPayments.Count(rp => rp.SfaContributionPercentage == 1M).Should().Be(1);
                 requiredPayments.Sum(rp => rp.Amount).Should().Be(-35);
+            }
+        }
+
+        [TestFixture]
+        public class WhenRoundingErrorInPreviousRefundGeneratesAPaymentDueThatIsLessThanOnePence : RequiredPaymentProcessorTests
+        {
+            [Test]
+            public void ThenThePaymentShouldNotBeGeneratedAndAWarningLoggedIfSfaContributionIsNull()
+            {
+                testEarning.SfaContributionPercentage = null;
+                testEarning.Amount = 0.004128m;
+
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = 514.285872m, FundingSource = FundingSourceType.Levy });
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = -514.29000m, FundingSource = FundingSourceType.Levy });
+                
+                paymentLogger.Setup(x => x.LogWarning(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                    .Verifiable();
+
+                var requiredPayments = sut.GetRequiredPayments(testEarning, paymentHistory);
+                requiredPayments.Count.Should().Be(0);
+                paymentLogger.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith($"Payment amount is a fraction of a penny")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+            }
+
+            [Test]
+            public void ThenThePaymentShouldNotBeGeneratedAndAWarningLoggedIfSfaContributionIsNotNull()
+            {
+                testEarning.SfaContributionPercentage = 0.9m;
+                testEarning.Amount = 0.004128m;
+
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = 514.285872m, FundingSource = FundingSourceType.Levy });
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = -514.29000m, FundingSource = FundingSourceType.Levy });
+
+                paymentLogger.Setup(x => x.LogWarning(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                    .Verifiable();
+
+                var requiredPayments = sut.GetRequiredPayments(testEarning, paymentHistory);
+                requiredPayments.Count.Should().Be(0);
+                paymentLogger.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith($"Payment amount is a fraction of a penny")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+            }
+
+
+            [Test]
+            public void ThenTheRefundShouldNotBeGeneratedAndAWarningLogged()
+            {
+                testEarning.SfaContributionPercentage = null;
+                testEarning.Amount = -0.005128m;
+
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = 514.285872m, FundingSource = FundingSourceType.Levy });
+                paymentHistory.Add(new Payment { SfaContributionPercentage = .9m, Amount = -514.29000m, FundingSource = FundingSourceType.Levy });
+
+                paymentLogger.Setup(x => x.LogWarning(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                    .Verifiable();
+
+                var requiredPayments = sut.GetRequiredPayments(testEarning, paymentHistory);
+                requiredPayments.Count.Should().Be(0);
+                paymentLogger.Verify(x => x.LogWarning(It.Is<string>(y => y.StartsWith($"Refund amount is a fraction of a penny")), It.IsAny<object[]>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
             }
         }
     }
