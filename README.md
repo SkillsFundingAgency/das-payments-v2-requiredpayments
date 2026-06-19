@@ -36,7 +36,7 @@ StorageConnectionString, ServiceBusConnectionString and PaymentsConnectionString
 On the Azure Portal:
 - Go to https://portal.azure.com/#home or https://portal.azure.com/#browse/Microsoft.ServiceBus%2Fnamespaces, search das-pv2-dev-{your initials} , should be a service bus namespace.
 - Select Entities > Queues from the left hand navigation pane and create a new queue called `sfa-das-payments-requiredpayments-tests-specs`, with the default properties set.
-- Select Enitities > Topics from the left hand navigation pane and select the `bundle-1` topic
+- Select Entities > Topics from the left hand navigation pane and select the `bundle-1` topic
 - Create a new subscription called `sfa-das-payments-requiredpayments-tests-specs`. Tick the `Forward messages to queue/topic` checkbox and select the `sfa-das-payments-requiredpayments-tests-specs` queue from the list. 
 - Delete the default filter. 
 - Create a new filter with the following information:
