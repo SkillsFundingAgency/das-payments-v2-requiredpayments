@@ -428,21 +428,19 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await messagingContext.Send(message);
         }
 
-        [Then(@"1 payment line is generated for 'SFA co-investment' \(100%\)")]
+        [Then(@"the payment is fully funded by SFA \(100%\)")]
         public async Task ThenPaymentLineIsGeneratedForSfaCoInvestment()
         {
-            var events = await WaitForRequiredLevyPayments(1);
+            var events = await WaitForRequiredLevyPayments();
             Assert.That(events.Count, Is.EqualTo(1));
             Assert.That(events[0].SfaContributionPercentage, Is.EqualTo(1m));
         }
 
-        //Need to verify what it means by 2 payments lines - is it 2 separate events with the different contribution percentages, or a single event with the split contribution percentage?
-        [Then(@"2 payment lines are generated split between 'SFA co-investment' \(95%\) and 'Employer co-investment' \(5%\)")]
+        [Then(@"the payment funding is split between 'SFA co-investment' \(95%\) and 'Employer co-investment' \(5%\)")]
         public async Task ThenPaymentLinesAreGeneratedSplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
         {
 
-            var events = await WaitForRequiredLevyPayments(2);
-            Console.WriteLine(events.Count);
+            var events = await WaitForRequiredLevyPayments();
             Assert.That(events.Count, Is.EqualTo(1));
             
             var requiredPayment = events.Single();
@@ -454,7 +452,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
         }
 
-        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments(int expectedPaymentLines)
+        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
         {
             var expectedTransactionType = onProgrammeEarningType switch
             {
@@ -466,8 +464,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 
             await testSession.WaitForIt(
                 () => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
-                    .Count(ev => ev.TransactionType == expectedTransactionType) == expectedPaymentLines,
-                $"Failed to find expected number of levy required payment events. Expected: {expectedPaymentLines}");
+                    .Any(ev => ev.TransactionType == expectedTransactionType),
+                "Failed to find levy required payment event");
 
             return RequiredLevyPaymentsHandler
                 .GetEvents(testSession.Learner)

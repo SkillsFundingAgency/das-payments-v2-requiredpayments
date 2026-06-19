@@ -7,7 +7,7 @@ And the learning start date is on or after 1 August 2026
 And the learner is aged between 16 and 21 on the start date
 And the transaction type is a <transactionType> payment
 When the ILR is submitted
-Then 1 payment line is generated for 'SFA co-investment' (100%)
+Then the payment is fully funded by SFA (100%)
 
 Examples:
 | transactionType |
@@ -22,7 +22,7 @@ And the learning start date is on or after 1 August 2026
 And the learner is aged between 22 and 24 on the start date
 And the transaction type is a <transactionType> payment
 When the ILR is submitted
-Then 1 payment line is generated for 'SFA co-investment' (100%)
+Then the payment is fully funded by SFA (100%)
 
 Examples:
 | transactionType |
@@ -37,7 +37,7 @@ And the learning start date is before 1 August 2026 and after 1 Apr 2024
 And the learner is aged between 22 and 24 on the start date
 And the transaction type is a <transactionType> payment
 When the ILR is submitted
-Then 2 payment lines are generated split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
+Then the payment funding is split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
 
 Examples:
 | transactionType |
@@ -52,7 +52,7 @@ And the learning start date is on or after 1 August 2026
 And the learner is aged 25 or over on the start date
 And the transaction type is a <transactionType> payment
 When the ILR is submitted
-Then 2 payment lines are generated split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
+Then the payment funding is split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
 Examples:
 | transactionType |
 | Learning        |
@@ -66,7 +66,7 @@ And the learning start date is before 1 August 2026
 And the learner is aged 25 or over on the start date
 And the transaction type is a <transactionType> payment
 When the ILR is submitted
-Then 2 payment lines are generated split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
+Then the payment funding is split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
 Examples:
 | transactionType |
 | Learning        |
