@@ -431,7 +431,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [Then(@"1 payment line is generated for 'SFA co-investment' \(100%\)")]
         public async Task ThenPaymentLineIsGeneratedForSfaCoInvestment()
         {
-            var events = await WaitForRequiredLevyPayments();
+            var events = await WaitForRequiredLevyPayments(1);
             Assert.That(events.Count, Is.EqualTo(1));
             Assert.That(events[0].SfaContributionPercentage, Is.EqualTo(1m));
         }
@@ -441,7 +441,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public async Task ThenPaymentLinesAreGeneratedSplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
         {
 
-            var events = await WaitForRequiredLevyPayments();
+            var events = await WaitForRequiredLevyPayments(2);
+            Console.WriteLine(events.Count);
             Assert.That(events.Count, Is.EqualTo(1));
             
             var requiredPayment = events.Single();
@@ -453,7 +454,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
         }
 
-        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
+        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments(int expectedPaymentLines)
         {
             var expectedTransactionType = onProgrammeEarningType switch
             {
@@ -462,10 +463,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 OnProgrammeEarningType.Balancing => TransactionType.Balancing,
                 _ => throw new ArgumentOutOfRangeException(nameof(onProgrammeEarningType), onProgrammeEarningType, "Unsupported on-programme earning type for transaction type")
             };
+
             await testSession.WaitForIt(
                 () => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
-                    .Any(ev => ev.TransactionType == expectedTransactionType),
-                "Failed to find levy required payment event");
+                    .Count(ev => ev.TransactionType == expectedTransactionType) == expectedPaymentLines,
+                $"Failed to find expected number of levy required payment events. Expected: {expectedPaymentLines}");
 
             return RequiredLevyPaymentsHandler
                 .GetEvents(testSession.Learner)

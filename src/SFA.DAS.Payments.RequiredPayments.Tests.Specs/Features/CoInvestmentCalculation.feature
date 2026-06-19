@@ -1,4 +1,4 @@
-Feature: CoInvestmentCalculation
+Feature: PV2-4063 SFA Funding for Non‑Levy Employers With Apprentices
 
 
 Scenario Outline: Non-levy employer - Fully funded from co-investment - Start date on or after 1st August - Learner under 22yrs (regression)
