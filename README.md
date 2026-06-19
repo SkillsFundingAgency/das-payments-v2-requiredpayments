@@ -24,6 +24,28 @@ Setup instructions can be found at the following link, which will help you set u
 
 Select the configuration for the Required Payments application
 
+
+## How to run the specs project
+
+In order to run SFA.DAS.Payments.RequiredPayments.Tests.Specs successfully you will need the following:
+
+Within the project:
+- Within SFA.DAS.Payments.RequiredPayments.Tests.Specs create a file called appSettings.local.Json. Copy and paste the contents of appSettings.json into this file and populate the following values: 
+StorageConnectionString, ServiceBusConnectionString and PaymentsConnectionString.
+
+On the Azure Portal:
+- Go to https://portal.azure.com/#home or https://portal.azure.com/#browse/Microsoft.ServiceBus%2Fnamespaces, search das-pv2-dev-{your initials} , should be a service bus namespace.
+- Towards the bottom of the page, beneath requests, there should be a table containing Queues and Topics, select Topics and then select bundle-1
+- Towards the bottom of the page, beneath metrics, there should be a table titled subscriptions, type in sfa-das-payments-requiredpayments-tests-specs and select it. 
+- Delete the default filter. 
+- Create a new filter with the following information:
+	Name: specs
+	Filter Type: SQL Filter
+	SQL: [NServiceBus.EnclosedMessageTypes] LIKE 'SFA.DAS.Payments.RequiredPayments.Messages%'
+
+After the following have been done, within the IDE, run (without debugging) SFA.DAS.Payments.RequiredPayments.ServiceFabric
+
+
 ## 🔗 External Dependencies
 
 N/A
