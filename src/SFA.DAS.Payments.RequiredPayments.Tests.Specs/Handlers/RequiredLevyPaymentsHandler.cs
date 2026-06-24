@@ -14,6 +14,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers
         public static ConcurrentBag<CalculatedRequiredLevyAmount> ReceivedEvents { get; } = new ConcurrentBag<CalculatedRequiredLevyAmount>();       
         public Task Handle(CalculatedRequiredLevyAmount message, IMessageHandlerContext context)
         {
+            Console.WriteLine($"Received required payment: {message.Ukprn}, {message.Learner.Uln}, {message.CollectionPeriod.AcademicYear}-{message.CollectionPeriod.Period}, {message.AmountDue}, {message.GetType().FullName}");
             ReceivedEvents.Add(message);
             return Task.CompletedTask;
         }
