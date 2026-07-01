@@ -7,5 +7,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     public interface IPeriodisedRequiredPaymentEvent : IPeriodisedPaymentEvent, IRequiredPaymentEvent
     {
         Guid EarningEventId { get; }
+        Guid? ExternalEarningsId { get; }
     }
 }
