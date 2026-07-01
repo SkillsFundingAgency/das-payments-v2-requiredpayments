@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AutoMapper;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
@@ -25,6 +26,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(dest => dest.Priority, opt => opt.Ignore())
                 .ForMember(dest => dest.AgeAtStartOfLearning, opt => opt.Ignore())
                 .ForMember(dest => dest.CourseType, opt => opt.Ignore())
+                .ForMember(dest => dest.ExternalEarningsId, opt => opt.Ignore())
 
                 .ForMember(dest => dest.AgreementId, opt => opt.MapFrom(s => s.AgreementId))
                 .ForMember(dest => dest.AmountDue, opt => opt.MapFrom(s => s.Amount))
@@ -105,6 +107,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Include<IEarningEvent, CalculatedRequiredIncentiveAmount>()
                 .ForMember(requiredPayment => requiredPayment.EarningEventId,
                     opt => opt.MapFrom(earning => earning.EventId))
+                .ForMember(requiredPayment => requiredPayment.ExternalEarningsId,
+                    opt => opt.MapFrom(earning => GetExternalEarningsId(earning)))
                 .ForMember(requiredPayment => requiredPayment.AmountDue, opt => opt.Ignore())
                 .ForMember(requiredPayment => requiredPayment.DeliveryPeriod, opt => opt.Ignore())
                 .ForMember(requiredPayment => requiredPayment.PriceEpisodeIdentifier, opt => opt.Ignore())
@@ -287,6 +291,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(requiredPayment => requiredPayment.ApprenticeshipPriceEpisodeId, opt => opt.MapFrom(period => period.ApprenticeshipPriceEpisodeId))
                 //.ForAllOtherMembers(opt => opt.Ignore()) - Method deprecated. Use explicit Ignore()
                 .Ignore(x => x.EarningEventId)
+                .Ignore(x => x.ExternalEarningsId)
                 .Ignore(x => x.ClawbackSourcePaymentEventId)
                 .Ignore(x => x.AmountDue)
                 .Ignore(x => x.ContractType)
@@ -351,6 +356,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.AccountId, opt => opt.MapFrom(x => x.AccountId))
                 .ForMember(x => x.TransferSenderAccountId, opt => opt.MapFrom(x => x.TransferSenderAccountId))
                 .Ignore(x => x.EarningEventId)
+                .Ignore(x => x.ExternalEarningsId)
                 .Ignore(x => x.DeliveryPeriod)
                 .Ignore(x => x.JobId)
                 .Ignore(x => x.EventTime)
@@ -414,6 +420,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.EventId)
                 .Ignore(x => x.AmountDue)
                 .Ignore(x => x.EarningEventId)
+                .Ignore(x => x.ExternalEarningsId)
                 .Ignore(x => x.AccountId)
                 .Ignore(x => x.PriceEpisodeIdentifier)
                 .Ignore(x => x.DeliveryPeriod)
@@ -477,6 +484,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.EventId)
                 .Ignore(x => x.AmountDue)
                 .Ignore(x => x.EarningEventId)
+                .Ignore(x => x.ExternalEarningsId)
                 .Ignore(x => x.JobId)
                 .Ignore(x => x.EventTime)
                 .Ignore(x => x.LearningAim)
@@ -561,5 +569,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
             // End Required Payment --> RequiredPaymentEvent
 
         }
+
+        private static Guid? GetExternalEarningsId(IEarningEvent earning) =>
+            earning is GSLShortCourseEarningsEvent shortCourseEarning
+                ? shortCourseEarning.ExternalEarningsId
+                : null;
     }
 }
