@@ -247,6 +247,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             requiredPayment.ContractType = ContractType.Act1;
             requiredPayment.Learner = earningEvent.Learner;
             requiredPayment.EarningEventId = earningEvent.EventId;
+            requiredPayment.ExternalEarningsId = earningEvent.ExternalEarningsId;
             requiredPayment.AmountDue = period.Amount;
             requiredPayment.DeliveryPeriod = period.Period;
             requiredPayment.StartDate = priceEpisode.StartDate;
