@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Reqnroll;
+using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
@@ -17,6 +18,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private readonly TestSession testSession;
         private CollectionPeriod collectionPeriod;
         private short currentAcademicYear;
+        private GSLShortCourseEarningsEvent shortCourseEarningsEvent;
+        private Guid expectedExternalEarningsId;
+        private static readonly Guid ShortCourseExternalEarningsId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -308,6 +312,94 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public async Task ThenTheServiceShouldAllowPaymentOfTheCompletionPayment()
         {
             await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
+        }
+
+        [Given("a short course earnings event with an external earnings id")]
+        public void GivenAShortCourseEarningsEventWithAnExternalEarningsId()
+        {
+            expectedExternalEarningsId = ShortCourseExternalEarningsId;
+            shortCourseEarningsEvent = new GSLShortCourseEarningsEvent
+            {
+                EventId = Guid.NewGuid(),
+                FundingPlatformType = FundingPlatformType.DigitalApprenticeshipService,
+                ExternalEarningsId = expectedExternalEarningsId,
+                JobId = testSession.JobId,
+                Ukprn = testSession.Provider.Ukprn,
+                CollectionPeriod = new CollectionPeriod
+                {
+                    AcademicYear = currentAcademicYear,
+                    Period = 1
+                },
+                EventTime = DateTimeOffset.UtcNow,
+                IlrSubmissionDateTime = DateTime.Now,
+                AgeAtStartOfLearning = 19,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                LearningAim = new LearningAim
+                {
+                    Reference = testSession.Learner.Course.Reference,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    PathwayCode = testSession.Learner.Course.PathwayCode,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FrameworkCode = testSession.Learner.Course.FrameworkCode,
+                    SequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                    FundingLineType = testSession.Learner.Course.FundingLineType,
+                    StartDate = testSession.Learner.Course.LearningStartDate,
+                    LearningType = LearningType.ApprenticeshipUnit
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        Identifier = "PE-1",
+                        LearningAimSequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                        FundingLineType = testSession.Learner.Course.FundingLineType,
+                        StartDate = testSession.Learner.Course.LearningStartDate,
+                        PlannedEndDate = testSession.Learner.Course.LearningPlannedEndDate.GetValueOrDefault(),
+                        CompletionAmount = 1000m,
+                        InstalmentAmount = 300m,
+                        NumberOfInstalments = 2,
+                        CourseStartDate = testSession.Learner.Course.LearningStartDate
+                    }
+                },
+                Earnings = new List<ShortCourseEarning>
+                {
+                    new ShortCourseEarning
+                    {
+                        Type = ShortCourseEarningType.Milestone1,
+                        Periods = new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Period = 1,
+                                Amount = 300m,
+                                PriceEpisodeIdentifier = "PE-1",
+                                AccountId = 1,
+                                ApprenticeshipId = 1,
+                                ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        [When("the short course earnings event is processed")]
+        public async Task WhenTheShortCourseEarningsEventIsReceived()
+        {
+            await messagingContext.Send(shortCourseEarningsEvent);
+
+        }
+
+        [Then("the published required payment event should have the same external earnings id")]
+        public async Task ThenAllPublishedRequiredPaymentEventsShouldHaveTheSameExternalEarningsId()
+        {
+
+            await testSession.WaitForIt(() => PeriodisedRequiredPaymentEventHandler.GetEvents(testSession.Learner).Any(ev => ev.ExternalEarningsId == shortCourseEarningsEvent.ExternalEarningsId), "Failed to find any required payment events with the expected ExternalEarningsId");
+
         }
     }
 }
