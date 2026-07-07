@@ -317,6 +317,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
         }
 
+        [Given("a Levy employer with an Apprentice")]
+        public void GivenALevyEmployerWithAnApprentice()
+        {
+            testSession.Learner.IsLevyLearner = true;
+        }
+
         [Given("a Non-levy employer with an Apprentice")]
         public void GivenANonLevyEmployerWithAnApprentice()
         {
@@ -327,6 +333,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void GivenTheLearningStartDateIsOnOrAfter1August2026()
         {
             ilrLearningStartDate = new DateTime(2026, 8, 1);
+        }
+
+        [Given("the Levy Employer has insufficient balance")]
+        public void GivenTheLevyEmployerHasInsufficientBalance()
+        {
         }
 
         [Given("the learning start date is before 1 August 2026")]
@@ -349,6 +360,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             ageAtStartOfLearning = 25;
         }
 
+        [Given("the learner is aged under 25")]
+        [Given("the learner is aged under 25 on the start date")]
+        public void GivenTheLearnerIsAgedUnder25()
+        {
+            ageAtStartOfLearning = 24;
+        }
         [Given("the transaction type is a {word} payment")]
         public void GivenTheTransactionTypeIsAPayment(string transactionType)
         {
@@ -363,6 +380,70 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             onProgrammeEarningType = parsedOnProgrammeEarningType;
         }
 
+
+        [When("the ILR is submitted - Levy")]
+        public async Task WhenTheIlrIsSubmittedLevy()
+        {
+            testSession.Learner.Course.LearningStartDate = ilrLearningStartDate;
+
+            var message = new PayableEarningEvent
+            {
+                CollectionPeriod = new CollectionPeriod { AcademicYear = currentAcademicYear, Period = 1 },
+                CollectionYear = currentAcademicYear,
+                Ukprn = testSession.Provider.Ukprn,
+                JobId = testSession.JobId,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                StartDate = ilrLearningStartDate,
+                IlrSubmissionDateTime = DateTime.Now,
+                AgeAtStartOfLearning = ageAtStartOfLearning,
+                LearningAim = new LearningAim
+                {
+                    Reference = testSession.Learner.Course.Reference,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FundingLineType = "19+ Apprenticeship Levy Contract",
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        Identifier = "pe-1",
+                        LearningAimSequenceNumber = 1,
+                        NumberOfInstalments = 12,
+                        InstalmentAmount = 100,
+                        CompletionAmount = 1200,
+                        CompletionHoldBackExemptionCode = 0,
+                        EmployerContribution = 0,
+                        FundingLineType = "19+ Apprenticeship Levy Contract",
+                    }
+                },
+                OnProgrammeEarnings = new List<OnProgrammeEarning>
+                {
+                    new OnProgrammeEarning
+                    {
+                        Type = onProgrammeEarningType,
+                        Periods = new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Amount = 100,
+                                SfaContributionPercentage = 0.95m,
+                                Period = 1,
+                                PriceEpisodeIdentifier = "pe-1",
+                                ApprenticeshipId = 12345,
+                                ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                            },
+                        }.AsReadOnly(),
+                    }
+                },
+            };
+
+            await messagingContext.Send(message);
+        }
 
         [When("the ILR is submitted")]
         public async Task WhenTheIlrIsSubmitted()

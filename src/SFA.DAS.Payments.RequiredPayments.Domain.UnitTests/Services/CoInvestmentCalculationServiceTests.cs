@@ -99,7 +99,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
         [Test]
         [TestCase(ApprenticeshipEmployerType.Levy, 0.95)]
-        public void ProcessPeriodsForRecalculation_Should_Not_Override_CoInvestmentRate_For_Levy_Employers(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
+        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
         {
             payableEvent.StartDate = FundingRules2024EligibilityDate;
             payableEvent.AgeAtStartOfLearning = 21;
@@ -110,7 +110,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
 
-            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(fundingPercentage);
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(1.0m);
         }
 
         [Test]
@@ -160,7 +160,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(expectedFundingPercentage);
         }
 
+        [Test]
+        [TestCase(ApprenticeshipEmployerType.Levy, 0.95, 1)]
+        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_Starting_After_1st_August_2026_Who_Are_Younger_Than_25(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage, decimal? expectedFundingPercentage)
+        {
+            payableEvent.StartDate = FundingRules2026EligibilityDate;
+            payableEvent.AgeAtStartOfLearning = 24;
+            var periods = new List<(EarningPeriod period, int type)>
+            {
+                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = apprenticeshipEmployerType, SfaContributionPercentage = fundingPercentage} , 1)
+            };
 
+            var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
 
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(expectedFundingPercentage);
+        }
     }
 }

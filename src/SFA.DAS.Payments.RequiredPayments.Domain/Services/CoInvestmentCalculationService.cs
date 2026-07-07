@@ -49,10 +49,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
                     if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
 
-                    if (earningPeriod.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.NonLevy)
-                    {
-                        earningPeriod.period.SfaContributionPercentage = new decimal(1.0);
-                    }
+                    earningPeriod.period.SfaContributionPercentage = new decimal(1.0);
+                    
                 }
             }
 
