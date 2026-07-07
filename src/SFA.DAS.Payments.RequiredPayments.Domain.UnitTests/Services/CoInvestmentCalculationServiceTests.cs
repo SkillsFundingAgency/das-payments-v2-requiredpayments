@@ -99,9 +99,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
         [Test]
         [TestCase(ApprenticeshipEmployerType.Levy, 0.95)]
-        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
+        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_2024_Eligibility(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
         {
             payableEvent.StartDate = FundingRules2024EligibilityDate;
+            payableEvent.AgeAtStartOfLearning = 21;
+            var periods = new List<(EarningPeriod period, int type)>
+            {
+                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = apprenticeshipEmployerType, SfaContributionPercentage = fundingPercentage} , 1)
+            };
+
+            var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
+
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(1.0m);
+        }
+
+        [Test]
+        [TestCase(ApprenticeshipEmployerType.Levy, 0.95)]
+        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_2026_Eligibility(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
+        {
+            payableEvent.StartDate = FundingRules2026EligibilityDate;
             payableEvent.AgeAtStartOfLearning = 21;
             var periods = new List<(EarningPeriod period, int type)>
             {
