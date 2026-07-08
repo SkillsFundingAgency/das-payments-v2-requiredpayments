@@ -11,7 +11,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
     public interface ICoInvestmentCalculationService
     {
-        bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent);
+        bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods);
 
         IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent,
             IReadOnlyCollection<(EarningPeriod period, int type)> periods);
@@ -24,10 +24,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
         public static readonly DateTime FundingRules2024EligibilityDate = new(2024, 4, 1);
         public static readonly DateTime FundingRules2026EligibilityDate = new(2026, 8, 1);
 
-        public bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent)
+        public bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
         {
             if (payableEarningEvent.AgeAtStartOfLearning is null) return false;
 
+            // If the earning event is for a levy employer and the start date is before the 2026 eligibility date, it is not eligible for recalculation.
+            if (periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy) && payableEarningEvent.StartDate < FundingRules2026EligibilityDate)
+            {
+                return false;
+            }
             var meets2024EligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
                                     && payableEarningEvent.AgeAtStartOfLearning < FundingRules2024AgeThreshold;
 
@@ -39,7 +44,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
         public IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
         {
-            var requiresRecalculation = IsEligibleForRecalculation(earningEvent);
+            var requiresRecalculation = IsEligibleForRecalculation(earningEvent, periods);
 
             if (requiresRecalculation)
             {
