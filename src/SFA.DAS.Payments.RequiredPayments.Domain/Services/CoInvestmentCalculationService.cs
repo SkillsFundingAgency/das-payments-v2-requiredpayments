@@ -29,7 +29,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
             if (payableEarningEvent.AgeAtStartOfLearning is null) return false;
 
             // If the earning event is for a levy employer and the start date is before the 2026 eligibility date, it is not eligible for recalculation.
-            if (periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy) && payableEarningEvent.StartDate < FundingRules2026EligibilityDate)
+            if (payableEarningEvent.StartDate < FundingRules2026EligibilityDate && periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy))
             {
                 return false;
             }
