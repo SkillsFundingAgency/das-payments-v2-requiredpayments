@@ -11,7 +11,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
     public interface ICoInvestmentCalculationService
     {
-        bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods);
+        (bool, decimal) IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods);
 
         IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent,
             IReadOnlyCollection<(EarningPeriod period, int type)> periods);
@@ -24,27 +24,37 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
         public static readonly DateTime FundingRules2024EligibilityDate = new(2024, 4, 1);
         public static readonly DateTime FundingRules2026EligibilityDate = new(2026, 8, 1);
 
-        public bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
+        public (bool, decimal) IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent,
+            IReadOnlyCollection<(EarningPeriod period, int type)> periods)
         {
-            if (payableEarningEvent.AgeAtStartOfLearning is null) return false;
+            if (payableEarningEvent.AgeAtStartOfLearning is null) return (false, 0);
 
             // If the earning event is for a levy employer and the start date is before the 2026 eligibility date, it is not eligible for recalculation.
-            if (payableEarningEvent.StartDate < FundingRules2026EligibilityDate && periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy))
+            if (periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy) &&
+                payableEarningEvent.StartDate < FundingRules2026EligibilityDate)
             {
-                return false;
+                return (false, 0);
             }
-            var meets2024EligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
-                                    && payableEarningEvent.AgeAtStartOfLearning < FundingRules2024AgeThreshold;
 
-            var meets2026EligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2026EligibilityDate
-                                    && payableEarningEvent.AgeAtStartOfLearning < FundingRules2026AgeThreshold;
+            var meets2024FullEligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
+                                               && payableEarningEvent.AgeAtStartOfLearning <
+                                               FundingRules2024AgeThreshold;
 
-            return meets2024EligibilityCriteria || meets2026EligibilityCriteria;
+            var meets2026FullEligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2026EligibilityDate
+                                               && payableEarningEvent.AgeAtStartOfLearning <
+                                               FundingRules2026AgeThreshold;
+
+            if (meets2024FullEligibilityCriteria || meets2026FullEligibilityCriteria)
+            {
+                return (true, new decimal(1.0));
+            }
+
+            return (false, 0);
         }
 
         public IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
         {
-            var requiresRecalculation = IsEligibleForRecalculation(earningEvent, periods);
+            var (requiresRecalculation, sfaContributionPercentage) = IsEligibleForRecalculation(earningEvent, periods);
 
             if (requiresRecalculation)
             {
@@ -54,7 +64,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
                     if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
 
-                    earningPeriod.period.SfaContributionPercentage = new decimal(1.0);
+                    earningPeriod.period.SfaContributionPercentage = sfaContributionPercentage;
                     
                 }
             }
