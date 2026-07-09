@@ -117,7 +117,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
         [Test]
         [TestCase("2026/08/01", 21, true, 1.0)]
         [TestCase("2026/07/31", 25, false, 0.95)]
-        [TestCase("2026/08/01", 25, true, 0.25)]
+        [TestCase("2026/08/01", 25, true, 0.75)]
         public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_2026_Eligibility(DateTime eventStartDate, int ageAtStartOfLearning, bool requiresRecalc, double expectedFundingPercentage)
         {
             decimal sfaContrib = (decimal)expectedFundingPercentage;
