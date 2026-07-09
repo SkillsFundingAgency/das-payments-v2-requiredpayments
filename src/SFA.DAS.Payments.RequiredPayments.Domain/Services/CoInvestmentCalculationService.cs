@@ -48,6 +48,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                 return (true, new decimal(1.0));
             }
 
+            //If date after 1/8/26 & learner is 25 or over, return true, 0.75
+            if (payableEarningEvent.StartDate >= FundingRules2026EligibilityDate && payableEarningEvent.AgeAtStartOfLearning >= FundingRules2026AgeThreshold)
+            {
+                return (true, new decimal(0.75));
+            }
+
             return (false, 0);
         }
 
