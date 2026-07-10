@@ -44,3 +44,34 @@ Examples:
 | Learning        |
 | Completion      |
 | Balancing       |
+
+
+Scenario Outline: Levy employer with zero balance - Fully funded from co-investment - Start date on or after 1st August
+Given a Levy employer with an Apprentice
+And the Levy Employer has zero balance
+And the learning start date is on or after 1 August 2026
+And the learner is aged 25 or over on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted - Levy
+Then the payment funding is split between 'SFA co-investment' (75%) and 'Employer co-investment' (25%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |
+
+Scenario Outline: Levy employer with insufficient balance - Part funded from co-investment - Start date on or after 1st August
+Given a Levy employer with an Apprentice
+And the Levy Employer has insufficient balance
+And the learning start date is on or after 1 August 2026
+And the learner is aged 25 or over on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted - Levy
+Then the payment funding is split between 'SFA co-investment' (75%) and 'Employer co-investment' (25%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |

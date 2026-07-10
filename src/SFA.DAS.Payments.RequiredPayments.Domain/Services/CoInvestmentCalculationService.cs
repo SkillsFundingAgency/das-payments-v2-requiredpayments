@@ -51,7 +51,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
             //If date after 1/8/26 & learner is 25 or over, return true, 0.75
             if (payableEarningEvent.StartDate >= FundingRules2026EligibilityDate && payableEarningEvent.AgeAtStartOfLearning >= FundingRules2026AgeThreshold)
             {
-                return (true, new decimal(0.75));
+                //If Levy
+                if (periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy))
+                {
+                    return (true, new decimal(0.75));
+                }
             }
 
             return (false, 0);
