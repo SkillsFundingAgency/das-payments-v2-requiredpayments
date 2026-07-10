@@ -336,6 +336,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [Given("the Levy Employer has insufficient balance")]
+        [Given("the Levy Employer has zero balance")]
         public void GivenTheLevyEmployerHasInsufficientBalance()
         {
         }
@@ -518,7 +519,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [Then(@"the payment funding is split between 'SFA co-investment' \(95%\) and 'Employer co-investment' \(5%\)")]
-        public async Task ThenPaymentLinesAreGeneratedSplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
+        public async Task ThenPaymentLinesAreGenerated95SplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
         {
 
             var events = await WaitForRequiredLevyPayments();
@@ -531,6 +532,22 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             var employerAmount = requiredPayment.AmountDue - sfaAmount;
             Assert.That(sfaAmount, Is.EqualTo(95m));
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
+        }
+
+        [Then(@"the payment funding is split between 'SFA co-investment' \(75%\) and 'Employer co-investment' \(25%\)")]
+        public async Task ThenPaymentLinesAreGenerated75SplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+
+            var requiredPayment = events.Single();
+            Assert.That(requiredPayment.SfaContributionPercentage, Is.EqualTo(0.75m));
+
+            var sfaAmount = requiredPayment.AmountDue * requiredPayment.SfaContributionPercentage;
+            var employerAmount = requiredPayment.AmountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(75m));
+            Assert.That(employerAmount, Is.EqualTo(25m));
         }
 
         private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
