@@ -75,3 +75,18 @@ Examples:
 | Learning        |
 | Completion      |
 | Balancing       |
+
+Scenario Outline: Change from Non- Levy Employer to Levy Employer  - Start date on /after August 1 2026
+Given an apprentice changes from a Non-Levy to a Levy employer
+And the Levy Employer has insufficient balance
+And the learning start date is on or after 1 August 2026
+And the learner is aged 25 or over on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted - Levy
+Then then two payments are generated for 'Non-Levy' (95%) and 'Levy' (75%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |
