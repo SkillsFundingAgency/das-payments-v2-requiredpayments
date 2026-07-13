@@ -70,7 +70,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
                 if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
 
-                //Loop go here and set the SFA contribution percentage for each period
                 earningPeriod.period.SfaContributionPercentage = CalculateSfaContributionPercentage(earningEvent, earningPeriod.period.ApprenticeshipEmployerType);
                 
             }
