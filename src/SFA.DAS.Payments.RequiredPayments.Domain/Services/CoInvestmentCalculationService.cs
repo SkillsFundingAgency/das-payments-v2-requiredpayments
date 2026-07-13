@@ -49,7 +49,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                 return new decimal(1.0);
             }
 
-            //If date after 1/8/26 & learner is 25 or over, return true, 0.75
+            //If date after 1/8/26 & learner is 25 or over, and the employer is a levy employer, set contribution to 75%
             if (payableEarningEvent.StartDate >= FundingRules2026EligibilityDate && payableEarningEvent.AgeAtStartOfLearning >= FundingRules2026AgeThreshold)
             {
                 //If Levy
