@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NUnit.Framework;
 using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
+using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
@@ -17,6 +19,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private readonly TestSession testSession;
         private CollectionPeriod collectionPeriod;
         private short currentAcademicYear;
+        private DateTime ilrLearningStartDate;
+        private int ageAtStartOfLearning;
+        private OnProgrammeEarningType onProgrammeEarningType;
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -34,6 +39,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void BeforeScenario()
         {
             SetCurrentCollectionYear();
+            ageAtStartOfLearning = 21;
+            onProgrammeEarningType = OnProgrammeEarningType.Learning;
             Console.WriteLine($"UKPRN : {testSession.Provider.Ukprn}, ULN: {testSession.Learner.Uln}, collection year: {currentAcademicYear}");
         }
 
@@ -308,6 +315,163 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public async Task ThenTheServiceShouldAllowPaymentOfTheCompletionPayment()
         {
             await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
+        }
+
+        [Given("a Non-levy employer with an Apprentice")]
+        public void GivenANonLevyEmployerWithAnApprentice()
+        {
+            testSession.Learner.IsLevyLearner = false;
+        }
+
+        [Given("the learning start date is on or after 1 August 2026")]
+        public void GivenTheLearningStartDateIsOnOrAfter1August2026()
+        {
+            ilrLearningStartDate = new DateTime(2026, 8, 1);
+        }
+
+        [Given("the learning start date is before 1 August 2026")]
+        [Given("the learning start date is before 1 August 2026 and after 1 Apr 2024")]
+        public void GivenTheLearningStartDateIsBefore1August2026AndAfter1Apr2024()
+        {
+            ilrLearningStartDate = new DateTime(2026, 7, 31);
+        }
+
+        // The actual number needs to be decided
+        [Given(@"the learner is aged between (\d+) and (\d+) on the start date")]
+        public void GivenTheLearnerIsAgedBetweenOnTheStartDate(int minimumAge, int maximumAge)
+        {
+            ageAtStartOfLearning = maximumAge;
+        }
+
+        [Given("the learner is aged 25 or over on the start date")]
+        public void GivenTheLearnerIsAged25OrOverOnTheStartDate()
+        {
+            ageAtStartOfLearning = 25;
+        }
+
+        [Given("the transaction type is a {word} payment")]
+        public void GivenTheTransactionTypeIsAPayment(string transactionType)
+        {
+            if (!Enum.TryParse(transactionType, true, out OnProgrammeEarningType parsedOnProgrammeEarningType) ||
+                parsedOnProgrammeEarningType is not (OnProgrammeEarningType.Learning
+                    or OnProgrammeEarningType.Completion
+                    or OnProgrammeEarningType.Balancing))
+            {
+                Assert.Fail($"Unsupported transaction type: {transactionType}");
+            }
+
+            onProgrammeEarningType = parsedOnProgrammeEarningType;
+        }
+
+
+        [When("the ILR is submitted")]
+        public async Task WhenTheIlrIsSubmitted()
+        {
+            testSession.Learner.Course.LearningStartDate = ilrLearningStartDate;
+
+            var message = new PayableEarningEvent
+            {
+                CollectionPeriod = new CollectionPeriod { AcademicYear = currentAcademicYear, Period = 1 },
+                CollectionYear = currentAcademicYear,
+                Ukprn = testSession.Provider.Ukprn,
+                JobId = testSession.JobId,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                StartDate = ilrLearningStartDate,
+                IlrSubmissionDateTime = DateTime.Now,
+                AgeAtStartOfLearning = ageAtStartOfLearning,
+                LearningAim = new LearningAim
+                {
+                    Reference = testSession.Learner.Course.Reference,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        Identifier = "pe-1",
+                        LearningAimSequenceNumber = 1,
+                        NumberOfInstalments = 12,
+                        InstalmentAmount = 100,
+                        CompletionAmount = 1200,
+                        CompletionHoldBackExemptionCode = 0,
+                        EmployerContribution = 0,
+                        FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                    }
+                },
+                OnProgrammeEarnings = new List<OnProgrammeEarning>
+                {
+                    new OnProgrammeEarning
+                    {
+                        Type = onProgrammeEarningType,
+                        Periods = new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Amount = 100,
+                                SfaContributionPercentage = 0.95m,
+                                Period = 1,
+                                PriceEpisodeIdentifier = "pe-1",
+                                ApprenticeshipId = 12345,
+                                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                            },
+                        }.AsReadOnly(),
+                    }
+                },
+            };
+
+            await messagingContext.Send(message);
+        }
+
+        [Then(@"the payment is fully funded by SFA \(100%\)")]
+        public async Task ThenPaymentLineIsGeneratedForSfaCoInvestment()
+        {
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+            Assert.That(events[0].SfaContributionPercentage, Is.EqualTo(1m));
+        }
+
+        [Then(@"the payment funding is split between 'SFA co-investment' \(95%\) and 'Employer co-investment' \(5%\)")]
+        public async Task ThenPaymentLinesAreGeneratedSplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+            
+            var requiredPayment = events.Single();
+            Assert.That(requiredPayment.SfaContributionPercentage, Is.EqualTo(0.95m));
+
+            var sfaAmount = requiredPayment.AmountDue * requiredPayment.SfaContributionPercentage;
+            var employerAmount = requiredPayment.AmountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(95m));
+            Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
+        }
+
+        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
+        {
+            var expectedTransactionType = onProgrammeEarningType switch
+            {
+                OnProgrammeEarningType.Learning => TransactionType.Learning,
+                OnProgrammeEarningType.Completion => TransactionType.Completion,
+                OnProgrammeEarningType.Balancing => TransactionType.Balancing,
+                _ => throw new ArgumentOutOfRangeException(nameof(onProgrammeEarningType), onProgrammeEarningType, "Unsupported on-programme earning type for transaction type")
+            };
+
+            await testSession.WaitForIt(
+                () => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
+                    .Any(ev => ev.TransactionType == expectedTransactionType),
+                "Failed to find levy required payment event");
+
+            return RequiredLevyPaymentsHandler
+                .GetEvents(testSession.Learner)
+                .Where(ev => ev.TransactionType == expectedTransactionType)
+                .Select(ev => (ev.AmountDue, ev.SfaContributionPercentage))
+                .ToList();
         }
     }
 }
