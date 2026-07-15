@@ -4,9 +4,11 @@ using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
+using SFA.DAS.Payments.Model.Core.Audit;
 using SFA.DAS.Payments.Model.Core.Entities;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers;
+using UUIDNext;
 
 namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 {
@@ -20,7 +22,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private short currentAcademicYear;
         private GSLShortCourseEarningsEvent shortCourseEarningsEvent;
         private Guid expectedExternalEarningsId;
-        private static readonly Guid ShortCourseExternalEarningsId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        private static readonly Guid ShortCourseExternalEarningsIdOld = Uuid.NewDatabaseFriendly(Database.SqlServer);
+        private static readonly Guid ShortCourseExternalEarningsIdNew = Uuid.NewDatabaseFriendly(Database.SqlServer);
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -317,7 +320,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [Given("a short course earnings event with an external earnings id")]
         public void GivenAShortCourseEarningsEventWithAnExternalEarningsId()
         {
-            expectedExternalEarningsId = ShortCourseExternalEarningsId;
+            expectedExternalEarningsId = ShortCourseExternalEarningsIdOld;
             shortCourseEarningsEvent = new GSLShortCourseEarningsEvent
             {
                 EventId = Guid.NewGuid(),
@@ -401,5 +404,209 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await testSession.WaitForIt(() => PeriodisedRequiredPaymentEventHandler.GetEvents(testSession.Learner).Any(ev => ev.ExternalEarningsId == shortCourseEarningsEvent.ExternalEarningsId), "Failed to find any required payment events with the expected ExternalEarningsId");
 
         }
+
+
+        [Given("the following earnings have been received in collection period {byte}")]
+        public async Task GivenTheFollowingEarningsHaveBeenReceivedInCollectionPeriod(byte collectionPeriodValue, Table table)
+        {
+            foreach (var row in table.Rows)
+            {
+                byte parsedDeliveryPeriod = byte.Parse(row["Delivery Period"]);
+                int parsedAmount = int.Parse(row["Amount"]);
+                TransactionType parsedTransactionType = Enum.Parse<TransactionType>(row["Earning Type"]);
+
+                var learningStartDate = testSession.Learner.Course.LearningStartDate;
+                var plannedEndDate = testSession.Learner.Course.LearningPlannedEndDate ?? DateTime.Today.AddMonths(12);
+                const string fundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)";
+
+                testSession.DataContext.RequiredPaymentEvents.Add(new RequiredPaymentEventModel
+                {
+                    Ukprn = testSession.Provider.Ukprn,
+                    LearnerUln = testSession.Learner.Uln,
+                    ExternalEarningsId = ShortCourseExternalEarningsIdOld,
+                    CollectionPeriod = new CollectionPeriod
+                    {
+                        AcademicYear = currentAcademicYear,
+                        Period = collectionPeriodValue
+                    },
+                    DeliveryPeriod = parsedDeliveryPeriod,
+                    ContractType = ContractType.Act1,
+                    TransactionType = parsedTransactionType,
+                    LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
+                    LearningAimReference = testSession.Learner.Course.Reference,
+                    LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    LearningAimFrameworkCode = testSession.Learner.Course.FrameworkCode,
+                    LearningAimPathwayCode = testSession.Learner.Course.PathwayCode,
+                    LearningAimStandardCode = testSession.Learner.Course.StandardCode,
+                    LearningAimFundingLineType = fundingLineType,
+                    Amount = new decimal(parsedAmount),
+                    SfaContributionPercentage = 0.95m,
+                    IlrSubmissionDateTime = DateTime.Now,
+                    JobId = testSession.JobId,
+                    LearningStartDate = learningStartDate,
+                    StartDate = learningStartDate,
+                    PlannedEndDate = plannedEndDate,
+                    ActualEndDate = DateTime.Now,
+                    CompletionAmount = 3600m,
+                    InstalmentAmount = 300m,
+                    NumberOfInstalments = 7,
+                    CompletionStatus = 0,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                    ApprenticeshipId = 1,
+                    ApprenticeshipPriceEpisodeId = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    AgeAtStartOfLearning = 33,
+                    EventTime = DateTime.Now,
+                    EventId = Guid.NewGuid()
+                });
+            }
+            await testSession.DataContext.SaveChangesAsync();
+        }
+
+        [Given("the provider now reports that the learner actually withdrew from the course prior to completing")]
+        public void GivenTheProviderNowReportsThatTheLearnerActuallyWithdrewFromTheCoursePriorToCompleting()
+        {
+
+        }
+
+
+        [When("the following earnings are now generated with a new Earnings Identifier {byte}")]
+        public async Task WhenTheFollowingEarningsAreNowGeneratedWithANewEarningsIdentifier(byte collectionPeriodValue, Table table)
+        {
+
+            GSLShortCourseEarningsEvent withdrawalIlrSubmission = null;
+
+            foreach (var row in table.Rows)
+            {
+                byte parsedDeliveryPeriod = byte.Parse(row["Delivery Period"]);
+                int parsedAmount = int.Parse(row["Amount"]);
+                TransactionType parsedTransactionType = Enum.Parse<TransactionType>(row["Earning Type"]);
+
+                var learningStartDate = testSession.Learner.Course.LearningStartDate;
+                var plannedEndDate = testSession.Learner.Course.LearningPlannedEndDate ?? DateTime.Today.AddMonths(12);
+                const string fundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)";
+
+                var completionDate = DateTime.Now;
+                var withdrawalSubmissionDate = completionDate.AddSeconds(1);
+
+                withdrawalIlrSubmission = new GSLShortCourseEarningsEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    ExternalEarningsId = ShortCourseExternalEarningsIdNew,
+                    FundingPlatformType = FundingPlatformType.DigitalApprenticeshipService,
+                    CollectionPeriod = new CollectionPeriod()
+                    {
+                        AcademicYear = currentAcademicYear,
+                        Period = collectionPeriodValue
+                    },
+                    Ukprn = testSession.Provider.Ukprn,
+                    JobId = testSession.JobId,
+                    Learner = new SFA.DAS.Payments.Model.Core.Learner
+                    {
+                        Uln = testSession.Learner.Uln,
+                        ReferenceNumber = testSession.Learner.LearnRefNumber
+                    },
+                    IlrSubmissionDateTime = withdrawalSubmissionDate,
+                    AgeAtStartOfLearning = 33,
+                    LearningAim = new LearningAim
+                    {
+                        Reference = testSession.Learner.Course.Reference,
+                        FrameworkCode = testSession.Learner.Course.FrameworkCode,
+                        PathwayCode = testSession.Learner.Course.PathwayCode,
+                        ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                        StandardCode = testSession.Learner.Course.StandardCode,
+                        FundingLineType = fundingLineType,
+                        LearningType = LearningType.ApprenticeshipUnit,
+                        StartDate = learningStartDate
+                    },
+                    PriceEpisodes = new List<PriceEpisode>
+                    {
+                        new PriceEpisode
+                        {
+                            Identifier = "pe-1",
+                            TotalNegotiatedPrice1 = 17000,
+                            TotalNegotiatedPrice2 = 1000,
+                            AgreedPrice = 18000,
+                            StartDate = learningStartDate,
+                            PlannedEndDate = plannedEndDate,
+                            ActualEndDate = completionDate,
+                            NumberOfInstalments = 7,
+                            InstalmentAmount = 300,
+                            CompletionAmount = 3600,
+                            Completed = false,
+                            EmployerContribution = 900,
+                            CompletionHoldBackExemptionCode = 0,
+                            FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                        }
+                    },
+                    Earnings = new List<ShortCourseEarning>
+                    {
+                        new ShortCourseEarning
+                        {
+                            Type = (ShortCourseEarningType)parsedTransactionType,
+                            Periods = new List<EarningPeriod>
+                            {
+                                new EarningPeriod
+                                {
+                                    Amount = parsedAmount,
+                                    SfaContributionPercentage = 0.95m,
+                                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                                    Period = parsedDeliveryPeriod,
+                                    ApprenticeshipId = 1,
+                                    ApprenticeshipPriceEpisodeId = 1,
+                                    PriceEpisodeIdentifier = "pe-1",
+                                },
+                            }.AsReadOnly()
+                        }
+                    }
+                };
+            }
+
+            scenarioContext["shortCourseWithdrawalSubmission"] = withdrawalIlrSubmission;
+
+            await Task.CompletedTask;
+        }
+
+
+        [When("the funding transactions are processed")]
+        public async Task WhenTheFundingTransactionsAreProcessed()
+        {
+            if (!scenarioContext.TryGetValue("shortCourseWithdrawalSubmission", out GSLShortCourseEarningsEvent withdrawalSubmission)
+                || withdrawalSubmission == null)
+            {
+                throw new InvalidOperationException("Withdrawal submission was not found in scenario context.");
+            }
+
+            var messageJson = System.Text.Json.JsonSerializer.Serialize(withdrawalSubmission);
+            await messagingContext.Send<GSLShortCourseEarningsEvent>(messageJson);
+        }
+
+
+        [Then("the following required payments should be generated with the new Earnings identifier in collection period {byte}")]
+        public async Task ThenTheFollowingRequiredPaymentsShouldBeGeneratedWithTheNewEarningsIdentifierInCollectionPeriod(byte collectionPeriodValue, Table table)
+        {
+            var expectedCollectionPeriod = collectionPeriodValue;
+            var expectedEvents = table.Rows.Select(row => new
+            {
+                DeliveryPeriod = byte.Parse(row["Delivery Period"]),
+                Amount = decimal.Parse(row["Amount"]),
+                TransactionType = Enum.Parse<TransactionType>(row["Earning Type"])
+            }).ToList();
+
+            await testSession.WaitForIt(() =>
+            {
+                var requiredLevyEvents = RequiredLevyPaymentsHandler.GetEvents(testSession.Learner).ToList();
+
+                return requiredLevyEvents.Count == expectedEvents.Count
+                       && expectedEvents.All(expectedEvent => requiredLevyEvents.Any(actualEvent =>
+                           actualEvent.TransactionType == expectedEvent.TransactionType
+                           && actualEvent.DeliveryPeriod == expectedEvent.DeliveryPeriod
+                           && actualEvent.AmountDue == expectedEvent.Amount
+                           && actualEvent.CollectionPeriod.AcademicYear == currentAcademicYear
+                           && actualEvent.CollectionPeriod.Period == expectedCollectionPeriod
+                           && actualEvent.ExternalEarningsId == ShortCourseExternalEarningsIdNew));
+            }, "Failed to find the expected required payment events with the new ExternalEarningsId.");
+        }
+
     }
 }
