@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
+using System;
 
 namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 {
@@ -84,7 +85,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = null,
-                CompletionHoldBackExemptionCode = 0
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = new DateTime(2025, 1, 1)
             };
 
             // act
@@ -126,6 +128,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             // act
             var result = service.ShouldHoldBackCompletionPayment(paymentHistory, priceEpisode);
 
+            // assert
+            result.Should().BeFalse();
+        }
+
+        [Test]
+
+        public void CompletionPaymentIsNotHeldWhenActualEndDateIsAfter2026EligibilityDate()
+        {
+
+            // arrange
+            var paymentHistory = 5;
+            var priceEpisode = new PriceEpisode
+            {
+                EmployerContribution = 0,
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = HoldingBackCompletionPaymentService.FundingRules2026EligibilityDate,
+    };
+            // act
+            var result = service.ShouldHoldBackCompletionPayment(paymentHistory, priceEpisode);
             // assert
             result.Should().BeFalse();
         }
