@@ -20,7 +20,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         public PayableEarningEventProcessor(
             IMapper mapper,
             IRequiredPaymentProcessor requiredPaymentProcessor,
-            IHoldingBackCompletionPaymentService holdingBackCompletionPaymentService,
             IPaymentHistoryRepository paymentHistoryRepository,
             IApprenticeshipKeyProvider apprenticeshipKeyProvider,
             INegativeEarningService negativeEarningService,
@@ -30,7 +29,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         ) : base(
             mapper,
             requiredPaymentProcessor,
-            holdingBackCompletionPaymentService,
             paymentHistoryRepository,
             apprenticeshipKeyProvider,
             negativeEarningService,
