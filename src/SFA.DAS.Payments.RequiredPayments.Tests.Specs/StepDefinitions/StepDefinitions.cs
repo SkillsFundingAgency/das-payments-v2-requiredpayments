@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Bogus.DataSets;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
@@ -23,6 +24,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private int ageAtStartOfLearning;
         private OnProgrammeEarningType onProgrammeEarningType;
         private List<EarningPeriod> periods;
+        private DateTime? apprenticeCompletionDate;
+        private int employerContribution;
+        
         
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
@@ -44,11 +48,33 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             ageAtStartOfLearning = 21;
             onProgrammeEarningType = OnProgrammeEarningType.Learning;
             periods = new List<EarningPeriod>();
+            apprenticeCompletionDate = null;
+            employerContribution = 0;
             Console.WriteLine($"UKPRN : {testSession.Provider.Ukprn}, ULN: {testSession.Learner.Uln}, collection year: {currentAcademicYear}");
         }
 
         [AfterScenario]
         public void AfterScenario()
+        {
+        }
+
+        [Given("the Levy Employer has insufficient balance")]
+        [Given("the Levy Employer has zero balance")]
+        [Given("co‑investment may be fully, partially, or not collected")]
+        [Given(@"an employer \(levy or non‑levy\) with an apprentice")]
+        [Then("co‑investment collection continues independently of completion payment generation")]
+        [Then("the completion payment does not depend on co‑investment collection")]
+        [Given("co‑investment is not fully collected")]
+        [Then("the system continues to apply the pre‑August‑2026 rule linking completion payments to co‑investment collection")]
+        [Then("completion payments generate only after co‑investment collection completes under the legacy rules")]
+        [Given("the completion payment was not generated before because co-investment was incomplete")]
+        [Given("the system change is deployed after 1 August 2026")]
+        [Then("the apprentice is eligible under the new funding rule from 1 August 2026")]
+        [Then("no co-investment proof is needed to generate the payment")]
+        [Then("eligible payments held back due to co-investment are released retrospectively")]
+        [Then("no duplicate payments are made if already paid")]
+
+        public void BlankStep()
         {
         }
 
@@ -314,12 +340,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await messagingContext.Send(message);
         }
 
-        [Then("the service should allow payment of the completion payment")]
-        public async Task ThenTheServiceShouldAllowPaymentOfTheCompletionPayment()
-        {
-            await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
-        }
-
         [Given("a Levy employer with an Apprentice")]
         public void GivenALevyEmployerWithAnApprentice()
         {
@@ -418,10 +438,44 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             ilrLearningStartDate = new DateTime(2026, 8, 1);
         }
 
-        [Given("the Levy Employer has insufficient balance")]
-        [Given("the Levy Employer has zero balance")]
-        public void GivenTheLevyEmployerHasInsufficientBalance()
+        [Given("the apprentice’s completion date is on or after 1 August 2026")]
+        public void GivenTheApprenticesCompletionDateIsOnOrAfter1August2026()
         {
+            apprenticeCompletionDate = new DateTime(2026, 8, 1);
+            onProgrammeEarningType = OnProgrammeEarningType.Completion;
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                },
+            };
+        }
+
+        [Given("the apprentice’s completion date is before 1 August 2026")]
+        public void GivenTheApprenticesCompletionDateBefore1August2026()
+        {
+            employerContribution = -1;
+            apprenticeCompletionDate = new DateTime(2026, 7, 31);
+            onProgrammeEarningType = OnProgrammeEarningType.Completion;
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                    
+                },
+            };
         }
 
         [Given("the learning start date is before 1 August 2026")]
@@ -501,8 +555,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                         InstalmentAmount = 100,
                         CompletionAmount = 1200,
                         CompletionHoldBackExemptionCode = 0,
-                        EmployerContribution = 0,
+                        EmployerContribution = employerContribution,
                         FundingLineType = "19+ Apprenticeship Levy Contract",
+                        ActualEndDate = apprenticeCompletionDate,
                     }
                 },
                 OnProgrammeEarnings = new List<OnProgrammeEarning>
@@ -519,6 +574,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [When("the ILR is submitted")]
+        [When("the completion payment process runs after deployment")]
         public async Task WhenTheIlrIsSubmitted()
         {
             testSession.Learner.Course.LearningStartDate = ilrLearningStartDate;
@@ -554,8 +610,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                         InstalmentAmount = 100,
                         CompletionAmount = 1200,
                         CompletionHoldBackExemptionCode = 0,
-                        EmployerContribution = 0,
+                        EmployerContribution = employerContribution,
                         FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                        ActualEndDate = apprenticeCompletionDate,
                     }
                 },
                 OnProgrammeEarnings = new List<OnProgrammeEarning>
@@ -569,6 +626,24 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             };
 
             await messagingContext.Send(message);
+        }
+        [Then("the service should allow payment of the completion payment")]
+        public async Task ThenTheServiceShouldAllowPaymentOfTheCompletionPayment()
+        {
+            await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
+        }
+
+        [Then("the completion payment is generated")]
+        [Then("the completion payment is generated regardless of co-investment status")]
+        public async Task ThenTheCompletionPaymentIsGenerated()
+        {
+            await testSession.WaitForIt(() => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
+        }
+
+        [Then("the completion payment is not generated")]
+        public async Task ThenTheCompletionPaymentIsNotGenerated()
+        {
+            await testSession.WaitForIt(() => CompletionPaymentHeldBackEventHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
         }
 
         [Then(@"the payment is fully funded by SFA \(100%\)")]

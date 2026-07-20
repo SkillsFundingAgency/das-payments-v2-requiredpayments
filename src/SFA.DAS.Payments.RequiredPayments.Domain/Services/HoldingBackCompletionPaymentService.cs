@@ -14,9 +14,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
             var reportedContribution = priceEpisode.EmployerContribution ?? 0;
             var completionHoldBackExemptionCode = priceEpisode.CompletionHoldBackExemptionCode ?? 0;
 
-            if (priceEpisode.ActualEndDate >= FundingRules2026EligibilityDate)
-                return false;
-
             if (completionHoldBackExemptionCode > 0)
                 return false;
 
