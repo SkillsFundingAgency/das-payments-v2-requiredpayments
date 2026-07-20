@@ -11,7 +11,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
     public interface ICoInvestmentCalculationService
     {
-        bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods);
+        decimal CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent, ApprenticeshipEmployerType employerType);
 
         IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent,
             IReadOnlyCollection<(EarningPeriod period, int type)> periods);
@@ -21,43 +21,59 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
     {
         private const int FundingRules2024AgeThreshold = 22;
         private const int FundingRules2026AgeThreshold = 25;
+        private const decimal DefaultSfaContribution = 0.95m;
         public static readonly DateTime FundingRules2024EligibilityDate = new(2024, 4, 1);
         public static readonly DateTime FundingRules2026EligibilityDate = new(2026, 8, 1);
 
-        public bool IsEligibleForRecalculation(PayableEarningEvent payableEarningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
+        public decimal CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent,
+            ApprenticeshipEmployerType employerType)
         {
-            if (payableEarningEvent.AgeAtStartOfLearning is null) return false;
+            if (payableEarningEvent.AgeAtStartOfLearning is null) return DefaultSfaContribution;
 
             // If the earning event is for a levy employer and the start date is before the 2026 eligibility date, it is not eligible for recalculation.
-            if (payableEarningEvent.StartDate < FundingRules2026EligibilityDate && periods.Any(x => x.period.ApprenticeshipEmployerType == ApprenticeshipEmployerType.Levy))
+            if (payableEarningEvent.StartDate < FundingRules2026EligibilityDate && employerType == ApprenticeshipEmployerType.Levy)
             {
-                return false;
+                return DefaultSfaContribution;
             }
-            var meets2024EligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
-                                    && payableEarningEvent.AgeAtStartOfLearning < FundingRules2024AgeThreshold;
 
-            var meets2026EligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2026EligibilityDate
-                                    && payableEarningEvent.AgeAtStartOfLearning < FundingRules2026AgeThreshold;
+            var meets2024FullEligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
+                                               && payableEarningEvent.AgeAtStartOfLearning <
+                                               FundingRules2024AgeThreshold;
 
-            return meets2024EligibilityCriteria || meets2026EligibilityCriteria;
+            var meets2026FullEligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2026EligibilityDate
+                                               && payableEarningEvent.AgeAtStartOfLearning <
+                                               FundingRules2026AgeThreshold;
+
+            if (meets2024FullEligibilityCriteria || meets2026FullEligibilityCriteria)
+            {
+                return new decimal(1.0);
+            }
+
+            //If date after 1/8/26 & learner is 25 or over, and the employer is a levy employer, set contribution to 75%
+            if (payableEarningEvent.StartDate >= FundingRules2026EligibilityDate && payableEarningEvent.AgeAtStartOfLearning >= FundingRules2026AgeThreshold)
+            {
+                //If Levy
+                if (employerType == ApprenticeshipEmployerType.Levy)
+                {
+                    return new decimal(0.75);
+                }
+            }
+
+            return DefaultSfaContribution;
         }
 
         public IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
         {
-            var requiresRecalculation = IsEligibleForRecalculation(earningEvent, periods);
-
-            if (requiresRecalculation)
+            foreach (var earningPeriod in periods)
             {
-                foreach (var earningPeriod in periods)
-                {
-                    if (earningPeriod.period.ApprenticeshipId is null or 0) continue;
+                if (earningPeriod.period.ApprenticeshipId is null or 0) continue;
 
-                    if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
+                if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
 
-                    earningPeriod.period.SfaContributionPercentage = new decimal(1.0);
-                    
-                }
+                earningPeriod.period.SfaContributionPercentage = CalculateSfaContributionPercentage(earningEvent, earningPeriod.period.ApprenticeshipEmployerType);
+                
             }
+            
 
             return periods;
         }
