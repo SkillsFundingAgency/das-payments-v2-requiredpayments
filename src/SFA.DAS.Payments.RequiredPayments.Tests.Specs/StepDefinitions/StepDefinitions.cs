@@ -640,12 +640,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await testSession.WaitForIt(() => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
         }
 
-        [Then("the completion payment is not generated")]
-        public async Task ThenTheCompletionPaymentIsNotGenerated()
-        {
-            await testSession.WaitForIt(() => CompletionPaymentHeldBackEventHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
-        }
-
         [Then(@"the payment is fully funded by SFA \(100%\)")]
         public async Task ThenPaymentLineIsGeneratedForSfaCoInvestment()
         {

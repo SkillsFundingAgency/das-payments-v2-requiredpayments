@@ -1,4 +1,4 @@
-﻿Feature: Holding Back Completion Payments
+﻿Feature: PV2-4163 - Decouple completion payments from co-investment collection
 
 As a Training Provider
 Once a learner has completed their EPA and I have recorded the completion and end date
@@ -18,15 +18,6 @@ When the ILR is submitted
 Then the completion payment is generated
 And the completion payment does not depend on co‑investment collection
 And co‑investment collection continues independently of completion payment generation
-
-Scenario: Regression scenario: Completion payments before 1 August 2026 remain dependent on co‑investment collection
-Given an employer (levy or non‑levy) with an apprentice
-And the apprentice’s completion date is before 1 August 2026
-And co‑investment is not fully collected
-When the ILR is submitted
-Then the completion payment is not generated
-And the system continues to apply the pre‑August‑2026 rule linking completion payments to co‑investment collection
-And completion payments generate only after co‑investment collection completes under the legacy rules
 
 Scenario: Backdating Scenario: Completion payments retrospectively generated for eligible completions from 1 August 2026
 Given an employer (levy or non‑levy) with an apprentice

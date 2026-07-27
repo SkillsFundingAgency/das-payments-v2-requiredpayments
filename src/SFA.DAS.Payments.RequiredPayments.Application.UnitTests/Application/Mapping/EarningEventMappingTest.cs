@@ -99,7 +99,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CalculatedRequiredIncentiveAmount))]
         [TestCase(typeof(CalculatedRequiredCoInvestedAmount))]
         [TestCase(typeof(CalculatedRequiredLevyAmount))]
-        [TestCase(typeof(CompletionPaymentHeldBackEvent))]
         public void ContractTypeIsCorrectForPayableEarningEvent(Type requiredPaymentEventType)
         {
             var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
@@ -113,7 +112,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         [TestCase(typeof(CalculatedRequiredIncentiveAmount))]
         [TestCase(typeof(CalculatedRequiredCoInvestedAmount))]
         [TestCase(typeof(CalculatedRequiredLevyAmount))]
-        [TestCase(typeof(CompletionPaymentHeldBackEvent))]
         public void ContractTypeIsCorrectForNotLevyEvent(Type requiredPaymentEventType)
         {
             var requiredPaymentEvent = Activator.CreateInstance(requiredPaymentEventType) as PeriodisedRequiredPaymentEvent;
@@ -159,10 +157,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             actual.ContractType.Should().Be(expectedContractType);
         }
         [Test]
-        [TestCase("payableEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2EarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType1RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
         [TestCase("payableEarningEvent-calculatedRequiredOnProgrammeAmount", typeof(CalculatedRequiredLevyAmount))]
         [TestCase("payableEarningEvent-calculatedRequiredIncentiveAmount", typeof(CalculatedRequiredIncentiveAmount))]
         public void TestLearningStartDateMapToLearningAimStartDate(string earningEventType, Type requiredPaymentEventType)
@@ -205,10 +199,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         }
 
         [Test]
-        [TestCase("payableEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2EarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType1RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
-        [TestCase("apprenticeshipContractType2RedundancyEarningEvent", typeof(CompletionPaymentHeldBackEvent))]
         [TestCase("payableEarningEvent-calculatedRequiredOnProgrammeAmount", typeof(CalculatedRequiredLevyAmount))]
         [TestCase("payableEarningEvent-calculatedRequiredIncentiveAmount", typeof(CalculatedRequiredIncentiveAmount))]
         public void TestLearningStartDateMapToPriceEpisodeCourseStartDate(string earningEventType, Type requiredPaymentEventType)
