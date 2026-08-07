@@ -14,14 +14,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
     [Binding]
     public class StepDefinitions
     {
-        private readonly ScenarioContext scenarioContext;
-        private readonly MessagingContext messagingContext;
-        private readonly TestSession testSession;
-        private CollectionPeriod collectionPeriod;
-        private short currentAcademicYear;
-        private DateTime ilrLearningStartDate;
-        private int ageAtStartOfLearning;
-        private OnProgrammeEarningType onProgrammeEarningType;
+        protected readonly ScenarioContext scenarioContext;
+        protected readonly MessagingContext messagingContext;
+        protected readonly TestSession testSession;
+        protected CollectionPeriod collectionPeriod;
+        protected short currentAcademicYear;
+        protected DateTime ilrLearningStartDate;
+        protected int ageAtStartOfLearning;
+        protected OnProgrammeEarningType onProgrammeEarningType;
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
