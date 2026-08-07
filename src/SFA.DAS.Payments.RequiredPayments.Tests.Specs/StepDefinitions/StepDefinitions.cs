@@ -1,9 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
-using Reqnroll;
 using SFA.DAS.Payments.EarningEvents.Messages;
-using SFA.DAS.Payments.AcceptanceTests.Core.Data;
-using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Audit;
