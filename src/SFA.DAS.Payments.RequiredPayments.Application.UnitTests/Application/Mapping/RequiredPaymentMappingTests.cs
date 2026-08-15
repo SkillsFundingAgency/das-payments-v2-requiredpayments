@@ -61,9 +61,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             requiredPaymentEvent.TransferSenderAccountId.Should().Be(requiredPayment.TransferSenderAccountId);
         }
 
-        [TestCase(FundingPlatformType.SubmitLearnerData)]
-        [TestCase(FundingPlatformType.DigitalApprenticeshipService)]        
-        public void Maps_FundingPLatform_From_PayableEarningEvent_To_CalculatedRequiredOnProgrammeAmount(FundingPlatformType fundingPlatform)
+        [TestCase(FundingPlatformType.SubmitLearnerData )]
+        [TestCase(FundingPlatformType.DigitalApprenticeshipService)]
+        public void Maps_FundingPlatform_From_PayableEarningEvent_To_CalculatedRequiredLevyAmount(FundingPlatformType fundingPlatform)
         {
             // Arrange
             var payableEarningEvent = new PayableEarningEvent
@@ -74,7 +74,51 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
                 FundingPlatformType = fundingPlatform   
             };
 
-            var requiredPaymentEvent = Activator.CreateInstance(typeof(CalculatedRequiredCoInvestedAmount)) as CalculatedRequiredOnProgrammeAmount;
+            var requiredPaymentEvent = Activator.CreateInstance<CalculatedRequiredLevyAmount>();
+
+            // Act
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            // Assert
+            requiredPaymentEvent.FundingPlatformType.Should().Be(fundingPlatform);
+        }
+
+        [TestCase(FundingPlatformType.SubmitLearnerData)]
+        [TestCase(FundingPlatformType.DigitalApprenticeshipService)]
+        public void Maps_FundingPlatform_From_PayableEarningEvent_To_CalculatedRequiredCoInvestedAmount(FundingPlatformType fundingPlatform)
+        {
+            // Arrange
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
+                AgeAtStartOfLearning = 25,
+                FundingPlatformType = fundingPlatform
+            };
+
+            var requiredPaymentEvent = Activator.CreateInstance<CalculatedRequiredCoInvestedAmount>();
+
+            // Act
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            // Assert
+            requiredPaymentEvent.FundingPlatformType.Should().Be(fundingPlatform);
+        }
+
+        [TestCase(FundingPlatformType.SubmitLearnerData)]
+        [TestCase(FundingPlatformType.DigitalApprenticeshipService)]
+        public void Maps_FundingPlatform_From_PayableEarningEvent_To_CalculatedRequiredIncentiveAmount(FundingPlatformType fundingPlatform)
+        {
+            // Arrange
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
+                AgeAtStartOfLearning = 25,
+                FundingPlatformType = fundingPlatform
+            };
+
+            var requiredPaymentEvent = Activator.CreateInstance<CalculatedRequiredIncentiveAmount>();
 
             // Act
             mapper.Map(payableEarningEvent, requiredPaymentEvent);
