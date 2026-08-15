@@ -61,6 +61,28 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             requiredPaymentEvent.TransferSenderAccountId.Should().Be(requiredPayment.TransferSenderAccountId);
         }
 
+        [TestCase(FundingPlatformType.SubmitLearnerData)]
+        [TestCase(FundingPlatformType.DigitalApprenticeshipService)]        
+        public void Maps_FundingPLatform_From_PayableEarningEvent_To_CalculatedRequiredOnProgrammeAmount(FundingPlatformType fundingPlatform)
+        {
+            // Arrange
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
+                AgeAtStartOfLearning = 25,
+                FundingPlatformType = fundingPlatform   
+            };
+
+            var requiredPaymentEvent = Activator.CreateInstance(typeof(CalculatedRequiredCoInvestedAmount)) as CalculatedRequiredOnProgrammeAmount;
+
+            // Act
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            // Assert
+            requiredPaymentEvent.FundingPlatformType.Should().Be(fundingPlatform);
+        }
+
         [Test]
         public void Maps_AgeAtStartOfLearning_From_PayableEarningEvent_To_CalculatedRequiredOnProgrammeAmount()
         {

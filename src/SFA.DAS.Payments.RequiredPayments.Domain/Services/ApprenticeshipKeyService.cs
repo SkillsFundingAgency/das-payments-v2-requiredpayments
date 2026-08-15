@@ -10,7 +10,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
         public string GenerateApprenticeshipKey(long ukprn, string learnerReferenceNumber, int frameworkCode,
             int pathwayCode, int programmeType, int standardCode, string learnAimRef, short academicYear,
-            ContractType contractType)
+            ContractType contractType, string courseCode, LearningType learningType)
         {
             return string.Join(keyDelimiter,
                 new[]
@@ -23,7 +23,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                     standardCode.ToString(CultureInfo.InvariantCulture),
                     learnAimRef, // we may need to remove this as apprenticeship should handle both zprog and maths&eng
                     academicYear.ToString(CultureInfo.InvariantCulture),
-                    contractType.ToString()
+                    contractType.ToString(),
+                    courseCode,
+                    learningType.ToString()
                 }
             ).ToLowerInvariant();
         }
