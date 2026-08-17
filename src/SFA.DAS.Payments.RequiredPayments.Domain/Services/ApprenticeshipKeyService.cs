@@ -10,7 +10,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
         public string GenerateApprenticeshipKey(long ukprn, string learnerReferenceNumber, int frameworkCode,
             int pathwayCode, int programmeType, int standardCode, string learnAimRef, short academicYear,
-            ContractType contractType, string courseCode, LearningType learningType)
+            ContractType contractType, string courseCode, CourseType courseType)
         {
             return string.Join(keyDelimiter,
                 new[]
@@ -25,7 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                     academicYear.ToString(CultureInfo.InvariantCulture),
                     contractType.ToString(),
                     courseCode,
-                    learningType.ToString()
+                    courseType.ToString()
                 }
             ).ToLowerInvariant();
         }
@@ -33,7 +33,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
         public ApprenticeshipKey ParseApprenticeshipKey(string apprenticeshipKey)
         {
             var keyParts = apprenticeshipKey.Split(Convert.ToChar(keyDelimiter));
-            if (keyParts.Length != 9)
+            if (keyParts.Length != 11)
                 throw new InvalidOperationException($"Cannot parse the apprenticeship key. invalid number of parts.  Expected 9 but was {keyParts.Length}.");
             return new ApprenticeshipKey
             {
@@ -45,7 +45,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                 StandardCode = ParseToInt(keyParts[5], "StandardCode"),
                 LearnAimRef = keyParts[6],
                 AcademicYear = ParseToShort(keyParts[7], "AcademicYear"),
-                ContractType = ParseToContractType(keyParts[8], "ContractType")
+                ContractType = ParseToContractType(keyParts[8], "ContractType"),                
+                CourseCode = keyParts[9],
+                CourseType = ParseToCourseType(keyParts[10], "CourseType"),
+
             };
         }
 
@@ -74,6 +77,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
         {
             if (!Enum.TryParse(source, true, out ContractType result))
                 throw new ArgumentException($"Cannot parse the key part to a ContractType. Destination: {destinationName}, source value: '{source}'");
+            return result;
+        }
+
+        private LearningType ParseToLearningType(string source, string destinationName)
+        {
+            if (!Enum.TryParse(source, true, out LearningType result))
+                throw new ArgumentException($"Cannot parse the key part to a LearningType. Destination: {destinationName}, source value: '{source}'");
+            return result;
+        }
+
+        private CourseType ParseToCourseType(string source, string destinationName)
+        {
+            if (!Enum.TryParse(source, true, out CourseType result))
+                throw new ArgumentException($"Cannot parse the key part to a CourseType. Destination: {destinationName}, source value: '{source}'");
             return result;
         }
     }
