@@ -219,32 +219,6 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             }
         }
 
-        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandlePayableGSLApprenticeshipEarningEvent(PayableGSLApprenticeshipEarningsEvent earningEvent, CancellationToken cancellationToken)
-        {
-            paymentLogger.LogVerbose($"Handling PayableGSLEarningEvent for learner:{earningEvent.Learner.ReferenceNumber} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
-            try
-            {
-                using (var operation = telemetry.StartOperation("RequiredPaymentsService.HandlePayableEarningEvent", earningEvent.EventId.ToString()))
-                {
-                    var stopwatch = Stopwatch.StartNew();
-                    await ResetPaymentHistoryCacheIfDifferentCollectionPeriod(earningEvent.CollectionPeriod)
-                        .ConfigureAwait(false);
-
-                    await Initialise(earningEvent.CollectionPeriod.Period).ConfigureAwait(false);
-                    var requiredPaymentEvents = await payableEarningEventProcessor.HandleEarningEvent(earningEvent, paymentHistoryCache, cancellationToken).ConfigureAwait(false);
-                    Log(requiredPaymentEvents);
-                    telemetry.TrackDuration("RequiredPaymentsService.HandlePayableGSLApprenticeshipEarningEvent", stopwatch, earningEvent);
-                    telemetry.StopOperation(operation);
-                    return requiredPaymentEvents;
-                }
-            }
-            catch (Exception e)
-            {
-                paymentLogger.LogError($"Error handling payable earning. Error: {e.Message}");
-                throw;
-            }
-        }
-
         private void Log(ReadOnlyCollection<PeriodisedRequiredPaymentEvent> requiredPaymentEvents)
         {
             var stats = requiredPaymentEvents.GroupBy(p => p.GetType()).Select(group => $"{group.Key.Name}: {group.Count()}");
