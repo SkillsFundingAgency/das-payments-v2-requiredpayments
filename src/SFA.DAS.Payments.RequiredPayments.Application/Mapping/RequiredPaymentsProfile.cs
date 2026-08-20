@@ -97,10 +97,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
 
             // Earning event --> required payment event
             CreateMap<IEarningEvent, PeriodisedRequiredPaymentEvent>()
-                .Include<PayableEarningEvent, CompletionPaymentHeldBackEvent>()
-                .Include<ApprenticeshipContractType2EarningEvent, CompletionPaymentHeldBackEvent>()
-                .Include<ApprenticeshipContractType1RedundancyEarningEvent, CompletionPaymentHeldBackEvent>()
-                .Include<ApprenticeshipContractType2RedundancyEarningEvent, CompletionPaymentHeldBackEvent>()
                 .Include<IEarningEvent, CalculatedRequiredOnProgrammeAmount>()
                 .Include<IEarningEvent, CalculatedRequiredIncentiveAmount>()
                 .ForMember(requiredPayment => requiredPayment.EarningEventId,
@@ -172,20 +168,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .Ignore(x => x.ContractType)
                 ;
 
-            CreateMap<PayableEarningEvent, CompletionPaymentHeldBackEvent>()
-                .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
-                .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
-                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(src => src.FundingPlatformType))
-                .Ignore(x => x.TransactionType)
-                ;
-
-            CreateMap<ApprenticeshipContractType2EarningEvent, CompletionPaymentHeldBackEvent>()
-                .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act2))
-                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(src => FundingPlatformType.SubmitLearnerData))
-                .Ignore(x => x.TransactionType)
-                .Ignore(x => x.TransactionType)
-                ;
-
             CreateMap<PayableEarningEvent, CalculatedRequiredOnProgrammeAmount>()
                 .Include<PayableEarningEvent, CalculatedRequiredLevyAmount>()
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
@@ -226,22 +208,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act2))
                 ;
 
-            CreateMap<ApprenticeshipContractType1RedundancyEarningEvent, CompletionPaymentHeldBackEvent>()
-                .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
-                .Ignore(x => x.TransactionType)
-                ;
-
-            CreateMap<ApprenticeshipContractType2RedundancyEarningEvent, CompletionPaymentHeldBackEvent>()
-                .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act2))
-                .Ignore(x => x.TransactionType)
-                ;
-
             CreateMap<PayableEarningEvent, CalculatedRequiredIncentiveAmount>()
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
                 .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(source => source.FundingPlatformType))
-
-
                 ;
 
             CreateMap<ApprenticeshipContractType2EarningEvent, CalculatedRequiredIncentiveAmount>()
