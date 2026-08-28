@@ -22,6 +22,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private DateTime ilrLearningStartDate;
         private int ageAtStartOfLearning;
         private OnProgrammeEarningType onProgrammeEarningType;
+        private List<EarningPeriod> periods;
+        
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -41,6 +43,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             SetCurrentCollectionYear();
             ageAtStartOfLearning = 21;
             onProgrammeEarningType = OnProgrammeEarningType.Learning;
+            periods = new List<EarningPeriod>();
             Console.WriteLine($"UKPRN : {testSession.Provider.Ukprn}, ULN: {testSession.Learner.Uln}, collection year: {currentAcademicYear}");
         }
 
@@ -321,12 +324,92 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void GivenALevyEmployerWithAnApprentice()
         {
             testSession.Learner.IsLevyLearner = true;
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                },
+            };
         }
 
         [Given("a Non-levy employer with an Apprentice")]
         public void GivenANonLevyEmployerWithAnApprentice()
         {
             testSession.Learner.IsLevyLearner = false;
+
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                },
+            };
+        }
+
+
+        [Given("an apprentice changes from a Non-Levy to a Levy employer")]
+        public void GivenAnApprenticeChangesFromNonLevyToALevyEmployer()
+        {
+            testSession.Learner.IsLevyLearner = true;
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                },
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                },
+            };
+        }
+
+        [Given("an apprentice changes from a Levy to a Non-Levy employer")]
+        public void GivenAnApprenticeChangesFromLevyToANonLevyEmployer()
+        {
+            testSession.Learner.IsLevyLearner = false;
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
+                },
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.95m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                },
+            };
         }
 
         [Given("the learning start date is on or after 1 August 2026")]
@@ -336,6 +419,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [Given("the Levy Employer has insufficient balance")]
+        [Given("the Levy Employer has zero balance")]
         public void GivenTheLevyEmployerHasInsufficientBalance()
         {
         }
@@ -426,18 +510,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                     new OnProgrammeEarning
                     {
                         Type = onProgrammeEarningType,
-                        Periods = new List<EarningPeriod>
-                        {
-                            new EarningPeriod
-                            {
-                                Amount = 100,
-                                SfaContributionPercentage = 0.95m,
-                                Period = 1,
-                                PriceEpisodeIdentifier = "pe-1",
-                                ApprenticeshipId = 12345,
-                                ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy,
-                            },
-                        }.AsReadOnly(),
+                        Periods = periods.AsReadOnly(),
                     }
                 },
             };
@@ -490,18 +563,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                     new OnProgrammeEarning
                     {
                         Type = onProgrammeEarningType,
-                        Periods = new List<EarningPeriod>
-                        {
-                            new EarningPeriod
-                            {
-                                Amount = 100,
-                                SfaContributionPercentage = 0.95m,
-                                Period = 1,
-                                PriceEpisodeIdentifier = "pe-1",
-                                ApprenticeshipId = 12345,
-                                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                            },
-                        }.AsReadOnly(),
+                        Periods = periods.AsReadOnly(),
                     }
                 },
             };
@@ -518,7 +580,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [Then(@"the payment funding is split between 'SFA co-investment' \(95%\) and 'Employer co-investment' \(5%\)")]
-        public async Task ThenPaymentLinesAreGeneratedSplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
+        public async Task ThenPaymentLinesAreGenerated95SplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
         {
 
             var events = await WaitForRequiredLevyPayments();
@@ -533,7 +595,45 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
         }
 
-        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
+        [Then(@"the payment funding is split between 'SFA co-investment' \(75%\) and 'Employer co-investment' \(25%\)")]
+        public async Task ThenPaymentLinesAreGenerated75SplitBetweenSfaCoInvestmentAndEmployerCoInvestment()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+
+            var requiredPayment = events.Single();
+            Assert.That(requiredPayment.SfaContributionPercentage, Is.EqualTo(0.75m));
+
+            var sfaAmount = requiredPayment.AmountDue * requiredPayment.SfaContributionPercentage;
+            var employerAmount = requiredPayment.AmountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(75m));
+            Assert.That(employerAmount, Is.EqualTo(25m));
+        }
+
+
+        [Then(@"then two payments are generated for 'Non-Levy' \(95%\) and 'Levy' \(75%\)")]
+        [Then(@"then two payments are generated for 'Levy' \(75%\) and 'Non-Levy' \(95%\)")]
+        public async Task Then2PaymentLinesAreGeneratedForNonLevyAndLevy()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(2));
+
+            var nonLevyPayment = events.FirstOrDefault(x => x.employerType == ApprenticeshipEmployerType.NonLevy);
+            AssertRequiredPaymentAndSfaPercentage(nonLevyPayment.AmountDue, nonLevyPayment.SfaContributionPercentage, 95m, 5m);
+            var levyPayment = events.FirstOrDefault(x => x.employerType == ApprenticeshipEmployerType.Levy);
+            AssertRequiredPaymentAndSfaPercentage(levyPayment.AmountDue, levyPayment.SfaContributionPercentage, 75m, 25m);
+        }
+
+        private void AssertRequiredPaymentAndSfaPercentage(decimal amountDue, decimal sfaContributionPercentage, decimal expectedSfa, decimal expectedEmployerAmount)
+        {
+            var sfaAmount = amountDue * sfaContributionPercentage;
+            var employerAmount = amountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(expectedSfa));
+            Assert.That(employerAmount, Is.EqualTo(expectedEmployerAmount));
+        }
+        private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage, ApprenticeshipEmployerType employerType)>> WaitForRequiredLevyPayments()
         {
             var expectedTransactionType = onProgrammeEarningType switch
             {
@@ -551,7 +651,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             return RequiredLevyPaymentsHandler
                 .GetEvents(testSession.Learner)
                 .Where(ev => ev.TransactionType == expectedTransactionType)
-                .Select(ev => (ev.AmountDue, ev.SfaContributionPercentage))
+                .Select(ev => (ev.AmountDue, ev.SfaContributionPercentage, ev.ApprenticeshipEmployerType))
                 .ToList();
         }
     }
