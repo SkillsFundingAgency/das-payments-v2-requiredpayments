@@ -11,9 +11,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="appSettings.local.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
 		<Content Include="appSettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
