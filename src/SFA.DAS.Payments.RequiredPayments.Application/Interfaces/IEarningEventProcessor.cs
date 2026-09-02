@@ -38,7 +38,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Application
     public interface IPayableEarningEventProcessor : IEarningEventProcessor<PayableEarningEvent>
     {
     }
+
     public interface IShortCoursesEarningEventProcessor : IEarningEventProcessor<GSLShortCourseEarningsEvent>
+    {
+    }
+
+    public interface IGSLFunctionalSkillEarningsEventProcessor : IEarningEventProcessor<GSLFunctionalSkillEarningsEvent>
     {
     }
 }

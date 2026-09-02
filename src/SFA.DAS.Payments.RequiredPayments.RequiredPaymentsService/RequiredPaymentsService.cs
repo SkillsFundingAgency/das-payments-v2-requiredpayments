@@ -38,9 +38,10 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
         private readonly IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor;
         private readonly IPayableEarningEventProcessor payableEarningEventProcessor;
         private readonly IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor;
+        private readonly IGSLFunctionalSkillEarningsEventProcessor gslFunctionalSkillEarningsEventProcessor;
         readonly ITelemetry telemetry;
         private readonly string logSafeApprenticeshipKeyString;
-        
+
 
 
         public RequiredPaymentsService(ActorService actorService,
@@ -49,20 +50,22 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             IApprenticeshipKeyService apprenticeshipKeyService,
             Func<IPaymentHistoryRepository> paymentHistoryRepositoryFactory,
             IApprenticeshipContractType2EarningsEventProcessor contractType2EarningsEventProcessor,
-            IApprenticeshipAct1RedundancyEarningsEventProcessor act1RedundancyEarningsEventProcessor, 
+            IApprenticeshipAct1RedundancyEarningsEventProcessor act1RedundancyEarningsEventProcessor,
             IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor,
             IPayableEarningEventProcessor payableEarningEventProcessor,
             IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor,
+            IGSLFunctionalSkillEarningsEventProcessor gslFunctionalSkillEarningsEventProcessor,
             ITelemetry telemetry)
             : base(actorService, actorId)
         {
             this.paymentLogger = paymentLogger;
-            this.paymentHistoryRepositoryFactory = paymentHistoryRepositoryFactory;
+            this.paymentHistoryRepositoryFactory = paymentHistoryRepositoryFactory;            
             this.contractType2EarningsEventProcessor = contractType2EarningsEventProcessor;
             this.act1RedundancyEarningsEventProcessor = act1RedundancyEarningsEventProcessor;
             this.functionalSkillEarningsEventProcessor = functionalSkillEarningsEventProcessor;
             this.payableEarningEventProcessor = payableEarningEventProcessor;
             this.shortCoursesEarningEventProcessor = shortCoursesEarningEventProcessor;
+            this.gslFunctionalSkillEarningsEventProcessor = gslFunctionalSkillEarningsEventProcessor;
             this.telemetry = telemetry;
             apprenticeshipKeyString = actorId.GetStringId();
             apprenticeshipKey = apprenticeshipKeyService.ParseApprenticeshipKey(apprenticeshipKeyString);
@@ -72,7 +75,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleApprenticeship2ContractTypeEarningsEvent(ApprenticeshipContractType2EarningEvent earningEvent, CancellationToken cancellationToken)
         {
             paymentLogger.LogVerbose($"Handling ApprenticeshipContractType2EarningEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
-            
+
             using (var operation = telemetry.StartOperation("RequiredPaymentsService.HandleApprenticeship2ContractTypeEarningsEvent", earningEvent.EventId.ToString()))
             {
                 var stopwatch = Stopwatch.StartNew();
@@ -193,6 +196,32 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             }
         }
 
+        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleGSLFunctionalSkillEarningsEvent(GSLFunctionalSkillEarningsEvent earningEvent,
+            CancellationToken cancellationToken)
+        {
+            paymentLogger.LogVerbose($"Handling GSLFunctionalSkillEarningsEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
+
+            try
+            {
+                using (var operation = telemetry.StartOperation("RequiredPaymentsService.HandleGSLFunctionalSkillEarningsEvent", earningEvent.EventId.ToString()))
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    await ResetPaymentHistoryCacheIfDifferentCollectionPeriod(earningEvent.CollectionPeriod).ConfigureAwait(false);
+                    await Initialise(earningEvent.CollectionPeriod.Period).ConfigureAwait(false);
+                    var requiredPaymentEvents = await gslFunctionalSkillEarningsEventProcessor.HandleEarningEvent(earningEvent, paymentHistoryCache, cancellationToken).ConfigureAwait(false);
+                    Log(requiredPaymentEvents);
+                    telemetry.TrackDuration("RequiredPaymentsService.HandleGSLFunctionalSkillEarningsEvent", stopwatch, earningEvent);
+                    telemetry.StopOperation(operation);
+                    return requiredPaymentEvents;
+                }
+            }
+            catch (Exception e)
+            {
+                paymentLogger.LogError($"Error handling GSLFunctionalSkillEarningsEvent. Error: {e.Message}");
+                throw;
+            }
+        }
+
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandlePayableEarningEvent(PayableEarningEvent earningEvent, CancellationToken cancellationToken)
         {
             paymentLogger.LogVerbose($"Handling PayableEarningEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
@@ -227,7 +256,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
 
         protected override async Task OnActivateAsync()
         {
-            using (var operation = telemetry.StartOperation("RequiredPaymentsService.RefundRemovedLearningAim",$"{apprenticeshipKeyString}_{Guid.NewGuid():N}"))
+            using (var operation = telemetry.StartOperation("RequiredPaymentsService.RefundRemovedLearningAim", $"{apprenticeshipKeyString}_{Guid.NewGuid():N}"))
             {
                 var stopwatch = Stopwatch.StartNew();
                 //TODO: why are we still doing this?  We are supposed to be resolving this from the container.
