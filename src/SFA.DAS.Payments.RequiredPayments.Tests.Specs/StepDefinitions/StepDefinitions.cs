@@ -32,7 +32,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 
         protected void SetCurrentCollectionYear()
         {
-            currentAcademicYear = new CollectionPeriodBuilder().WithDate(DateTime.Today).Build().AcademicYear;
+            currentAcademicYear = CollectionPeriodBuilder.CurrentAcademicYear();
         }
 
         [BeforeScenario]

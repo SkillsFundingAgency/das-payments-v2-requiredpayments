@@ -72,5 +72,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 
             return this;
         }
+
+        public static short CurrentAcademicYear()
+        {
+            return new CollectionPeriodBuilder().WithDate(DateTime.Today).Build().AcademicYear;
+        }
     }
 }

@@ -108,6 +108,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 x.DeliveryPeriod
             }))
             {
+                // Payments are paused for this transaction type - leave existing payment history untouched.
+                var isPausedForType = currentEarnings.Any(x =>
+                    x.type == historicGroup.Key.TransactionType &&
+                    x.period.IsPaymentPaused);
+
+                if (isPausedForType)
+                {
+                    continue;
+                }
+
                 var historicPayments = historicGroup.ToList();
 
                 var historicAmount = historicPayments.Sum(x => x.Amount);
@@ -160,6 +170,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
         {
             foreach (var (period, type) in currentEarnings)
             {
+                if (period.IsPaymentPaused)
+                {
+                    continue;
+                }
+
                 if (period.Period > earningEvent.CollectionPeriod.Period)
                 {
                     continue;

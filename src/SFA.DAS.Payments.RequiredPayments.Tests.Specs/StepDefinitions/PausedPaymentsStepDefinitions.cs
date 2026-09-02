@@ -1,4 +1,5 @@
-﻿using SFA.DAS.Payments.EarningEvents.Messages;
+﻿using Reqnroll;
+using SFA.DAS.Payments.EarningEvents.Messages;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
@@ -6,13 +7,19 @@ using SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers;
 
 namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 {
-    public class PausedPaymentsStepDefinitions : StepDefinitions
+    [Binding]
+    public class PausedPaymentsStepDefinitions
     {
+        private readonly MessagingContext messagingContext;
+        private readonly TestSession testSession;
         private GSLShortCourseEarningsEvent shortCourseEarningsEvent;
 
-        public PausedPaymentsStepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
-            : base(scenarioContext, messagingContext, testSession)
+        private short currentAcademicYear => CollectionPeriodBuilder.CurrentAcademicYear();
+
+        public PausedPaymentsStepDefinitions(MessagingContext messagingContext, TestSession testSession)
         {
+            this.messagingContext = messagingContext;
+            this.testSession = testSession;
         }
 
 
@@ -36,6 +43,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 EventTime = DateTimeOffset.UtcNow,
                 IlrSubmissionDateTime = DateTime.Now,
                 AgeAtStartOfLearning = 19,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                LearningAim = new LearningAim
+                {
+                    Reference = "ZSC0001"
+                },
+                PriceEpisodes = new List<PriceEpisode>(),
                 Earnings = new List<ShortCourseEarning>
                 {
                     new ShortCourseEarning
@@ -44,7 +61,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                          Periods = new List<EarningPeriod>
                          {
                              new EarningPeriod
-                             {                 
+                             {
                                 Period = 3,
                                 Amount = 300m,
                                 PriceEpisodeIdentifier = "PE-1",
