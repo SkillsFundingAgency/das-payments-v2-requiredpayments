@@ -1,13 +1,9 @@
-﻿using SFA.DAS.Payments.Application.Messaging;
-using SFA.DAS.Payments.Application.Repositories;
+﻿using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
-using SFA.DAS.Payments.Messages.Common.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
-using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Application.Infrastructure;
-using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 using System;
@@ -20,7 +16,7 @@ using SFA.DAS.Payments.RequiredPayments.Domain;
 
 namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 {
-    public class ShortCoursesEarningEventProcessor : IShortCoursesEarningEventProcessor
+    public class ShortCoursesEarningEventProcessor : GSLEarningsEventProcessorBase, IShortCoursesEarningEventProcessor
     {
         private readonly IDuplicateShortCoursesEarningEventService duplicateShortCoursesEarningEventService;
 
@@ -52,17 +48,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                 //Extracting the latest earnings from the incoming submission.
                 var currentEarnings = GetPeriods(earningEvent).ToList();
 
-                GenerateRefundPayments(
-                    earningEvent,
-                    requiredPaymentEvents,
-                    academicYearPayments,
-                    currentEarnings);
+                GenerateRefundPayments(earningEvent, requiredPaymentEvents, academicYearPayments, currentEarnings, GenerateRequiredPaymentEvent);
 
-                GenerateNewRequiredPayments(
-                    earningEvent,
-                    requiredPaymentEvents,
-                    academicYearPayments,
-                    currentEarnings);
+                GenerateNewRequiredPayments(earningEvent, requiredPaymentEvents, academicYearPayments, currentEarnings, GenerateRequiredPaymentEvent);
 
                 return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
             }
@@ -94,113 +82,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                            earningEvent.CollectionPeriod.AcademicYear)
                     .ToList()
                 : new List<PaymentHistoryEntity>();
-        }
-
-        private void GenerateRefundPayments(
-                        GSLShortCourseEarningsEvent earningEvent,
-                        List<PeriodisedRequiredPaymentEvent> requiredPaymentEvents,
-                        List<PaymentHistoryEntity> academicYearPayments,
-                        List<(EarningPeriod period, int type)> currentEarnings)
-        {
-            foreach (var historicGroup in academicYearPayments.GroupBy(x => new
-            {
-                x.TransactionType,
-                x.DeliveryPeriod
-            }))
-            {
-                var historicPayments = historicGroup.ToList();
-
-                var historicAmount = historicPayments.Sum(x => x.Amount);
-
-                var currentMatch = currentEarnings.FirstOrDefault(x =>
-                    x.type == historicGroup.Key.TransactionType &&
-                    x.period.Period == historicGroup.Key.DeliveryPeriod);
-
-                // refund if delivery period does not match or if the amount does not match
-                var requiresRefund =
-                    currentMatch.period == null ||
-                    currentMatch.period.Amount != historicAmount;
-
-                if (!requiresRefund)
-                {
-                    continue;
-                }
-
-                // Map the funding line type from the previous payment
-                var paymentToBeRefunded = historicPayments.First(x => x.TransactionType == historicGroup.Key.TransactionType);
-                    
-                var refundPeriod = new EarningPeriod
-                {
-                    Period = paymentToBeRefunded.DeliveryPeriod,
-                    Amount = -historicAmount,
-                    PriceEpisodeIdentifier = paymentToBeRefunded.PriceEpisodeIdentifier,
-                    AccountId = paymentToBeRefunded.AccountId,
-                    TransferSenderAccountId = paymentToBeRefunded.TransferSenderAccountId,
-                    SfaContributionPercentage = paymentToBeRefunded.SfaContributionPercentage,
-                    ApprenticeshipEmployerType = paymentToBeRefunded.ApprenticeshipEmployerType,
-                    ApprenticeshipId = paymentToBeRefunded.ApprenticeshipId
-                };
-
-                requiredPaymentEvents.Add(
-                    GenerateRequiredPaymentEvent(
-                        earningEvent,
-                        earningEvent.PriceEpisodes.FirstOrDefault()
-                            ?? new PriceEpisode { FundingLineType = paymentToBeRefunded.LearningAimFundingLineType },
-                        refundPeriod,
-                        paymentToBeRefunded.TransactionType,
-                        IsCoInvested(historicPayments)));
-            }
-        }
-
-        private void GenerateNewRequiredPayments(
-                        GSLShortCourseEarningsEvent earningEvent,
-                        List<PeriodisedRequiredPaymentEvent> requiredPaymentEvents,
-                        List<PaymentHistoryEntity> academicYearPayments,
-                        List<(EarningPeriod period, int type)> currentEarnings)
-        {
-            foreach (var (period, type) in currentEarnings)
-            {
-                if (period.Period > earningEvent.CollectionPeriod.Period)
-                {
-                    continue;
-                }
-
-                var historicPayments = academicYearPayments
-                    .Where(x =>
-                        x.DeliveryPeriod == period.Period &&
-                        x.TransactionType == type)
-                    .ToList();
-
-                if (historicPayments.Any())
-                {
-                    var historicAmount = historicPayments.Sum(x => x.Amount);
-
-                    if (historicAmount == period.Amount)
-                    {
-                        continue;
-                    }
-                }
-
-                var priceEpisode =
-                    earningEvent.PriceEpisodes.FirstOrDefault(x =>
-                        x.Identifier == period.PriceEpisodeIdentifier)
-                    ?? new PriceEpisode();
-                
-                requiredPaymentEvents.Add(
-                    GenerateRequiredPaymentEvent(
-                        earningEvent,
-                        priceEpisode,
-                        period,
-                        type, 
-                        false));
-            }
-        }
-
-        private static bool IsCoInvested(IEnumerable<PaymentHistoryEntity> payments)
-        {
-            return payments.Any(x =>
-                x.FundingSource == FundingSourceType.CoInvestedSfa ||
-                x.FundingSource == FundingSourceType.CoInvestedEmployer);
         }
 
         private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(
