@@ -1,6 +1,8 @@
 ﻿using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
+using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Application.Infrastructure;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 using SFA.DAS.Payments.RequiredPayments.Messages.Events;
@@ -23,7 +25,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             this.duplicateGSLFunctionalSkillEarningEventService = duplicateGSLFunctionalSkillEarningEventService;
         }
 
-        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(GSLFunctionalSkillEarningsEvent earningEvent,
+        public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleEarningEvent(
+            GSLFunctionalSkillEarningsEvent earningEvent,
             IDataCache<PaymentHistoryEntity[]> paymentHistoryCache,
             CancellationToken cancellationToken)
         {
@@ -37,17 +40,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     return requiredPaymentEvents.AsReadOnly();
                 }
 
-                //Gets all historical payments for this learner and academic year.This give milestone payments, completion payments, previous collection period payments.
-                var academicYearPayments =
-                    await GetAcademicYearPayments(
-                        earningEvent,
-                        paymentHistoryCache,
-                        cancellationToken);
+                //Gets all historical payments for this learner and academic year.
+                //This give milestone payments, completion payments, previous collection period payments.
+                var academicYearPayments = await GetAcademicYearPayments(earningEvent, paymentHistoryCache, cancellationToken);
 
                 //Extracting the latest earnings from the incoming submission.
                 var currentEarnings = GetPeriods(earningEvent).ToList();
 
-                // TO DO
+                GenerateRefundPayments(earningEvent, requiredPaymentEvents, academicYearPayments, currentEarnings);
+
+                GenerateNewRequiredPayments(earningEvent, requiredPaymentEvents, academicYearPayments, currentEarnings);
 
                 return new ReadOnlyCollection<PeriodisedRequiredPaymentEvent>(requiredPaymentEvents);
             }
@@ -58,6 +60,180 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     $"CollectionPeriod: Year: {earningEvent.CollectionPeriod.AcademicYear} Period: {earningEvent.CollectionPeriod.Period}. Exception: {ex.Message}",
                     ex);
             }
+        }
+
+        private void GenerateRefundPayments(GSLFunctionalSkillEarningsEvent earningEvent,
+            List<PeriodisedRequiredPaymentEvent> requiredPaymentEvents,
+            List<PaymentHistoryEntity> academicYearPayments,
+            List<(EarningPeriod period, int type)> currentEarnings)
+        {
+            foreach (var historicGroup in academicYearPayments.GroupBy(x => new
+            {
+                x.TransactionType,
+                x.DeliveryPeriod
+            }))
+            {
+                var historicPayments = historicGroup.ToList();
+
+                var historicAmount = historicPayments.Sum(x => x.Amount);
+
+                var currentMatch = currentEarnings.FirstOrDefault(x =>
+                    x.type == historicGroup.Key.TransactionType &&
+                    x.period.Period == historicGroup.Key.DeliveryPeriod);
+
+                // refund if delivery period does not match or if the amount does not match
+                var requiresRefund = currentMatch.period == null || currentMatch.period.Amount != historicAmount;
+
+                if (!requiresRefund)
+                {
+                    continue;
+                }
+
+                // Map the funding line type from the previous payment
+                var paymentToBeRefunded = historicPayments.First(x => x.TransactionType == historicGroup.Key.TransactionType);
+
+                var refundPeriod = new EarningPeriod
+                {
+                    Period = paymentToBeRefunded.DeliveryPeriod,
+                    Amount = -historicAmount,
+                    PriceEpisodeIdentifier = paymentToBeRefunded.PriceEpisodeIdentifier,
+                    AccountId = paymentToBeRefunded.AccountId,
+                    TransferSenderAccountId = paymentToBeRefunded.TransferSenderAccountId,
+                    SfaContributionPercentage = paymentToBeRefunded.SfaContributionPercentage,
+                    ApprenticeshipEmployerType = paymentToBeRefunded.ApprenticeshipEmployerType,
+                    ApprenticeshipId = paymentToBeRefunded.ApprenticeshipId
+                };
+
+                requiredPaymentEvents.Add(
+                    GenerateRequiredPaymentEvent(
+                        earningEvent,
+                        earningEvent.PriceEpisodes.FirstOrDefault() ?? new PriceEpisode { FundingLineType = paymentToBeRefunded.LearningAimFundingLineType },
+                        refundPeriod,
+                        paymentToBeRefunded.TransactionType,
+                        IsCoInvested(historicPayments)));
+            }
+        }
+
+        private void GenerateNewRequiredPayments(
+                        GSLFunctionalSkillEarningsEvent earningEvent,
+                        List<PeriodisedRequiredPaymentEvent> requiredPaymentEvents,
+                        List<PaymentHistoryEntity> academicYearPayments,
+                        List<(EarningPeriod period, int type)> currentEarnings)
+        {
+            foreach (var (period, type) in currentEarnings)
+            {
+                if (period.Period > earningEvent.CollectionPeriod.Period)
+                {
+                    continue;
+                }
+
+                var historicPayments = academicYearPayments
+                    .Where(x =>
+                        x.DeliveryPeriod == period.Period &&
+                        x.TransactionType == type)
+                    .ToList();
+
+                if (historicPayments.Any())
+                {
+                    var historicAmount = historicPayments.Sum(x => x.Amount);
+
+                    if (historicAmount == period.Amount)
+                    {
+                        continue;
+                    }
+                }
+
+                var priceEpisode =
+                    earningEvent.PriceEpisodes.FirstOrDefault(x => x.Identifier == period.PriceEpisodeIdentifier) ?? new PriceEpisode();
+
+                requiredPaymentEvents.Add(
+                    GenerateRequiredPaymentEvent(earningEvent, priceEpisode, period, type, false));
+            }
+        }
+
+        protected CalculatedRequiredOnProgrammeAmount InitialiseRequiredPaymentEvent(
+                int transactionType,
+                GSLFunctionalSkillEarningsEvent earningEvent,
+                bool isCoInvested)
+        {
+            var earningType = (OnProgrammeEarningType)transactionType;
+
+            return isCoInvested
+                ? new CalculatedRequiredCoInvestedAmount
+                {
+                    OnProgrammeEarningType = earningType,
+                    CourseType = CourseType.FunctionalSkill,
+                    FundingPlatformType = earningEvent.FundingPlatformType,
+                }
+                : new CalculatedRequiredLevyAmount
+                {
+                    OnProgrammeEarningType = earningType,
+                    CourseType = CourseType.FunctionalSkill,
+                    FundingPlatformType = earningEvent.FundingPlatformType,
+                };
+        }
+
+        private PeriodisedRequiredPaymentEvent GenerateRequiredPaymentEvent(
+                 GSLFunctionalSkillEarningsEvent earningEvent, 
+                 PriceEpisode priceEpisode, 
+                 EarningPeriod period, int type, bool isCoInvested)
+        {
+            var requiredPayment = InitialiseRequiredPaymentEvent(type, earningEvent, isCoInvested);
+            var learningStartDate = priceEpisode.CourseStartDate;
+
+            if (earningEvent.PriceEpisodes.All(x =>
+                    x.LearningAimSequenceNumber != earningEvent.LearningAim.SequenceNumber))
+            {
+                learningStartDate = earningEvent.LearningAim.StartDate;
+            }
+
+            requiredPayment.AccountId = period.AccountId;
+            requiredPayment.TransferSenderAccountId = period.TransferSenderAccountId;
+            requiredPayment.ApprenticeshipEmployerType = period.ApprenticeshipEmployerType;
+            requiredPayment.ApprenticeshipId = period.ApprenticeshipId;
+            requiredPayment.ApprenticeshipPriceEpisodeId = period.ApprenticeshipPriceEpisodeId;
+            requiredPayment.LearningAim = new LearningAim
+            {
+                CourseCode = earningEvent.LearningAim.CourseCode,
+                FrameworkCode = earningEvent.LearningAim.FrameworkCode,
+                FundingLineType = priceEpisode.FundingLineType,
+                LearningType = earningEvent.LearningAim.LearningType,
+                PathwayCode = earningEvent.LearningAim.PathwayCode,
+                ProgrammeType = earningEvent.LearningAim.ProgrammeType,
+                Reference = earningEvent.LearningAim.Reference,
+                SequenceNumber = earningEvent.LearningAim.SequenceNumber,
+                StandardCode = earningEvent.LearningAim.StandardCode,
+                StartDate = earningEvent.LearningAim.StartDate
+            };
+            requiredPayment.LearningStartDate = learningStartDate;
+            requiredPayment.LearningAimSequenceNumber = priceEpisode.LearningAimSequenceNumber;
+            requiredPayment.CompletionAmount = priceEpisode.CompletionAmount;
+            requiredPayment.SfaContributionPercentage = period.SfaContributionPercentage ?? 0;
+            requiredPayment.PriceEpisodeIdentifier = period.PriceEpisodeIdentifier;
+            requiredPayment.AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning;
+            requiredPayment.CollectionPeriod = new CollectionPeriod
+            {
+                AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
+                Period = earningEvent.CollectionPeriod.Period
+            };
+            requiredPayment.ContractType = ContractType.Act1;
+            requiredPayment.Learner = earningEvent.Learner;
+            requiredPayment.EarningEventId = earningEvent.EventId;
+            requiredPayment.AmountDue = period.Amount;
+            requiredPayment.DeliveryPeriod = period.Period;
+            requiredPayment.StartDate = priceEpisode.StartDate;
+            requiredPayment.PlannedEndDate = priceEpisode.PlannedEndDate;
+            requiredPayment.ActualEndDate = priceEpisode.ActualEndDate;
+            requiredPayment.CompletionStatus = 
+                (OnProgrammeEarningType)type == OnProgrammeEarningType.Completion ? (byte)1 : (byte)0;
+            requiredPayment.InstalmentAmount = priceEpisode.InstalmentAmount;
+            requiredPayment.NumberOfInstalments = (short)priceEpisode.NumberOfInstalments;
+            requiredPayment.JobId = earningEvent.JobId;
+            requiredPayment.EventId = Guid.NewGuid();
+            requiredPayment.Ukprn = earningEvent.Ukprn;
+            requiredPayment.IlrSubmissionDateTime = earningEvent.IlrSubmissionDateTime;
+
+            return requiredPayment;
         }
 
         private static async Task<List<PaymentHistoryEntity>> GetAcademicYearPayments(GSLFunctionalSkillEarningsEvent earningEvent,
@@ -88,6 +264,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             }
 
             return result;
+        }
+
+        private static bool IsCoInvested(IEnumerable<PaymentHistoryEntity> payments)
+        {
+            return payments.Any(x =>
+                x.FundingSource == FundingSourceType.CoInvestedSfa ||
+                x.FundingSource == FundingSourceType.CoInvestedEmployer);
         }
     }
 }
