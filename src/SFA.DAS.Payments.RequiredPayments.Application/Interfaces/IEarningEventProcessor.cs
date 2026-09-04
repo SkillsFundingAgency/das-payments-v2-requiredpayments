@@ -25,7 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application
     {
     }
 
-    
+
     public interface IApprenticeshipAct1RedundancyEarningsEventProcessor : IEarningEventProcessor<ApprenticeshipContractType1RedundancyEarningEvent>
     {
     }

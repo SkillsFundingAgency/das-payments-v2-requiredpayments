@@ -128,7 +128,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
 
                 // Map the funding line type from the previous payment
                 var paymentToBeRefunded = historicPayments.First(x => x.TransactionType == historicGroup.Key.TransactionType);
-                    
+
                 var refundPeriod = new EarningPeriod
                 {
                     Period = paymentToBeRefunded.DeliveryPeriod,
@@ -185,13 +185,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     earningEvent.PriceEpisodes.FirstOrDefault(x =>
                         x.Identifier == period.PriceEpisodeIdentifier)
                     ?? new PriceEpisode();
-                
+
                 requiredPaymentEvents.Add(
                     GenerateRequiredPaymentEvent(
                         earningEvent,
                         priceEpisode,
                         period,
-                        type, 
+                        type,
                         false));
             }
         }
@@ -240,10 +240,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
             requiredPayment.PriceEpisodeIdentifier = period.PriceEpisodeIdentifier;
             requiredPayment.AgeAtStartOfLearning = earningEvent.AgeAtStartOfLearning;
             requiredPayment.CollectionPeriod = new CollectionPeriod
-                                                    {
-                                                        AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
-                                                        Period = earningEvent.CollectionPeriod.Period
-                                                    };
+            {
+                AcademicYear = earningEvent.CollectionPeriod.AcademicYear,
+                Period = earningEvent.CollectionPeriod.Period
+            };
             requiredPayment.ContractType = ContractType.Act1;
             requiredPayment.Learner = earningEvent.Learner;
             requiredPayment.EarningEventId = earningEvent.EventId;
