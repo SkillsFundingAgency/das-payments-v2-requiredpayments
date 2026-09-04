@@ -38,11 +38,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
         private readonly IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor;
         private readonly IPayableEarningEventProcessor payableEarningEventProcessor;
         private readonly IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor;
-        private readonly IGSLFunctionalSkillEarningsEventProcessor gslFunctionalSkillEarningsEventProcessor;
         readonly ITelemetry telemetry;
         private readonly string logSafeApprenticeshipKeyString;
-
-
 
         public RequiredPaymentsService(ActorService actorService,
             ActorId actorId,
@@ -54,7 +51,6 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             IFunctionalSkillEarningsEventProcessor functionalSkillEarningsEventProcessor,
             IPayableEarningEventProcessor payableEarningEventProcessor,
             IShortCoursesEarningEventProcessor shortCoursesEarningEventProcessor,
-            IGSLFunctionalSkillEarningsEventProcessor gslFunctionalSkillEarningsEventProcessor,
             ITelemetry telemetry)
             : base(actorService, actorId)
         {
@@ -65,8 +61,8 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
             this.functionalSkillEarningsEventProcessor = functionalSkillEarningsEventProcessor;
             this.payableEarningEventProcessor = payableEarningEventProcessor;
             this.shortCoursesEarningEventProcessor = shortCoursesEarningEventProcessor;
-            this.gslFunctionalSkillEarningsEventProcessor = gslFunctionalSkillEarningsEventProcessor;
             this.telemetry = telemetry;
+
             apprenticeshipKeyString = actorId.GetStringId();
             apprenticeshipKey = apprenticeshipKeyService.ParseApprenticeshipKey(apprenticeshipKeyString);
             logSafeApprenticeshipKeyString = CreateLogSafeApprenticeshipKeyString(apprenticeshipKey);
@@ -208,7 +204,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
                     var stopwatch = Stopwatch.StartNew();
                     await ResetPaymentHistoryCacheIfDifferentCollectionPeriod(earningEvent.CollectionPeriod).ConfigureAwait(false);
                     await Initialise(earningEvent.CollectionPeriod.Period).ConfigureAwait(false);
-                    var requiredPaymentEvents = await gslFunctionalSkillEarningsEventProcessor.HandleEarningEvent(earningEvent, paymentHistoryCache, cancellationToken).ConfigureAwait(false);
+                    var requiredPaymentEvents = await functionalSkillEarningsEventProcessor.HandleEarningEvent(earningEvent, paymentHistoryCache, cancellationToken).ConfigureAwait(false);
                     Log(requiredPaymentEvents);
                     telemetry.TrackDuration("RequiredPaymentsService.HandleGSLFunctionalSkillEarningsEvent", stopwatch, earningEvent);
                     telemetry.StopOperation(operation);
