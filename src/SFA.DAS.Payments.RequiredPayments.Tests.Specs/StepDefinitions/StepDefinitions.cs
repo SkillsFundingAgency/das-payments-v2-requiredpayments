@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
@@ -6,6 +7,7 @@ using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers;
 
@@ -380,6 +382,87 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             onProgrammeEarningType = parsedOnProgrammeEarningType;
         }
 
+        [Given("the Required Payments Service receives a GSL Functional Skills Earnings Event")]
+        [Given("the event represents CourseType = Functional Skill")]
+        [Given("the event represents LearningType = Maths and English")]
+        [Given("the event contains <EarningType> earnings")]
+        public void GivenTheRequiredPaymentsServiceReceivesAGSLFunctionalSkillsEarningsEvent()
+        {
+            var message = new GSLFunctionalSkillEarningsEvent
+            {
+                CollectionPeriod = new CollectionPeriod { AcademicYear = currentAcademicYear, Period = 3 },
+                CollectionYear = currentAcademicYear,
+                Ukprn = testSession.Provider.Ukprn,
+                JobId = testSession.JobId,
+                ContractType = ContractType.Act2,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                StartDate = testSession.Learner.Course.LearningStartDate,
+                IlrSubmissionDateTime = DateTime.Now,
+                AgeAtStartOfLearning = 33,
+                LearningAim = new LearningAim
+                {
+                    Reference = testSession.Learner.Course.Reference,
+                    CourseCode = testSession.Learner.Course.LearnAimRef,
+                    SequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    FrameworkCode = testSession.Learner.Course.FrameworkCode,
+                    PathwayCode = testSession.Learner.Course.PathwayCode,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                    LearningType = LearningType.MathsAndEnglish
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode{
+                        Identifier = "pe-1",
+                        LearningAimSequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                        TotalNegotiatedPrice1 = 17000,
+                        TotalNegotiatedPrice2 = 1000,
+                        AgreedPrice = 18000,
+                        ActualEndDate = DateTime.Now,
+                        NumberOfInstalments = 7,
+                        InstalmentAmount = 300,
+                        CompletionAmount = 3600,
+                        Completed = false,
+                        EmployerContribution = 900,
+                        CompletionHoldBackExemptionCode = 0,
+                        FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+
+                    }
+                },
+                Earnings = new ReadOnlyCollection<FunctionalSkillEarning>(new List<FunctionalSkillEarning>
+                {
+                    new FunctionalSkillEarning
+                    {
+                        Type = FunctionalSkillType.BalancingMathsAndEnglish,
+                        Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Period = 1,
+                                Amount = 100,
+                                PriceEpisodeIdentifier = "pe-1",
+                                SfaContributionPercentage = 0.9m,
+                            }
+                        })
+                    }
+                })
+            };
+
+            scenarioContext["FunctionalSkillEarningsEvent"] = message;
+        }
+
+        [When("the event is processed by the Required Payments")]
+        public async Task WhenTheEventIsProcessedByTheRequiredPayments()
+        {
+            var message = (GSLFunctionalSkillEarningsEvent) scenarioContext["FunctionalSkillEarningsEvent"];
+            await messagingContext.Send(message);
+        }
+
 
         [When("the ILR is submitted - Levy")]
         public async Task WhenTheIlrIsSubmittedLevy()
@@ -532,6 +615,34 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(sfaAmount, Is.EqualTo(95m));
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
         }
+
+        [Then("the EarningType earnings should be processed successfully")]
+        public async Task ThenTheEarningTypeEarningsShouldBeProcessedSuccessfully()
+        {
+            await testSession.WaitForIt(
+                () => GSLFunctionalSkillsPaymentsHandler.GetEvents(testSession.Learner)
+                    .Any(),
+                "Failed to find GSL Functional Skills event");
+        }
+
+        [Then("the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Levy Amount message")]
+        public void ThenTheIncomingMathsAndEnglishEarningsShouldBeMappedToTheOutgoingCalculatedRequiredLevyAmountMessage()
+        {
+            throw new PendingStepException();
+        }
+
+        [Then("the earning type, amount, academic year and delivery period should match the values received in the incoming event")]
+        public void ThenTheEarningTypeAmountAcademicYearAndDeliveryPeriodShouldMatchTheValuesReceivedInTheIncomingEvent()
+        {
+            throw new PendingStepException();
+        }
+
+        [Then("the Calculated Required Levy Amount message should be published for downstream processing.")]
+        public void ThenTheCalculatedRequiredLevyAmountMessageShouldBePublishedForDownstreamProcessing_()
+        {
+            throw new PendingStepException();
+        }
+
 
         private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
         {
