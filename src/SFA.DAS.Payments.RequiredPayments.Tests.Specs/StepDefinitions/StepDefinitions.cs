@@ -638,6 +638,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         [Then("the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Levy Amount message")]
+        [Then("the earning type, amount, academic year and delivery period should match the values received in the incoming event")]
+        [Then("the Calculated Required Levy Amount message should be published for downstream processing.")]
         public async Task ThenTheIncomingMathsAndEnglishEarningsShouldBeMappedToTheOutgoingCalculatedRequiredLevyAmountMessage()
         {
             var incomingEvent = (GSLFunctionalSkillEarningsEvent)scenarioContext["FunctionalSkillEarningsEvent"];
@@ -665,19 +667,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(incentivePayment.DeliveryPeriod, Is.EqualTo(1));
             Assert.That(incentivePayment.EventId, Is.Not.EqualTo(Guid.Empty));
         }
-
-        [Then("the earning type, amount, academic year and delivery period should match the values received in the incoming event")]
-        public void ThenTheEarningTypeAmountAcademicYearAndDeliveryPeriodShouldMatchTheValuesReceivedInTheIncomingEvent()
-        {
-            throw new PendingStepException();
-        }
-
-        [Then("the Calculated Required Levy Amount message should be published for downstream processing.")]
-        public void ThenTheCalculatedRequiredLevyAmountMessageShouldBePublishedForDownstreamProcessing_()
-        {
-            throw new PendingStepException();
-        }
-
 
         private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
         {

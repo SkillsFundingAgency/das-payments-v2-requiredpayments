@@ -12,8 +12,8 @@ And the event contains <EarningType> earnings
 When the event is processed by the Required Payments 
 Then the <EarningType> earnings should be processed successfully
 And the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Levy Amount message
-#And the earning type, amount, academic year and delivery period should match the values received in the incoming event
-#And the Calculated Required Levy Amount message should be published for downstream processing.
+And the earning type, amount, academic year and delivery period should match the values received in the incoming event
+And the Calculated Required Levy Amount message should be published for downstream processing.
 
 Examples:
 | PaymentType | EarningType                    |
