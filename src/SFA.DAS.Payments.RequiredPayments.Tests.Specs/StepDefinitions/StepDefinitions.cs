@@ -51,6 +51,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [AfterScenario]
         public void AfterScenario()
         {
+            ResetCapturedEvents();
+        }
+
+        private static void ResetCapturedEvents()
+        {
+            RequiredIncentivePaymentHandler.ReceivedEvents.Clear();
+            RequiredLevyPaymentsHandler.ReceivedEvents.Clear();
+            RequiredCoInvestedPaymentsHandler.ReceivedEvents.Clear();
         }
 
         [Given("the Co-invested payments for the apprenticeship were recorded prior to the requirement to record the Reporting Funding Line Type")]
@@ -395,7 +403,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 CollectionYear = currentAcademicYear,
                 Ukprn = testSession.Provider.Ukprn,
                 JobId = testSession.JobId,
-                ContractType = ContractType.Act2,
+                ContractType = ContractType.Act1,
                 Learner = new SFA.DAS.Payments.Model.Core.Learner
                 {
                     Uln = testSession.Learner.Uln,
@@ -413,7 +421,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                     FrameworkCode = testSession.Learner.Course.FrameworkCode,
                     PathwayCode = testSession.Learner.Course.PathwayCode,
                     StandardCode = testSession.Learner.Course.StandardCode,
-                    FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                    FundingLineType = "19+ Apprenticeship (Employer on App Service)",
                     LearningType = LearningType.MathsAndEnglish
                 },
                 PriceEpisodes = new List<PriceEpisode>
@@ -431,7 +439,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                         Completed = false,
                         EmployerContribution = 900,
                         CompletionHoldBackExemptionCode = 0,
-                        FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                        FundingLineType = "19+ Apprenticeship (Employer on App Service)",
 
                     }
                 },
@@ -632,40 +640,36 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         {
             var expectedFunctionalSkillType = ParseFunctionalSkillType(earningType);
             await testSession.WaitForIt(
-                () => GSLFunctionalSkillsPaymentsHandler.GetEvents(testSession.Learner)
+                () => RequiredIncentivePaymentHandler.GetEvents(testSession.Learner)
                     .Any(ev => ev.TransactionType == (TransactionType)expectedFunctionalSkillType),
                 "Failed to find GSL Functional Skills event");
         }
 
-        [Then("the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Levy Amount message")]
+        [Then("the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Incentive Amount message")]
         [Then("the earning type, amount, academic year and delivery period should match the values received in the incoming event")]
-        [Then("the Calculated Required Levy Amount message should be published for downstream processing.")]
-        public async Task ThenTheIncomingMathsAndEnglishEarningsShouldBeMappedToTheOutgoingCalculatedRequiredLevyAmountMessage()
+        [Then("the Calculated Required Incentive Amount message should be published for downstream processing")]
+        public async Task ThenTheIncomingMathsAndEnglishEarningsShouldBeMappedToTheOutgoingCalculatedRequiredIncentiveAmountMessage()
         {
             var incomingEvent = (GSLFunctionalSkillEarningsEvent)scenarioContext["FunctionalSkillEarningsEvent"];
-            var periodisedRequiredPayment = GSLFunctionalSkillsPaymentsHandler
+            var requiredIncentivePayment = RequiredIncentivePaymentHandler
                 .GetEvents(testSession.Learner)
                 .Single();
 
-            Assert.That(periodisedRequiredPayment, Is.TypeOf<CalculatedRequiredIncentiveAmount>());
-
-            var incentivePayment = (CalculatedRequiredIncentiveAmount)periodisedRequiredPayment;
-
-            Assert.That(incentivePayment.Ukprn, Is.EqualTo(incomingEvent.Ukprn));
-            Assert.That(incentivePayment.JobId, Is.EqualTo(incomingEvent.JobId));
-            Assert.That(incentivePayment.CollectionPeriod.AcademicYear, Is.EqualTo(incomingEvent.CollectionPeriod.AcademicYear));
-            Assert.That(incentivePayment.CollectionPeriod.Period, Is.EqualTo(incomingEvent.CollectionPeriod.Period));
-            Assert.That(incentivePayment.Learner.Uln, Is.EqualTo(incomingEvent.Learner.Uln));
-            Assert.That(incentivePayment.Learner.ReferenceNumber, Is.EqualTo(incomingEvent.Learner.ReferenceNumber));
-            Assert.That(incentivePayment.LearningAim.Reference, Is.EqualTo(incomingEvent.LearningAim.Reference));
-            Assert.That(incentivePayment.LearningAim.ProgrammeType, Is.EqualTo(incomingEvent.LearningAim.ProgrammeType));
-            Assert.That(incentivePayment.LearningAim.StandardCode, Is.EqualTo(incomingEvent.LearningAim.StandardCode));
-            Assert.That(incentivePayment.LearningAim.FundingLineType, Is.EqualTo("19+ Apprenticeship Non-Levy Contract (procured)"));
-            Assert.That(incentivePayment.TransactionType, Is.EqualTo((TransactionType)functionalSkillType));
-            Assert.That(incentivePayment.Type, Is.EqualTo((IncentivePaymentType)functionalSkillType));
-            Assert.That(incentivePayment.AmountDue, Is.EqualTo(100m));
-            Assert.That(incentivePayment.DeliveryPeriod, Is.EqualTo(1));
-            Assert.That(incentivePayment.EventId, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(requiredIncentivePayment.Ukprn, Is.EqualTo(incomingEvent.Ukprn));
+            Assert.That(requiredIncentivePayment.JobId, Is.EqualTo(incomingEvent.JobId));
+            Assert.That(requiredIncentivePayment.CollectionPeriod.AcademicYear, Is.EqualTo(incomingEvent.CollectionPeriod.AcademicYear));
+            Assert.That(requiredIncentivePayment.CollectionPeriod.Period, Is.EqualTo(incomingEvent.CollectionPeriod.Period));
+            Assert.That(requiredIncentivePayment.Learner.Uln, Is.EqualTo(incomingEvent.Learner.Uln));
+            Assert.That(requiredIncentivePayment.Learner.ReferenceNumber, Is.EqualTo(incomingEvent.Learner.ReferenceNumber));
+            Assert.That(requiredIncentivePayment.LearningAim.Reference, Is.EqualTo(incomingEvent.LearningAim.Reference));
+            Assert.That(requiredIncentivePayment.LearningAim.ProgrammeType, Is.EqualTo(incomingEvent.LearningAim.ProgrammeType));
+            Assert.That(requiredIncentivePayment.LearningAim.StandardCode, Is.EqualTo(incomingEvent.LearningAim.StandardCode));
+            Assert.That(requiredIncentivePayment.LearningAim.FundingLineType, Is.EqualTo("19+ Apprenticeship (Employer on App Service)"));
+            Assert.That(requiredIncentivePayment.TransactionType, Is.EqualTo((TransactionType)functionalSkillType));
+            Assert.That(requiredIncentivePayment.Type, Is.EqualTo((IncentivePaymentType)functionalSkillType));
+            Assert.That(requiredIncentivePayment.AmountDue, Is.EqualTo(100m));
+            Assert.That(requiredIncentivePayment.DeliveryPeriod, Is.EqualTo(1));
+            Assert.That(requiredIncentivePayment.EventId, Is.Not.EqualTo(Guid.Empty));
         }
 
         private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
