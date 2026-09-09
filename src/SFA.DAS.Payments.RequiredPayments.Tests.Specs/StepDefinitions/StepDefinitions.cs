@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
@@ -6,7 +7,9 @@ using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Entities;
+using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
+using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Tests.Specs.Handlers;
 
 namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
@@ -22,6 +25,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private DateTime ilrLearningStartDate;
         private int ageAtStartOfLearning;
         private OnProgrammeEarningType onProgrammeEarningType;
+        private FunctionalSkillType functionalSkillType;
 
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
@@ -47,6 +51,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [AfterScenario]
         public void AfterScenario()
         {
+            ResetCapturedEvents();
+        }
+
+        private static void ResetCapturedEvents()
+        {
+            RequiredIncentivePaymentHandler.ReceivedEvents.Clear();
+            RequiredLevyPaymentsHandler.ReceivedEvents.Clear();
+            RequiredCoInvestedPaymentsHandler.ReceivedEvents.Clear();
         }
 
         [Given("the Co-invested payments for the apprenticeship were recorded prior to the requirement to record the Reporting Funding Line Type")]
@@ -380,6 +392,96 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             onProgrammeEarningType = parsedOnProgrammeEarningType;
         }
 
+        [Given("the Required Payments Service receives a GSL Functional Skills Earnings Event")]
+        [Given("the event represents CourseType = Functional Skill")]
+        [Given("the event represents LearningType = Maths and English")]
+        public void GivenTheRequiredPaymentsServiceReceivesAGSLFunctionalSkillsEarningsEvent()
+        {
+            var message = new GSLFunctionalSkillEarningsEvent
+            {
+                CollectionPeriod = new CollectionPeriod { AcademicYear = currentAcademicYear, Period = 3 },
+                CollectionYear = currentAcademicYear,
+                Ukprn = testSession.Provider.Ukprn,
+                JobId = testSession.JobId,
+                ContractType = ContractType.Act1,
+                Learner = new SFA.DAS.Payments.Model.Core.Learner
+                {
+                    Uln = testSession.Learner.Uln,
+                    ReferenceNumber = testSession.Learner.LearnRefNumber
+                },
+                StartDate = testSession.Learner.Course.LearningStartDate,
+                IlrSubmissionDateTime = DateTime.Now,
+                AgeAtStartOfLearning = 33,
+                LearningAim = new LearningAim
+                {
+                    Reference = testSession.Learner.Course.Reference,
+                    CourseCode = testSession.Learner.Course.LearnAimRef,
+                    SequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    FrameworkCode = testSession.Learner.Course.FrameworkCode,
+                    PathwayCode = testSession.Learner.Course.PathwayCode,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FundingLineType = "19+ Apprenticeship (Employer on App Service)",
+                    LearningType = LearningType.MathsAndEnglish
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode{
+                        Identifier = "pe-1",
+                        LearningAimSequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                        TotalNegotiatedPrice1 = 17000,
+                        TotalNegotiatedPrice2 = 1000,
+                        AgreedPrice = 18000,
+                        ActualEndDate = DateTime.Now,
+                        NumberOfInstalments = 7,
+                        InstalmentAmount = 300,
+                        CompletionAmount = 3600,
+                        Completed = false,
+                        EmployerContribution = 900,
+                        CompletionHoldBackExemptionCode = 0,
+                        FundingLineType = "19+ Apprenticeship (Employer on App Service)",
+
+                    }
+                },
+            };
+
+            scenarioContext["FunctionalSkillEarningsEvent"] = message;
+        }
+
+        [Given("the event contains (.*) earnings")]
+        public void GivenTheEventContainsOn_ProgrammeMathsAndEnglishEarnings(String earningType)
+        {
+            functionalSkillType = ParseFunctionalSkillType(earningType);
+            var message = scenarioContext.Get<GSLFunctionalSkillEarningsEvent>("FunctionalSkillEarningsEvent");
+
+            message.Earnings = new ReadOnlyCollection<FunctionalSkillEarning>(new List<FunctionalSkillEarning>()
+                {
+                    new FunctionalSkillEarning
+                    {
+                        Type = functionalSkillType,
+                        Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>
+                        {
+                            new EarningPeriod
+                            {
+                                Period = 1,
+                                Amount = 100,
+                                PriceEpisodeIdentifier = "pe-1",
+                                SfaContributionPercentage = 0.9m,
+                            }
+                        })
+                    }
+                }
+            );
+        }
+
+
+        [When("the event is processed by the Required Payments")]
+        public async Task WhenTheEventIsProcessedByTheRequiredPayments()
+        {
+            var message = (GSLFunctionalSkillEarningsEvent) scenarioContext["FunctionalSkillEarningsEvent"];
+            await messagingContext.Send(message);
+        }
+
 
         [When("the ILR is submitted - Levy")]
         public async Task WhenTheIlrIsSubmittedLevy()
@@ -533,6 +635,43 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             Assert.That(employerAmount, Is.EqualTo(5m)); //double check this, payment line wise
         }
 
+        [Then("the (.*) earnings should be processed successfully")]
+        public async Task ThenTheEarningTypeEarningsShouldBeProcessedSuccessfully(string earningType)
+        {
+            var expectedFunctionalSkillType = ParseFunctionalSkillType(earningType);
+            await testSession.WaitForIt(
+                () => RequiredIncentivePaymentHandler.GetEvents(testSession.Learner)
+                    .Any(ev => ev.TransactionType == (TransactionType)expectedFunctionalSkillType),
+                "Failed to find GSL Functional Skills event");
+        }
+
+        [Then("the incoming Maths and English earnings should be mapped to the outgoing Calculated Required Incentive Amount message")]
+        [Then("the earning type, amount, academic year and delivery period should match the values received in the incoming event")]
+        [Then("the Calculated Required Incentive Amount message should be published for downstream processing")]
+        public async Task ThenTheIncomingMathsAndEnglishEarningsShouldBeMappedToTheOutgoingCalculatedRequiredIncentiveAmountMessage()
+        {
+            var incomingEvent = (GSLFunctionalSkillEarningsEvent)scenarioContext["FunctionalSkillEarningsEvent"];
+            var requiredIncentivePayment = RequiredIncentivePaymentHandler
+                .GetEvents(testSession.Learner)
+                .Single();
+
+            Assert.That(requiredIncentivePayment.Ukprn, Is.EqualTo(incomingEvent.Ukprn));
+            Assert.That(requiredIncentivePayment.JobId, Is.EqualTo(incomingEvent.JobId));
+            Assert.That(requiredIncentivePayment.CollectionPeriod.AcademicYear, Is.EqualTo(incomingEvent.CollectionPeriod.AcademicYear));
+            Assert.That(requiredIncentivePayment.CollectionPeriod.Period, Is.EqualTo(incomingEvent.CollectionPeriod.Period));
+            Assert.That(requiredIncentivePayment.Learner.Uln, Is.EqualTo(incomingEvent.Learner.Uln));
+            Assert.That(requiredIncentivePayment.Learner.ReferenceNumber, Is.EqualTo(incomingEvent.Learner.ReferenceNumber));
+            Assert.That(requiredIncentivePayment.LearningAim.Reference, Is.EqualTo(incomingEvent.LearningAim.Reference));
+            Assert.That(requiredIncentivePayment.LearningAim.ProgrammeType, Is.EqualTo(incomingEvent.LearningAim.ProgrammeType));
+            Assert.That(requiredIncentivePayment.LearningAim.StandardCode, Is.EqualTo(incomingEvent.LearningAim.StandardCode));
+            Assert.That(requiredIncentivePayment.LearningAim.FundingLineType, Is.EqualTo("19+ Apprenticeship (Employer on App Service)"));
+            Assert.That(requiredIncentivePayment.TransactionType, Is.EqualTo((TransactionType)functionalSkillType));
+            Assert.That(requiredIncentivePayment.Type, Is.EqualTo((IncentivePaymentType)functionalSkillType));
+            Assert.That(requiredIncentivePayment.AmountDue, Is.EqualTo(100m));
+            Assert.That(requiredIncentivePayment.DeliveryPeriod, Is.EqualTo(1));
+            Assert.That(requiredIncentivePayment.EventId, Is.Not.EqualTo(Guid.Empty));
+        }
+
         private async Task<List<(decimal AmountDue, decimal SfaContributionPercentage)>> WaitForRequiredLevyPayments()
         {
             var expectedTransactionType = onProgrammeEarningType switch
@@ -553,6 +692,20 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 .Where(ev => ev.TransactionType == expectedTransactionType)
                 .Select(ev => (ev.AmountDue, ev.SfaContributionPercentage))
                 .ToList();
+        }
+
+        private static FunctionalSkillType ParseFunctionalSkillType(string earningType)
+        {
+            ArgumentNullException.ThrowIfNull(earningType);
+            var normalisedEarningType = earningType.Trim().ToLowerInvariant();
+
+            return normalisedEarningType switch
+            {
+                "on-programme maths and english" => FunctionalSkillType.OnProgrammeMathsAndEnglish,
+                "balancing maths and english" => FunctionalSkillType.BalancingMathsAndEnglish,
+                "learning support" => FunctionalSkillType.LearningSupport,
+                _ => throw new ArgumentOutOfRangeException(nameof(earningType), earningType, "Unsupported functional skill earning type")
+            };
         }
     }
 }
