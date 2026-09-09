@@ -195,7 +195,7 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsService
         public async Task<ReadOnlyCollection<PeriodisedRequiredPaymentEvent>> HandleGSLFunctionalSkillEarningsEvent(GSLFunctionalSkillEarningsEvent earningEvent,
             CancellationToken cancellationToken)
         {
-            paymentLogger.LogVerbose($"Handling GSLFunctionalSkillEarningsEvent for jobId:{earningEvent.JobId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
+            paymentLogger.LogVerbose($"Handling GSLFunctionalSkillEarningsEvent for externalEarningsId:{earningEvent.ExternalEarningsId} with apprenticeship key based on {logSafeApprenticeshipKeyString}");
 
             try
             {
