@@ -50,7 +50,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 },
                 LearningAim = new LearningAim
                 {
-                    Reference = "ZSC0001"
+                    Reference = "ZSC0001",
+                    FrameworkCode = testSession.Learner.Course.FrameworkCode,
+                    PathwayCode = testSession.Learner.Course.PathwayCode,
+                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
+                    StandardCode = testSession.Learner.Course.StandardCode,
+                    FundingLineType = testSession.Learner.Course.FundingLineType,
+                    SequenceNumber = testSession.Learner.Course.AimSeqNumber,
+                    StartDate = testSession.Learner.Course.LearningStartDate,
+                    LearningType = LearningType.ApprenticeshipUnit
                 },
                 PriceEpisodes = new List<PriceEpisode>(),
                 Earnings = new List<ShortCourseEarning>
@@ -85,6 +93,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [When("the provider now states that the learner has withdrawn from the course and we received amended earnings")]
         public async Task WhenTheProviderNowStatesThatTheLearnerHasWithdrawnFromTheCourseAndWeReceivedAmendedEarnings()
         {
+            shortCourseEarningsEvent.EventId = Guid.NewGuid();
+            shortCourseEarningsEvent.ExternalEarningsId = Guid.NewGuid();
             shortCourseEarningsEvent.Earnings = new List<ShortCourseEarning>();
             shortCourseEarningsEvent.PriceEpisodes = new List<PriceEpisode>();
             await messagingContext.Send(shortCourseEarningsEvent);
@@ -100,7 +110,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [Then("no required payments should be generated")]
         public async Task ThenNoRequiredPaymentsShouldBeGenerated()
         {
-            await testSession.WaitForItAndFail(() => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.FundingPlatformType == FundingPlatformType.DigitalApprenticeshipService), "Required payments were created when payments paused for learner and course");
+            await testSession.WaitForItAndFail(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.FundingPlatformType == FundingPlatformType.DigitalApprenticeshipService), "Required payments were created when payments paused for learner and course");
         }
 
         [Given("the provider originally stated the learner started and completed the course")]
@@ -116,6 +126,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 TransactionType = TransactionType.Milestone1,
                 FundingSource = FundingSourceType.CoInvestedSfa,
                 LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
+                LearningAimFrameworkCode = testSession.Learner.Course.FrameworkCode,
+                LearningAimPathwayCode = testSession.Learner.Course.PathwayCode,
                 LearningAimStandardCode = testSession.Learner.Course.StandardCode,
                 LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
                 CompletionAmount = 0,
@@ -148,6 +160,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 TransactionType = TransactionType.Completion,
                 FundingSource = FundingSourceType.CoInvestedSfa,
                 LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
+                LearningAimFrameworkCode = testSession.Learner.Course.FrameworkCode,
+                LearningAimPathwayCode = testSession.Learner.Course.PathwayCode,
                 LearningAimStandardCode = testSession.Learner.Course.StandardCode,
                 LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
                 CompletionAmount = 0,
@@ -176,7 +190,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [Then("the required payments should be generated to process refunds for the previous payments made")]
         public async Task ThenTheRequiredPaymentsShouldBeGeneratedToProcessRefundsForThePreviousPaymentsMode()
         {
-            await testSession.WaitForIt(() => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
+            await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner)
                     .Count(ev =>
                         ev.AmountDue < 0m &&
                         (ev.TransactionType == TransactionType.Milestone1 || ev.TransactionType == TransactionType.Completion)
@@ -197,6 +211,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
                 TransactionType = TransactionType.Milestone1,
                 FundingSource = FundingSourceType.CoInvestedSfa,
                 LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
+                LearningAimFrameworkCode = testSession.Learner.Course.FrameworkCode,
+                LearningAimPathwayCode = testSession.Learner.Course.PathwayCode,
                 LearningAimStandardCode = testSession.Learner.Course.StandardCode,
                 LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
                 CompletionAmount = 0,
