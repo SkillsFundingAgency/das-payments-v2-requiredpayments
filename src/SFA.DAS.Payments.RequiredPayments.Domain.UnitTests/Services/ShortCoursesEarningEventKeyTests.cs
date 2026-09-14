@@ -42,7 +42,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 Reference = "aim-ref",
                 SequenceNumber = 4,
                 StandardCode = 5,
-                CourseCode = "course-code"
+                CourseCode = "ABC123"
             };
             collectionPeriod = new CollectionPeriod { AcademicYear = 2021, Period = 1 };
             eventType = nameof(GSLShortCourseEarningsEvent);
@@ -139,7 +139,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                     Reference = "aim-ref",
                     SequenceNumber = 4,
                     StandardCode = 5,
-                    CourseCode = "course-code"
+                    CourseCode = "ABC123"
                 }
             };
         }
