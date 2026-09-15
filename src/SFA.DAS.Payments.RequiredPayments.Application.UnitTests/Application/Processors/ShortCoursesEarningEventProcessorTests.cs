@@ -329,6 +329,153 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
+        public async Task Payments_Paused_On_First_Earnings_Generates_No_Payment()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(1, 300m, ApprenticeshipEmployerType.Levy, isPaymentPaused: true);
+            var deliveryPeriod2 = GenerateTestEarningPeriod(2, 700m, ApprenticeshipEmployerType.Levy, isPaymentPaused: true);
+
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                },
+                new ()
+                {
+                    Type = ShortCourseEarningType.Completion,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod2
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+                });
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(false, null));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 0, "No required payments should be generated while payments are paused.");
+        }
+
+        [Test]
+        public async Task Payments_Paused_After_Change_Of_Delivery_Period_Generates_No_Payment_And_No_Refund()
+        {
+            // Arrange
+            var deliveryPeriod1 = GenerateTestEarningPeriod(2, 300m, ApprenticeshipEmployerType.Levy, isPaymentPaused: true);
+
+            var shortCourses = new List<ShortCourseEarning>
+            {
+                new ()
+                {
+                    Type = ShortCourseEarningType.Milestone1,
+                    Periods = new List<EarningPeriod>
+                    {
+                        deliveryPeriod1
+                    },
+                }
+            };
+
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = shortCourses,
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+                });
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 0, "No required payments (including refunds) should be generated while payments are paused.");
+        }
+
+        [Test]
+        public async Task Learner_Withdrawn_While_Payments_Paused_Still_Generates_Refund()
+        {
+            // Arrange
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2526,
+                    CollectionPeriod = 2,
+                    PlannedEndDate = new DateTime(2026, 9, 30)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2526, Period = 1 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 1,
+                    Amount = 300m,
+                    LearningAimFundingLineType = "funding line type"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            // Act
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            // Assert
+            ClassicAssert.IsTrue(result.Count == 1, "Should still refund the Milestone1 payment when the learner has withdrawn, even though payments are paused.");
+
+            var refundMilestone1Payment = result.FirstOrDefault(x =>
+                x.TransactionType == TransactionType.Milestone1 && x.AmountDue < 0m);
+
+            ClassicAssert.IsNotNull(refundMilestone1Payment);
+            ValidateRequiredPaymentEvents(refundMilestone1Payment, -300m, 1, TransactionType.Milestone1, 2526, 2);
+        }
+
+        [Test]
         public async Task Payments_Made_In_Different_Delivery_Period_Generates_New_Payment()
         {
             // Arrange
@@ -891,7 +1038,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             ClassicAssert.IsNotNull(rpe.LearningAim.FundingLineType, "Invalid LearningAim FundingLineType");
         }
 
-        private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, ApprenticeshipEmployerType employerType, decimal? sfaContribution = 0m)
+        private EarningPeriod GenerateTestEarningPeriod(byte period, decimal amount, ApprenticeshipEmployerType employerType, decimal? sfaContribution = 0m, bool isPaymentPaused = false)
         {
             return new EarningPeriod
             {
@@ -903,6 +1050,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 ApprenticeshipId = 1,
                 SfaContributionPercentage = sfaContribution,
                 ApprenticeshipEmployerType = employerType,
+                IsPaymentPaused = isPaymentPaused,
             };
         }
 
