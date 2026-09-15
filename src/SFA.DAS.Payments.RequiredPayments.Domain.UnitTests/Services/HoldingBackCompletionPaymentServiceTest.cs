@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using NUnit.Framework;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
@@ -27,7 +28,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = 10,
-                CompletionHoldBackExemptionCode = exemptionCode
+                CompletionHoldBackExemptionCode = exemptionCode,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -46,7 +48,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = 10,
-                CompletionHoldBackExemptionCode = 0
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -66,7 +69,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = 10,
-                CompletionHoldBackExemptionCode = 0
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -84,7 +88,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = null,
-                CompletionHoldBackExemptionCode = 0
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -102,7 +107,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = 11,
-                CompletionHoldBackExemptionCode = null
+                CompletionHoldBackExemptionCode = null,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -120,7 +126,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var priceEpisode = new PriceEpisode
             {
                 EmployerContribution = 11,
-                CompletionHoldBackExemptionCode = null
+                CompletionHoldBackExemptionCode = null,
+                ActualEndDate = new DateTime(2026, 7, 31)
             };
 
             // act
@@ -130,5 +137,23 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             result.Should().BeFalse();
         }
 
+        [Test]
+        public void CompletionPaymentIsNotHeldWhenCompletionDateIsOnOrAfterPolicyChange()
+        {
+            // arrange
+            var paymentHistory = 0m;
+            var priceEpisode = new PriceEpisode
+            {
+                EmployerContribution = null,
+                CompletionHoldBackExemptionCode = 0,
+                ActualEndDate = new DateTime(2026, 8, 1)
+            };
+
+            // act
+            var result = service.ShouldHoldBackCompletionPayment(paymentHistory, priceEpisode);
+
+            // assert
+            result.Should().BeFalse();
+        }
     }
 }
