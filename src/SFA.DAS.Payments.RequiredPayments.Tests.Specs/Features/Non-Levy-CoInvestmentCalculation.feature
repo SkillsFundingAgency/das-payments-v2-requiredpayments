@@ -87,3 +87,18 @@ Examples:
 | Learning        |
 | Completion      |
 | Balancing       |
+
+Scenario Outline: Non-levy employer with insufficient balance - Part funded from co-investment - Start date before 1 April 2024
+Given a Non-levy employer with an Apprentice
+And the SFA contribution percentage was previously calculated to be 90%
+And the learning start date is before 1 April 2024
+And the learner is aged between 16 and 21 on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted
+Then the payment funding is split between 'SFA co-investment' (90%) and 'Employer co-investment' (10%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |

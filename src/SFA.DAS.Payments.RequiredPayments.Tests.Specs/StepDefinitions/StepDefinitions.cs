@@ -412,6 +412,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             };
         }
 
+        [Given("the SFA contribution percentage was previously calculated to be 90%")]
+        public void GivenTheSFAContributionPercentageWasPreviouslyCalculatedToBe90Percent()
+        {
+            testSession.Learner.IsLevyLearner = false;
+
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.9m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                },
+            };
+        }
+
         [Given("the learning start date is on or after 1 August 2026")]
         public void GivenTheLearningStartDateIsOnOrAfter1August2026()
         {
@@ -429,6 +448,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void GivenTheLearningStartDateIsBefore1August2026AndAfter1Apr2024()
         {
             ilrLearningStartDate = new DateTime(2026, 7, 31);
+        }
+
+        [Given("the learning start date is before 1 April 2024")]
+        public void GivenTheLearningStartDateIsBefore1April2024()
+        {
+            ilrLearningStartDate = new DateTime(2024, 3, 31);
         }
 
         // The actual number needs to be decided
@@ -624,6 +649,22 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             AssertRequiredPaymentAndSfaPercentage(nonLevyPayment.AmountDue, nonLevyPayment.SfaContributionPercentage, 95m, 5m);
             var levyPayment = events.FirstOrDefault(x => x.employerType == ApprenticeshipEmployerType.Levy);
             AssertRequiredPaymentAndSfaPercentage(levyPayment.AmountDue, levyPayment.SfaContributionPercentage, 75m, 25m);
+        }
+
+        [Then(@"the payment funding is split between 'SFA co-investment' \(90%\) and 'Employer co-investment' \(10%\)")]
+        public async Task ThenPaymentLinesAreGenerated95SplitBetween90PercentSfaCoInvestmentAnd10PercentEmployerCoInvestment()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+
+            var requiredPayment = events.Single();
+            Assert.That(requiredPayment.SfaContributionPercentage, Is.EqualTo(0.9m));
+
+            var sfaAmount = requiredPayment.AmountDue * requiredPayment.SfaContributionPercentage;
+            var employerAmount = requiredPayment.AmountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(90m));
+            Assert.That(employerAmount, Is.EqualTo(10m)); 
         }
 
         private void AssertRequiredPaymentAndSfaPercentage(decimal amountDue, decimal sfaContributionPercentage, decimal expectedSfa, decimal expectedEmployerAmount)
