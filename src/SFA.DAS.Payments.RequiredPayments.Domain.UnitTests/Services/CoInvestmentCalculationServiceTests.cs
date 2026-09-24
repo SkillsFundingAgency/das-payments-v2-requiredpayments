@@ -213,7 +213,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
         }
 
         [Test]
-        public void ProcessPeriodsForRecalculation_Should_Not_Override_CoInvestmentRate_For_Apprentices_Who_Started_With_Levy_Employer_Before_1st_August_2024()
+        public void ProcessPeriodsForRecalculation_Should_Not_Override_CoInvestmentRate_For_Apprentices_Who_Started_With_Levy_Employer_Before_1st_August_2026()
         {
             var historicalSfaContributionPercentage = 0.8m;
 
