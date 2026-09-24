@@ -17,6 +17,7 @@ using SFA.DAS.Payments.Application.Repositories;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
 using SFA.DAS.Payments.Model.Core.Factories;
+using SFA.DAS.Payments.Model.Core.Incentives;
 using SFA.DAS.Payments.Model.Core.OnProgramme;
 using SFA.DAS.Payments.RequiredPayments.Application.Infrastructure;
 using SFA.DAS.Payments.RequiredPayments.Application.Mapping;
@@ -26,6 +27,7 @@ using SFA.DAS.Payments.RequiredPayments.Application.UnitTests.TestHelpers;
 using SFA.DAS.Payments.RequiredPayments.Domain;
 using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using SFA.DAS.Payments.RequiredPayments.Domain.Services;
+using SFA.DAS.Payments.RequiredPayments.Messages.Events;
 using SFA.DAS.Payments.RequiredPayments.Model.Entities;
 using Earning = SFA.DAS.Payments.RequiredPayments.Domain.Entities.Earning;
 
@@ -97,7 +99,10 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
-        public async Task TestNormalEvent()
+        [TestCase(OnProgrammeEarningType.Learning)]
+        [TestCase(OnProgrammeEarningType.Completion)]
+        [TestCase(OnProgrammeEarningType.Balancing)]
+        public async Task TestLevyEvent(OnProgrammeEarningType onProgrammeEarningType)
         {
             // arrange
             var period = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2);
@@ -113,7 +118,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 {
                     new OnProgrammeEarning
                     {
-                        Type = OnProgrammeEarningType.Learning,
+                        Type = onProgrammeEarningType,
                         Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>()
                         {
                             new EarningPeriod
@@ -157,7 +162,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                 CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2), 
                 DeliveryPeriod = 2,
                 LearnAimReference = earningEvent.LearningAim.Reference,
-                TransactionType = (int) OnProgrammeEarningType.Learning
+                TransactionType = (int) onProgrammeEarningType
             }};
 
             var periods = GeneratePeriods(earningEvent);
@@ -179,6 +184,102 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             // assert
             actualRequiredPayment.Should().HaveCount(1);
             actualRequiredPayment.First().LearningAimSequenceNumber.Should().Be(2);
+            requiredPaymentsService.Verify(p => p.GetRequiredPayments(It.Is<Earning>(x => x.EarningType == EarningType.Levy && x.Amount == 100), It.IsAny<List<Payment>>()), Times.Once);
+        }
+
+        [TestCaseSource(nameof(GetAllIncentiveEarningTypes))]
+        public async Task TestIncentiveEvent(IncentiveEarningType incentiveEarningType)
+        {
+            // arrange
+            var period = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2);
+
+            var earningEvent = new PayableEarningEvent
+            {
+                Ukprn = 1,
+                CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                CollectionYear = period.AcademicYear,
+                Learner = EarningEventDataHelper.CreateLearner(),
+                LearningAim = EarningEventDataHelper.CreateLearningAim(),
+                IncentiveEarnings = new List<IncentiveEarning>()
+                {
+                    new IncentiveEarning
+                    {
+                        Type = incentiveEarningType,
+                        Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>()
+                        {
+                            new EarningPeriod
+                            {
+                                Amount = 100,
+                                Period = period.Period,
+                                PriceEpisodeIdentifier = "2",
+                                SfaContributionPercentage = 0.9m,
+                            }
+                        }),
+                    },
+                    new IncentiveEarning
+                    {
+                        Type = incentiveEarningType,
+                        Periods = new ReadOnlyCollection<EarningPeriod>(new List<EarningPeriod>()
+                        {
+                            new EarningPeriod
+                            {
+                                Amount = 200,
+                                Period = (byte)(period.Period + 1),
+                                PriceEpisodeIdentifier = "2",
+                                SfaContributionPercentage = 0.9m,
+                            }
+                        })
+                    }
+                },
+                PriceEpisodes = new List<PriceEpisode>
+                {
+                    new PriceEpisode
+                    {
+                        LearningAimSequenceNumber = 2,
+                        Identifier = "2"
+                    }
+                }
+            };
+
+            var requiredPayments = new List<RequiredPayment>
+            {
+                new RequiredPayment
+                {
+                    Amount = 100,
+                    EarningType = EarningType.Incentive,
+                },
+            };
+
+            var paymentHistoryEntities = new[]
+            {
+                new PaymentHistoryEntity
+                {
+                    CollectionPeriod = CollectionPeriodFactory.CreateFromAcademicYearAndPeriod(1819, 2),
+                    DeliveryPeriod = 2,
+                    LearnAimReference = earningEvent.LearningAim.Reference,
+                    TransactionType = (int) incentiveEarningType
+                }
+            };
+            var periods = GeneratePeriods(earningEvent);
+
+            coInvestmentCalculationServiceMock.Setup(x =>
+                x.ProcessPeriodsForRecalculation(It.IsAny<PayableEarningEvent>(),
+                    It.IsAny<IReadOnlyCollection<(EarningPeriod period, int type)>>())).Returns(periods);
+
+            paymentHistoryCacheMock.Setup(c => c.TryGet(It.Is<string>(key => key == CacheKeys.PaymentHistoryKey), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities))
+                .Verifiable();
+            requiredPaymentsService.Setup(p => p.GetRequiredPayments(It.Is<Earning>(x => x.EarningType == EarningType.Incentive && x.Amount == 100), It.IsAny<List<Payment>>()))
+                .Returns(requiredPayments)
+                .Verifiable();
+
+            // act
+            var actualRequiredPayment = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object, CancellationToken.None);
+
+            // assert
+            actualRequiredPayment.Should().HaveCount(1);
+            actualRequiredPayment.First().LearningAimSequenceNumber.Should().Be(2);
+            requiredPaymentsService.Verify(p => p.GetRequiredPayments(It.Is<Earning>(x => x.EarningType == EarningType.Incentive && x.Amount == 100), It.IsAny<List<Payment>>()), Times.Once);
         }
 
         [Test]
@@ -768,6 +869,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
                     }
                 }
             };
+        }
+
+        private static IEnumerable<IncentiveEarningType> GetAllIncentiveEarningTypes()
+        {
+            return Enum.GetValues<IncentiveEarningType>();
         }
 
         private IReadOnlyCollection<(EarningPeriod period, int type)> GeneratePeriods(PayableEarningEvent earningEvent)

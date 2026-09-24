@@ -2,12 +2,14 @@
 using System.Linq;
 using System.Runtime.Serialization;
 using SFA.DAS.Payments.Messages.Common.Events;
+using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
 {
     [KnownType("GetInheritors")]
     public abstract class PeriodisedRequiredPaymentEvent : PeriodisedPaymentEvent, IPeriodisedRequiredPaymentEvent
     {
+        public virtual FundingPlatformType FundingPlatformType { get; set; }
         private static Type[] inheritors;
         private static Type[] GetInheritors()
         {
