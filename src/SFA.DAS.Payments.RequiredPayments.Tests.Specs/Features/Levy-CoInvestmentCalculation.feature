@@ -90,3 +90,34 @@ Examples:
 | Learning        |
 | Completion      |
 | Balancing       |
+
+Scenario Outline: Levy employer with insufficient balance - Part funded from co-investment - Start date before 1 April 2024
+Given a Levy employer with an Apprentice
+And the SFA contribution percentage was previously calculated to be 90%
+And the Levy Employer has insufficient balance
+And the learning start date is before 1 April 2024
+And the learner is aged between 16 and 21 on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted - Levy
+Then the payment funding is split between 'SFA co-investment' (90%) and 'Employer co-investment' (10%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |
+
+Scenario Outline: Levy employer with insufficient balance - Funded from co-investment - Start date before 1st April 2024 - Learner under 22 yrs(regression)
+Given a Levy employer with an Apprentice
+And the Levy Employer has insufficient balance
+And the learning start date is before 1 April 2024
+And the learner is aged between 16 and 21 on the start date
+And the transaction type is a <transactionType> payment
+When the ILR is submitted - Levy
+Then the payment funding is split between 'SFA co-investment' (95%) and 'Employer co-investment' (5%)
+
+Examples:
+| transactionType |
+| Learning        |
+| Completion      |
+| Balancing       |
