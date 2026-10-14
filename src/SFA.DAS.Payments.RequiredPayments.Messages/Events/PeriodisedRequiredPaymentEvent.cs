@@ -8,6 +8,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     [KnownType("GetInheritors")]
     public abstract class PeriodisedRequiredPaymentEvent : PeriodisedPaymentEvent, IPeriodisedRequiredPaymentEvent
     {
+        public Guid? ExternalEarningsId { get; set; }
+
         private static Type[] inheritors;
         private static Type[] GetInheritors()
         {

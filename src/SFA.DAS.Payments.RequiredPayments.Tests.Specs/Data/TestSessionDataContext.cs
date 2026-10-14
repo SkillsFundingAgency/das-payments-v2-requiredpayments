@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using SFA.DAS.Payments.Model.Core.Audit;
 
 
 namespace SFA.DAS.Payments.AcceptanceTests.Core.Data
@@ -18,6 +19,8 @@ namespace SFA.DAS.Payments.AcceptanceTests.Core.Data
 
         public virtual DbSet<Provider> Providers { get; set; }
         public virtual DbSet<PaymentModel> Payment { get; set; }
+
+        public virtual DbSet<RequiredPaymentEventModel> RequiredPaymentEvents { get; set; }
 
         public TestSessionDataContext(string connectionString)
         {
@@ -35,6 +38,7 @@ namespace SFA.DAS.Payments.AcceptanceTests.Core.Data
             modelBuilder.HasDefaultSchema("Payments2");
             modelBuilder.ApplyConfiguration(new ProviderConfiguration());
             modelBuilder.ApplyConfiguration(new PaymentModelConfiguration());
+            modelBuilder.ApplyConfiguration(new RequiredPaymentEventModelConfiguration());
         }
 
         public Provider LeastRecentlyUsed() =>

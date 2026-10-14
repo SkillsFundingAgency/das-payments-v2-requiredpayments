@@ -1,11 +1,6 @@
 ﻿using NServiceBus;
 using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.EarningEvents.Messages.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
 {
@@ -30,6 +25,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         }
 
         public async Task Send(PayableEarningEvent earningEvent)
+        {
+            await endpointInstance.Send("sfa-das-payments-requiredpayments", earningEvent);
+        }
+
+        public async Task Send(GSLShortCourseEarningsEvent earningEvent)
         {
             await endpointInstance.Send("sfa-das-payments-requiredpayments", earningEvent);
         }

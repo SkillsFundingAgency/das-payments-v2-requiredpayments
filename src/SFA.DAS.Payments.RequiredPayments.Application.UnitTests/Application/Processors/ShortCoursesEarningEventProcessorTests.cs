@@ -911,6 +911,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
             return new GSLShortCourseEarningsEvent
             {
                 Earnings = testValues.ShortCourseEarnings,
+                ExternalEarningsId = Guid.NewGuid(),
                 LearningAim = new LearningAim { Reference = "ZSC0001", LearningType = LearningType.ApprenticeshipUnit },
                 CollectionPeriod = new CollectionPeriod { AcademicYear = testValues.Year, Period = testValues.CollectionPeriod },
                 PriceEpisodes = new List<PriceEpisode>
@@ -976,6 +977,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
 
             ClassicAssert.AreEqual(earningEvent.Learner, actualEvent.Learner, "Learner mismatch");
             ClassicAssert.AreEqual(earningEvent.EventId, actualEvent.EarningEventId, "EarningEventId mismatch");
+            ClassicAssert.AreEqual(earningEvent.ExternalEarningsId, actualEvent.ExternalEarningsId, "ExternalEarningsId mismatch");
             ClassicAssert.AreEqual((refund ? -period.Amount : period.Amount), actualEvent.AmountDue, "AmountDue mismatch");
             ClassicAssert.AreEqual(period.Period, actualEvent.CollectionPeriod.Period, "CollectionPeriod mismatch");
             ClassicAssert.AreEqual((refund ? phe?.DeliveryPeriod : period.Period), actualEvent.DeliveryPeriod, "DeliveryPeriod mismatch");
