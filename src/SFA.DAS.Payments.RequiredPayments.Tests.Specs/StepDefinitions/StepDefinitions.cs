@@ -22,9 +22,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         private DateTime ilrLearningStartDate;
         private int ageAtStartOfLearning;
         private OnProgrammeEarningType onProgrammeEarningType;
+        private FundingPlatformType selectedFundingPlatformType;
         private List<EarningPeriod> periods;
-        
+        private CollectionPeriod laterCollectionPeriod;
 
+        
         public StepDefinitions(ScenarioContext scenarioContext, MessagingContext messagingContext, TestSession testSession)
         {
             this.scenarioContext = scenarioContext;
@@ -464,6 +466,79 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             onProgrammeEarningType = parsedOnProgrammeEarningType;
         }
 
+        [Given("earnings were submitted for an Apprenticeship learner in a previous collection period with funding platform type of {word}")]
+        public void GivenEarningsWereSubmittedForAnApprenticeshipLearnerInAPreviousCollectionPeriod(string fundingPlatformType)
+        {
+            selectedFundingPlatformType = Enum.Parse<FundingPlatformType>(fundingPlatformType, true);
+
+            collectionPeriod = new CollectionPeriod
+            {
+                AcademicYear = currentAcademicYear,
+                Period = 2
+            };
+
+            testSession.Learner.Course.LearningStartDate = DateTime.Today.AddMonths(-1);
+        }
+
+        [Given("payments were generated from those earnings")]
+        public async Task GivenPaymentsWereGeneratedFromThoseEarnings()
+        {
+            testSession.DataContext.Payment.Add(new PaymentModel
+            {
+                Ukprn = testSession.Provider.Ukprn,
+                LearnerUln = testSession.Learner.Uln,
+                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
+                LearningAimReference = testSession.Learner.Course.Reference,
+                LearningAimFrameworkCode = testSession.Learner.Course.FrameworkCode,
+                LearningAimPathwayCode = testSession.Learner.Course.PathwayCode,
+                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
+                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
+                CollectionPeriod = collectionPeriod.Clone(),
+                DeliveryPeriod = collectionPeriod.Period,
+                ContractType = ContractType.Act1,
+                TransactionType = TransactionType.Learning,
+                FundingSource = FundingSourceType.Levy,
+                Amount = 100,
+                InstalmentAmount = 100,
+                NumberOfInstalments = 12,
+                FundingPlatformType = selectedFundingPlatformType,
+                LearningAimFundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
+                ReportingAimFundingLineType = "ReportingAimFundingLineType",
+                LearningStartDate = testSession.Learner.Course.LearningStartDate,
+                StartDate = testSession.Learner.Course.LearningStartDate,
+                PriceEpisodeIdentifier = "pe-1",
+                EventTime = DateTime.Now,
+                EventId = Guid.NewGuid()
+            });
+
+            await testSession.DataContext.SaveChangesAsync();
+        }
+
+        [Given("the learner is subsequently removed from the source data")]
+        public void GivenTheLearnerIsSubsequentlyRemovedFromTheSourceData()
+        {
+            // The learner is removed from the source data when the empty earnings message is received in the later collection period
+        }
+
+        [Given("an empty earnings message is received for that learner in a later collection period")]
+        public async Task GivenAnEmptyEarningsMessageIsReceivedForThatLearnerInALaterCollectionPeriod()
+        {
+            laterCollectionPeriod = new CollectionPeriod
+            {
+                AcademicYear = currentAcademicYear,
+                Period = 3
+            };
+
+            testSession.JobId = testSession.GenerateId();
+
+            await messagingContext.Send(new ReceivedProviderEarningsEvent
+            {
+                CollectionPeriod = laterCollectionPeriod,
+                Ukprn = testSession.Provider.Ukprn,
+                JobId = testSession.JobId,
+                IlrSubmissionDateTime = DateTime.Now
+            });
+        }
 
         [When("the ILR is submitted - Levy")]
         public async Task WhenTheIlrIsSubmittedLevy()
@@ -571,6 +646,15 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await messagingContext.Send(message);
         }
 
+        [When("the payment system handles the empty earnings message")]
+        public async Task WhenThePaymentSystemHandlesTheEmptyEarningsMessage()
+        {
+            await testSession.WaitForIt(
+                () => RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
+                    .Any(ev => ev.TransactionType == TransactionType.Learning && ev.AmountDue < 0),
+                "Failed to find the clawback payment generated from the empty earnings message");
+        }
+
         [Then(@"the payment is fully funded by SFA \(100%\)")]
         public async Task ThenPaymentLineIsGeneratedForSfaCoInvestment()
         {
@@ -624,6 +708,29 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             AssertRequiredPaymentAndSfaPercentage(nonLevyPayment.AmountDue, nonLevyPayment.SfaContributionPercentage, 95m, 5m);
             var levyPayment = events.FirstOrDefault(x => x.employerType == ApprenticeshipEmployerType.Levy);
             AssertRequiredPaymentAndSfaPercentage(levyPayment.AmountDue, levyPayment.SfaContributionPercentage, 75m, 25m);
+        }
+
+        [Then("clawback transactions should be generated to reverse the eligible payments made from the previously submitted earnings")]
+        public void ThenClawbackTransactionsShouldBeGenerated()
+        {
+            var clawbackPayments = RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
+                .Where(ev => ev.TransactionType == TransactionType.Learning && ev.AmountDue < 0)
+                .ToList();
+
+            Assert.That(clawbackPayments, Has.Count.EqualTo(1));
+            Assert.That(clawbackPayments[0].CollectionPeriod.AcademicYear, Is.EqualTo(laterCollectionPeriod.AcademicYear));
+            Assert.That(clawbackPayments[0].CollectionPeriod.Period, Is.EqualTo(laterCollectionPeriod.Period));
+        }
+
+        [Then("the clawback amounts should match the payments being reversed")]
+        public void ThenTheClawbackAmountsShouldMatchThePaymentsBeingReversed()
+        {
+            var clawbackPayments = RequiredLevyPaymentsHandler.GetEvents(testSession.Learner)
+                .Where(ev => ev.TransactionType == TransactionType.Learning && ev.AmountDue < 0)
+                .ToList();
+
+            Assert.That(clawbackPayments, Has.Count.EqualTo(1));
+            Assert.That(clawbackPayments[0].AmountDue, Is.EqualTo(-100m));
         }
 
         private void AssertRequiredPaymentAndSfaPercentage(decimal amountDue, decimal sfaContributionPercentage, decimal expectedSfa, decimal expectedEmployerAmount)
