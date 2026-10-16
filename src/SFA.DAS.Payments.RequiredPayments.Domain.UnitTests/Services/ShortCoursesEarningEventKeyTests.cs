@@ -42,12 +42,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 Reference = "aim-ref",
                 SequenceNumber = 4,
                 StandardCode = 5,
+                CourseCode = "ABC123"
             };
             collectionPeriod = new CollectionPeriod { AcademicYear = 2021, Period = 1 };
             eventType = nameof(GSLShortCourseEarningsEvent);
-            mockBaseKey = $@"{jobId}-{ukprn}-{collectionPeriod.AcademicYear}-{collectionPeriod.Period}-{learner.Uln}-{learner.ReferenceNumber}-{learningAim.Reference}-{learningAim.ProgrammeType}-{learningAim.StandardCode}-{learningAim.FrameworkCode}-{learningAim.PathwayCode}-{learningAim.FundingLineType}-{learningAim.SequenceNumber}-{learningAim.StartDate:G}-{eventType}";
-            mockBaseLogSafeKey = $@"{jobId}-{collectionPeriod.AcademicYear}-{collectionPeriod.Period}-{learner.ReferenceNumber}-{learningAim.Reference}-{learningAim.ProgrammeType}-{learningAim.StandardCode}-{learningAim.FrameworkCode}-{learningAim.PathwayCode}-{learningAim.FundingLineType}-{learningAim.SequenceNumber}-{learningAim.StartDate:G}-{eventType}";
+            mockBaseKey =
+            $"{jobId}-{ukprn}-{collectionPeriod.AcademicYear}-{collectionPeriod.Period}-" +
+            $"{learner.Uln}-{learner.ReferenceNumber}-{learningAim.Reference}-{learningAim.CourseCode}-" +
+            $"{learningAim.ProgrammeType}-{learningAim.StandardCode}-{learningAim.FrameworkCode}-" +
+            $"{learningAim.PathwayCode}-{learningAim.FundingLineType}-{learningAim.SequenceNumber}-" +
+            $"{learningAim.StartDate:G}-{eventType}";
+
+            mockBaseLogSafeKey =
+            $"{jobId}-{collectionPeriod.AcademicYear}-{collectionPeriod.Period}-" +
+            $"{learner.ReferenceNumber}-{learningAim.Reference}-{learningAim.CourseCode}-" +
+            $"{learningAim.ProgrammeType}-{learningAim.StandardCode}-{learningAim.FrameworkCode}-" +
+            $"{learningAim.PathwayCode}-{learningAim.FundingLineType}-{learningAim.SequenceNumber}-" +
+            $"{learningAim.StartDate:G}-{eventType}";
         }
+
         [Test]
         public void ShortCoursesEarningEventKey_Should_Throw_If_Event_Passed_Is_Null()
         {
@@ -56,7 +69,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => new ShortCoursesEarningEventKey(earningEvent));
-
         }
 
         [Test]
@@ -79,7 +91,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             // Assert
             key.Should().Be($"{mockBaseKey}-{earningEvent.ExternalEarningsId}-{earningEvent.EventId}-{earningEvent.LearningAim.CourseCode}");
-
         }
 
         [Test]
@@ -92,8 +103,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             // Assert
             key.Should().Be($"{mockBaseLogSafeKey}-{earningEvent.ExternalEarningsId}-{earningEvent.EventId}-{earningEvent.LearningAim.CourseCode}");
-
         }
+
         private GSLShortCourseEarningsEvent CreateDefaultEarningEvent()
         {
             return new GSLShortCourseEarningsEvent
@@ -128,6 +139,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                     Reference = "aim-ref",
                     SequenceNumber = 4,
                     StandardCode = 5,
+                    CourseCode = "ABC123"
                 }
             };
         }
