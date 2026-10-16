@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Reqnroll;
 using SFA.DAS.Payments.AcceptanceTests.Core.Data;
@@ -50,274 +50,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         [AfterScenario]
         public void AfterScenario()
         {
-        }
-
-        [Given("the Co-invested payments for the apprenticeship were recorded prior to the requirement to record the Reporting Funding Line Type")]
-        public async Task GivenTheCo_InvestedPaymentsForTheApprenticeshipWereRecordedPriorToTheRequirementToRecordTheReportingFundingLineType()
-        {
-            testSession.Learner.Course.LearningStartDate = DateTime.Now.AddYears(-1); ;
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 1 },
-                DeliveryPeriod = 1,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedSfa,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 270,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 1 },
-                DeliveryPeriod = 1,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedEmployer,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 30,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 2 },
-                DeliveryPeriod = 2,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedSfa,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 270,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 2 },
-                DeliveryPeriod = 2,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedEmployer,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 30,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 3 },
-                DeliveryPeriod = 3,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedSfa,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 270,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-            testSession.DataContext.Payment.Add(new PaymentModel
-            {
-                Ukprn = testSession.Provider.Ukprn,
-                LearnerUln = testSession.Learner.Uln,
-                CollectionPeriod = new CollectionPeriod { AcademicYear = (short)(currentAcademicYear - 101), Period = 3 },
-                DeliveryPeriod = 3,
-                ContractType = ContractType.Act2,
-                TransactionType = TransactionType.Learning,
-                FundingSource = FundingSourceType.CoInvestedEmployer,
-                LearnerReferenceNumber = testSession.Learner.LearnRefNumber,
-                LearningAimStandardCode = testSession.Learner.Course.StandardCode,
-                LearningAimProgrammeType = testSession.Learner.Course.ProgrammeType,
-                CompletionAmount = 3600,
-                Amount = 30,
-                IlrSubmissionDateTime = testSession.Learner.Course.LearningStartDate,
-                CompletionStatus = 1,
-                InstalmentAmount = 300,
-                LearningAimReference = "ZPROG001",
-                LearningAimFundingLineType = "16-18 Apprenticeship Non-Levy Contract (procured)",
-                SfaContributionPercentage = 0.9M,
-                LearningStartDate = testSession.Learner.Course.LearningStartDate,
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                ActualEndDate = null,
-                PlannedEndDate = DateTime.Now,
-                NumberOfInstalments = 48,
-                ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
-                PriceEpisodeIdentifier = "pe-1",
-                ReportingAimFundingLineType = string.Empty,
-                EventTime = DateTime.Now,
-                EventId = Guid.NewGuid()
-            });
-
-            await testSession.DataContext.SaveChangesAsync();
-            var sql = $"update Payments2.Payment set ReportingAimFundingLineType = null where Ukprn = {testSession.Provider.Ukprn} and LearnerUln = {testSession.Learner.Uln}";
-            Console.WriteLine(sql);
-            await testSession.DataContext.Database.ExecuteSqlRawAsync(sql);
-            await testSession.DataContext.SaveChangesAsync();
-
-        }
-
-        [When("the learner completes the apprenticeship")]
-        public async Task WhenTheLearnerCompletesTheApprenticeship()
-        {
-            var message = new ApprenticeshipContractType2EarningEvent
-            {
-                CollectionPeriod = new CollectionPeriod { AcademicYear = currentAcademicYear, Period = 3 },
-                CollectionYear = currentAcademicYear,
-                Ukprn = testSession.Provider.Ukprn,
-                JobId = testSession.JobId,
-                Learner = new SFA.DAS.Payments.Model.Core.Learner
-                {
-                    Uln = testSession.Learner.Uln,
-                    ReferenceNumber = testSession.Learner.LearnRefNumber
-                },
-                StartDate = testSession.Learner.Course.LearningStartDate,
-                SfaContributionPercentage = 1M,
-                IlrSubmissionDateTime = DateTime.Now,
-                AgeAtStartOfLearning = 33,
-                LearningAim = new LearningAim
-                {
-                    Reference = testSession.Learner.Course.Reference,
-                    ProgrammeType = testSession.Learner.Course.ProgrammeType,
-                    StandardCode = testSession.Learner.Course.StandardCode,
-                    FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)"
-                },
-                PriceEpisodes = new List<PriceEpisode>
-                {
-                    new PriceEpisode{
-                        Identifier = "pe-1",
-                        TotalNegotiatedPrice1 = 17000,
-                        TotalNegotiatedPrice2 = 1000,
-                        AgreedPrice = 18000,
-                        ActualEndDate = DateTime.Now,
-                        NumberOfInstalments = 7,
-                        InstalmentAmount = 300,
-                        CompletionAmount = 3600,
-                        Completed = false,
-                        EmployerContribution = 900,
-                        CompletionHoldBackExemptionCode = 0,
-                        FundingLineType = "19+ Apprenticeship Non-Levy Contract (procured)",
-
-                    }
-                },
-
-
-                OnProgrammeEarnings = new List<OnProgrammeEarning> {
-                    new OnProgrammeEarning {
-                        Type = OnProgrammeEarningType.Completion,
-                        Periods = new List<EarningPeriod>{
-                            new EarningPeriod
-                            {
-                                Amount = 3300,
-                                SfaContributionPercentage = .9M,
-                                Period = 1,
-                                PriceEpisodeIdentifier = "pe-1",
-                            },
-                        }.AsReadOnly()
-                    }
-                }
-            };
-            await messagingContext.Send(message);
-        }
-
-        [Then("the service should allow payment of the completion payment")]
-        public async Task ThenTheServiceShouldAllowPaymentOfTheCompletionPayment()
-        {
-            await testSession.WaitForIt(() => RequiredCoInvestedPaymentsHandler.GetEvents(testSession.Learner).Any(ev => ev.TransactionType == TransactionType.Completion), "Failed to find completion payment event");
         }
 
         [Given("a Levy employer with an Apprentice")]
@@ -412,6 +144,25 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             };
         }
 
+        [Given("the SFA contribution percentage was previously calculated to be 90%")]
+        public void GivenTheSFAContributionPercentageWasPreviouslyCalculatedToBe90Percent()
+        {
+            testSession.Learner.IsLevyLearner = false;
+
+            periods = new List<EarningPeriod>
+            {
+                new EarningPeriod
+                {
+                    Amount = 100,
+                    SfaContributionPercentage = 0.9m,
+                    Period = 1,
+                    PriceEpisodeIdentifier = "pe-1",
+                    ApprenticeshipId = 12345,
+                    ApprenticeshipEmployerType = ApprenticeshipEmployerType.NonLevy,
+                },
+            };
+        }
+
         [Given("the learning start date is on or after 1 August 2026")]
         public void GivenTheLearningStartDateIsOnOrAfter1August2026()
         {
@@ -429,6 +180,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
         public void GivenTheLearningStartDateIsBefore1August2026AndAfter1Apr2024()
         {
             ilrLearningStartDate = new DateTime(2026, 7, 31);
+        }
+
+        [Given("the learning start date is before 1 April 2024")]
+        public void GivenTheLearningStartDateIsBefore1April2024()
+        {
+            ilrLearningStartDate = new DateTime(2024, 3, 31);
         }
 
         // The actual number needs to be decided
@@ -624,6 +381,22 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             AssertRequiredPaymentAndSfaPercentage(nonLevyPayment.AmountDue, nonLevyPayment.SfaContributionPercentage, 95m, 5m);
             var levyPayment = events.FirstOrDefault(x => x.employerType == ApprenticeshipEmployerType.Levy);
             AssertRequiredPaymentAndSfaPercentage(levyPayment.AmountDue, levyPayment.SfaContributionPercentage, 75m, 25m);
+        }
+
+        [Then(@"the payment funding is split between 'SFA co-investment' \(90%\) and 'Employer co-investment' \(10%\)")]
+        public async Task ThenPaymentLinesAreGenerated95SplitBetween90PercentSfaCoInvestmentAnd10PercentEmployerCoInvestment()
+        {
+
+            var events = await WaitForRequiredLevyPayments();
+            Assert.That(events.Count, Is.EqualTo(1));
+
+            var requiredPayment = events.Single();
+            Assert.That(requiredPayment.SfaContributionPercentage, Is.EqualTo(0.9m));
+
+            var sfaAmount = requiredPayment.AmountDue * requiredPayment.SfaContributionPercentage;
+            var employerAmount = requiredPayment.AmountDue - sfaAmount;
+            Assert.That(sfaAmount, Is.EqualTo(90m));
+            Assert.That(employerAmount, Is.EqualTo(10m)); 
         }
 
         private void AssertRequiredPaymentAndSfaPercentage(decimal amountDue, decimal sfaContributionPercentage, decimal expectedSfa, decimal expectedEmployerAmount)

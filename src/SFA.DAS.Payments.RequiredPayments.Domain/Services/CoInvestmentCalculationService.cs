@@ -1,7 +1,5 @@
 ﻿using SFA.DAS.Payments.DataLocks.Messages.Events;
 using SFA.DAS.Payments.Model.Core;
-using SFA.DAS.Payments.Model.Core.OnProgramme;
-using SFA.DAS.Payments.RequiredPayments.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +9,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 {
     public interface ICoInvestmentCalculationService
     {
-        decimal CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent, ApprenticeshipEmployerType employerType);
+        decimal? CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent, ApprenticeshipEmployerType employerType);
 
         IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent,
             IReadOnlyCollection<(EarningPeriod period, int type)> periods);
@@ -21,19 +19,18 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
     {
         private const int FundingRules2024AgeThreshold = 22;
         private const int FundingRules2026AgeThreshold = 25;
-        private const decimal DefaultSfaContribution = 0.95m;
         public static readonly DateTime FundingRules2024EligibilityDate = new(2024, 4, 1);
         public static readonly DateTime FundingRules2026EligibilityDate = new(2026, 8, 1);
 
-        public decimal CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent,
+        public decimal? CalculateSfaContributionPercentage(PayableEarningEvent payableEarningEvent,
             ApprenticeshipEmployerType employerType)
         {
-            if (payableEarningEvent.AgeAtStartOfLearning is null) return DefaultSfaContribution;
+            if (payableEarningEvent.AgeAtStartOfLearning is null) return null;
 
             // If the earning event is for a levy employer and the start date is before the 2026 eligibility date, it is not eligible for recalculation.
             if (payableEarningEvent.StartDate < FundingRules2026EligibilityDate && employerType == ApprenticeshipEmployerType.Levy)
             {
-                return DefaultSfaContribution;
+                return null;
             }
 
             var meets2024FullEligibilityCriteria = payableEarningEvent.StartDate >= FundingRules2024EligibilityDate
@@ -59,7 +56,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
                 }
             }
 
-            return DefaultSfaContribution;
+            return null;
         }
 
         public IReadOnlyCollection<(EarningPeriod period, int type)> ProcessPeriodsForRecalculation(PayableEarningEvent earningEvent, IReadOnlyCollection<(EarningPeriod period, int type)> periods)
@@ -70,8 +67,12 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.Services
 
                 if (earningPeriod.period.DataLockFailures is not null && earningPeriod.period.DataLockFailures.Any()) continue;
 
-                earningPeriod.period.SfaContributionPercentage = CalculateSfaContributionPercentage(earningEvent, earningPeriod.period.ApprenticeshipEmployerType);
-                
+                var recalculatedSfaContributionPercentage = CalculateSfaContributionPercentage(earningEvent, earningPeriod.period.ApprenticeshipEmployerType);
+
+                if (recalculatedSfaContributionPercentage.HasValue)
+                {
+                    earningPeriod.period.SfaContributionPercentage = recalculatedSfaContributionPercentage.Value;
+                }
             }
             
 
