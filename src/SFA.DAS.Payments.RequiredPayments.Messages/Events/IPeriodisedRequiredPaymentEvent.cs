@@ -1,5 +1,6 @@
 ﻿using System;
 using SFA.DAS.Payments.Messages.Common.Events;
+using SFA.DAS.Payments.Model.Core.Entities;
 
 namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
 {
@@ -7,5 +8,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     public interface IPeriodisedRequiredPaymentEvent : IPeriodisedPaymentEvent, IRequiredPaymentEvent
     {
         Guid EarningEventId { get; }
+        FundingPlatformType FundingPlatformType { get; }
     }
 }
