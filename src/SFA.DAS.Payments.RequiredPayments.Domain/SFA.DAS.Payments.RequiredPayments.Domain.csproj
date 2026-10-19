@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>.net6.0;net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+	<SelfContained>True</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>

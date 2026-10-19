@@ -30,32 +30,31 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
 
         [Test]
-        [TestCase(-1, false)]
-        [TestCase(0, true)]
-        [TestCase(1, true)]
-        public void IsEligibleForRecalculation_Should_Not_Allow_Recalc_Before_StartDate(int dateModifier, bool requiresRecalc)
+        [TestCase(-1, null)]
+        [TestCase(0, 1.0)]
+        [TestCase(1, 1.0)]
+        public void CalculateSfaContributionPercentage_Should_Not_Allow_Recalc_Before_StartDate(int dateModifier, decimal? expectedFundingPercentage)
         {
             payableEvent.StartDate = FundingRules2024EligibilityDate.AddDays(dateModifier);
             payableEvent.AgeAtStartOfLearning = 21;
 
-            var result = service.IsEligibleForRecalculation(payableEvent, new List<(EarningPeriod period, int type)>());
+            var result = service.CalculateSfaContributionPercentage(payableEvent, ApprenticeshipEmployerType.NonLevy);
 
-            result.Should().Be(requiresRecalc);
+            result.Should().Be(expectedFundingPercentage);
         }
 
         [Test]
-        [TestCase(21, true)]
-        [TestCase(22, false)]
-        [TestCase(23, false)]
-        [TestCase(null, false)]
-        public void IsEligibleForRecalculation_Should_Not_Allow_Apprentice_22_Or_Over(int? apprenticeAge, bool isCorrectAge)
+        [TestCase(21, 1.0)]
+        [TestCase(22, null)]
+        [TestCase(23, null)]
+        [TestCase(null, null)]
+        public void CalculateSfaContributionPercentage_Should_Not_Allow_Apprentice_22_Or_Over(int? apprenticeAge, decimal? expectedContribution)
         {
             payableEvent.StartDate = FundingRules2024EligibilityDate;
             payableEvent.AgeAtStartOfLearning = apprenticeAge;
 
-            var result = service.IsEligibleForRecalculation(payableEvent, new List<(EarningPeriod period, int type)>());
-
-            result.Should().Be(isCorrectAge);
+            var result = service.CalculateSfaContributionPercentage(payableEvent, ApprenticeshipEmployerType.NonLevy);
+            result.Should().Be(expectedContribution);
         }
 
         [Test]
@@ -114,19 +113,22 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
         }
 
         [Test]
-        [TestCase(ApprenticeshipEmployerType.Levy, 0.95)]
-        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_2026_Eligibility(ApprenticeshipEmployerType apprenticeshipEmployerType, decimal? fundingPercentage)
+        [TestCase("2026/08/01", 21, true, 1.0)]
+        [TestCase("2026/07/31", 25, false, 0.95)]
+        [TestCase("2026/08/01", 25, true, 0.75)]
+        public void ProcessPeriodsForRecalculation_Should_Override_CoInvestmentRate_For_Levy_Employers_2026_Eligibility(DateTime eventStartDate, int ageAtStartOfLearning, bool requiresRecalc, double expectedFundingPercentage)
         {
-            payableEvent.StartDate = FundingRules2026EligibilityDate;
-            payableEvent.AgeAtStartOfLearning = 21;
+            decimal sfaContrib = (decimal)expectedFundingPercentage;
+            payableEvent.StartDate = eventStartDate;
+            payableEvent.AgeAtStartOfLearning = ageAtStartOfLearning;
             var periods = new List<(EarningPeriod period, int type)>
             {
-                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = apprenticeshipEmployerType, SfaContributionPercentage = fundingPercentage} , 1)
+                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy, SfaContributionPercentage = 0.95m} , 1)
             };
 
             var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
 
-            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(1.0m);
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(sfaContrib);
         }
 
         [Test]
@@ -146,18 +148,18 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
         }
 
         [Test]
-        [TestCase("2026/07/31", 24, false)]
-        [TestCase("2026/08/01", 24, true)]
-        [TestCase("2026/08/01", 25, false)]
-        [TestCase("2026/08/01", null, false)]
-        public void IsEligibleForRecalculation_Should_Apply_2026_Eligibility_Criteria(DateTime eventStartDate, int? apprenticeAge, bool requiresRecalc)
+        [TestCase("2026/07/31", 24, null)]
+        [TestCase("2026/08/01", 24, 1.0)]
+        [TestCase("2026/08/01", 25, null)]
+        [TestCase("2026/08/01", null, null)]
+        public void CalculateSfaContributionPercentage_Should_Apply_2026_Eligibility_Criteria(DateTime eventStartDate, int? apprenticeAge, decimal? expectedFundingPercentage)
         {
             payableEvent.StartDate = eventStartDate;
             payableEvent.AgeAtStartOfLearning = apprenticeAge;
 
-            var result = service.IsEligibleForRecalculation(payableEvent, new List<(EarningPeriod period, int type)>());
+            var result = service.CalculateSfaContributionPercentage(payableEvent, ApprenticeshipEmployerType.NonLevy);
 
-            result.Should().Be(requiresRecalc);
+            result.Should().Be(expectedFundingPercentage);
         }
 
         [Test]
@@ -190,6 +192,41 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
 
             result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(expectedFundingPercentage);
+        }
+
+        [TestCase(ApprenticeshipEmployerType.Levy)]
+        [TestCase(ApprenticeshipEmployerType.NonLevy)]
+        public void ProcessPeriodsForRecalculation_Should_Not_Override_CoInvestmentRate_For_Apprentices_Who_Started_Before_1st_April_2024(ApprenticeshipEmployerType apprenticeshipEmployerType)
+        {
+            var historicalSfaContributionPercentage = 0.8m;
+
+            payableEvent.StartDate = FundingRules2024EligibilityDate.Date.AddDays(-1);
+            payableEvent.AgeAtStartOfLearning = 21;
+            var periods = new List<(EarningPeriod period, int type)>
+            {
+                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = apprenticeshipEmployerType, SfaContributionPercentage = historicalSfaContributionPercentage} , 1)
+            };
+
+            var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
+
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(historicalSfaContributionPercentage);
+        }
+
+        [Test]
+        public void ProcessPeriodsForRecalculation_Should_Not_Override_CoInvestmentRate_For_Apprentices_Who_Started_With_Levy_Employer_Before_1st_August_2026()
+        {
+            var historicalSfaContributionPercentage = 0.8m;
+
+            payableEvent.StartDate = FundingRules2026EligibilityDate.Date.AddDays(-1);
+            payableEvent.AgeAtStartOfLearning = 21;
+            var periods = new List<(EarningPeriod period, int type)>
+            {
+                (new EarningPeriod { ApprenticeshipId = 1234, ApprenticeshipEmployerType = ApprenticeshipEmployerType.Levy, SfaContributionPercentage = historicalSfaContributionPercentage} , 1)
+            };
+
+            var result = service.ProcessPeriodsForRecalculation(payableEvent, periods);
+
+            result.FirstOrDefault().period.SfaContributionPercentage.Should().Be(historicalSfaContributionPercentage);
         }
     }
 }
