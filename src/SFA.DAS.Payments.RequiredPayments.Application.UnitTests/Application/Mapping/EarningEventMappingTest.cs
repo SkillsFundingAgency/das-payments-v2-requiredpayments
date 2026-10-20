@@ -254,14 +254,17 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         }
 
         [Test]
-        public void TestPayableEarningEventMap()
+        [TestCase(OnProgrammeEarningType.Balancing)]
+        [TestCase(OnProgrammeEarningType.Completion)]
+        [TestCase(OnProgrammeEarningType.Learning)]
+        public void TestPayableEarningEventMap(OnProgrammeEarningType onProgrammeEarningType)
         {
             // arrange
             var payableEarning = CreatePayableEarning();
             PeriodisedRequiredPaymentEvent requiredPayment = new CalculatedRequiredLevyAmount
             {
                 SfaContributionPercentage = .9m,
-                OnProgrammeEarningType = OnProgrammeEarningType.Completion
+                OnProgrammeEarningType = onProgrammeEarningType
             };
 
             // act
@@ -272,11 +275,37 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
 
             var act1RequiredPayment = (CalculatedRequiredLevyAmount)requiredPayment;
 
+            ClassicAssert.AreEqual(ContractType.Act1, act1RequiredPayment.ContractType);
             ClassicAssert.AreEqual(payableEarning.AgreementId, act1RequiredPayment.AgreementId);
             ClassicAssert.AreEqual(.9m, act1RequiredPayment.SfaContributionPercentage);
-            ClassicAssert.AreEqual(OnProgrammeEarningType.Completion, act1RequiredPayment.OnProgrammeEarningType);
+            ClassicAssert.AreEqual(onProgrammeEarningType, act1RequiredPayment.OnProgrammeEarningType);
             ClassicAssert.AreEqual(payableEarning.EarningEventId, act1RequiredPayment.EarningEventId);
             ClassicAssert.AreNotEqual(payableEarning.EventId, act1RequiredPayment.EarningEventId);
+        }
+
+        [TestCaseSource(nameof(GetAllIncentivePaymentTypes))]
+        public void TestPayableEarningEventIncentiveMap(IncentivePaymentType incentivePaymentType)
+        {
+            // arrange
+            var payableEarning = CreatePayableEarning();
+            PeriodisedRequiredPaymentEvent requiredPayment = new CalculatedRequiredIncentiveAmount
+            {
+                Type = incentivePaymentType
+            };
+
+            // act
+            mapper.Map(payableEarning, requiredPayment);
+
+            // assert
+            AssertCommonProperties(requiredPayment, payableEarning);
+
+            var incentiveRequiredPayment = (CalculatedRequiredIncentiveAmount)requiredPayment;
+
+            ClassicAssert.AreEqual(ContractType.Act1, incentiveRequiredPayment.ContractType);
+            ClassicAssert.AreEqual(payableEarning.FundingPlatformType, incentiveRequiredPayment.FundingPlatformType);
+            ClassicAssert.AreEqual(incentivePaymentType, incentiveRequiredPayment.Type);
+            ClassicAssert.AreEqual(payableEarning.EarningEventId, incentiveRequiredPayment.EarningEventId);
+            ClassicAssert.AreNotEqual(payableEarning.EventId, incentiveRequiredPayment.EarningEventId);
         }
 
         [Test]
@@ -468,6 +497,14 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         {
             yield return CreateAct2FunctionalSkillEarningsEvent();
             yield return CreatePayableFunctionalSkillEarningsEvent();
+        }
+
+        private static IEnumerable<TestCaseData> GetAllIncentivePaymentTypes()
+        {
+            foreach (var incentivePaymentType in Enum.GetValues<IncentivePaymentType>())
+            {
+                yield return new TestCaseData(incentivePaymentType);
+            }
         }
         private static Act2FunctionalSkillEarningsEvent CreateAct2FunctionalSkillEarningsEvent()
         {
