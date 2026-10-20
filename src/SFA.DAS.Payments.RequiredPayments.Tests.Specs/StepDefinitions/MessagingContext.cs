@@ -29,6 +29,11 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await endpointInstance.Send("sfa-das-payments-requiredpayments", earningEvent);
         }
 
+        public async Task Send(GSLFunctionalSkillEarningsEvent earningEvent)
+        {
+            await endpointInstance.Send("sfa-das-payments-requiredpayments", earningEvent);
+        }
+
         public async Task Send(PayableEarningEvent earningEvent)
         {
             await endpointInstance.Send("sfa-das-payments-requiredpayments", earningEvent);
