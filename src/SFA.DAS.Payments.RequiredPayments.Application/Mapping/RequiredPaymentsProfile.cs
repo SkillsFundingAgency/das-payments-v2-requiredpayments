@@ -15,6 +15,13 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
 {
     public class RequiredPaymentsProfile : Profile
     {
+        private static FundingPlatformType NormalizeFundingPlatformType(FundingPlatformType? fundingPlatformType)
+        {
+            return fundingPlatformType.GetValueOrDefault() == 0
+                ? FundingPlatformType.SubmitLearnerData
+                : fundingPlatformType.Value;
+        }
+
         public RequiredPaymentsProfile()
         {
 
@@ -73,7 +80,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(s => s.TransactionType))
                 .ForMember(dest => dest.TransferSenderAccountId, opt => opt.MapFrom(s => s.TransferSenderAccountId))
                 .ForMember(dest => dest.Ukprn, opt => opt.MapFrom(s => s.Ukprn))
-                .ForMember(dest => dest.FundingPlatformType, opt => opt.MapFrom(source => source.FundingPlatformType))
+                .ForMember(dest => dest.FundingPlatformType,
+                    opt => opt.MapFrom(source => NormalizeFundingPlatformType(source.FundingPlatformType)))
                 ;
 
             CreateMap<PaymentHistoryEntity, Payment>()
@@ -175,7 +183,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
             CreateMap<PayableEarningEvent, CompletionPaymentHeldBackEvent>()
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
-                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(src => src.FundingPlatformType))
+                .ForMember(x => x.FundingPlatformType,
+                    opt => opt.MapFrom(src => NormalizeFundingPlatformType(src.FundingPlatformType)))
                 .Ignore(x => x.TransactionType)
                 ;
 
@@ -191,7 +200,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
                 .ForMember(x => x.AgeAtStartOfLearning, opt => opt.MapFrom(source => source.AgeAtStartOfLearning))
-                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(source => source.FundingPlatformType))
+                .ForMember(x => x.FundingPlatformType,
+                    opt => opt.MapFrom(source => NormalizeFundingPlatformType(source.FundingPlatformType)))
                 //pull start date from price episode if available (in the case of on prog earnings) or from the aim if not (in the case of functional skills)
                 .ForMember(requiredPayment => requiredPayment.LearningStartDate,
                     opt => opt.MapFrom((earning, destination) =>
@@ -242,7 +252,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
             CreateMap<PayableEarningEvent, CalculatedRequiredIncentiveAmount>()
                 .ForMember(x => x.EarningEventId, opt => opt.MapFrom(source => source.EarningEventId))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(src => ContractType.Act1))
-                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(source => source.FundingPlatformType))
+                .ForMember(x => x.FundingPlatformType,
+                    opt => opt.MapFrom(source => NormalizeFundingPlatformType(source.FundingPlatformType)))
                 ;
 
             CreateMap<ApprenticeshipContractType2EarningEvent, CalculatedRequiredIncentiveAmount>()

@@ -83,6 +83,35 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
             requiredPaymentEvent.FundingPlatformType.Should().Be(fundingPlatform);
         }
 
+        [Test]
+        public void Maps_Zero_FundingPlatform_From_PayableEarningEvent_To_CompletionPaymentHeldBackEvent_AsSubmitLearnerData()
+        {
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                FundingPlatformType = (FundingPlatformType)0
+            };
+            var requiredPaymentEvent = new CompletionPaymentHeldBackEvent();
+
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            requiredPaymentEvent.FundingPlatformType.Should().Be(FundingPlatformType.SubmitLearnerData);
+        }
+
+        [TestCase(typeof(CalculatedRequiredCoInvestedAmount))]
+        [TestCase(typeof(CalculatedRequiredIncentiveAmount))]
+        public void Maps_Zero_FundingPlatform_From_PayableEarningEvent_To_CalculatedAmount_AsSubmitLearnerData(Type amountType)
+        {
+            var payableEarningEvent = new PayableEarningEvent
+            {
+                FundingPlatformType = (FundingPlatformType)0
+            };
+            var requiredPaymentEvent = (PeriodisedRequiredPaymentEvent)Activator.CreateInstance(amountType);
+
+            mapper.Map(payableEarningEvent, requiredPaymentEvent);
+
+            requiredPaymentEvent.FundingPlatformType.Should().Be(FundingPlatformType.SubmitLearnerData);
+        }
+
         [TestCase(FundingPlatformType.SubmitLearnerData)]
         [TestCase(FundingPlatformType.DigitalApprenticeshipService)]
         public void Maps_FundingPlatform_From_PayableEarningEvent_To_CalculatedRequiredCoInvestedAmount(FundingPlatformType fundingPlatform)
