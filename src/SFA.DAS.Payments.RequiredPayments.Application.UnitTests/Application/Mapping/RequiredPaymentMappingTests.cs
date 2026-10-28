@@ -88,6 +88,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         {
             var payableEarningEvent = new PayableEarningEvent
             {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
                 FundingPlatformType = (FundingPlatformType)0
             };
             var requiredPaymentEvent = new CompletionPaymentHeldBackEvent();
@@ -103,6 +105,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Ma
         {
             var payableEarningEvent = new PayableEarningEvent
             {
+                LearningAim = new LearningAim(),
+                PriceEpisodes = new List<PriceEpisode>(),
                 FundingPlatformType = (FundingPlatformType)0
             };
             var requiredPaymentEvent = (PeriodisedRequiredPaymentEvent)Activator.CreateInstance(amountType);
