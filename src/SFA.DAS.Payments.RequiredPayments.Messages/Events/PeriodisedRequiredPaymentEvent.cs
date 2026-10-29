@@ -9,7 +9,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Messages.Events
     [KnownType("GetInheritors")]
     public abstract class PeriodisedRequiredPaymentEvent : PeriodisedPaymentEvent, IPeriodisedRequiredPaymentEvent
     {
-        public virtual FundingPlatformType FundingPlatformType { get; set; }
+        public virtual FundingPlatformType FundingPlatformType { get; set; } = FundingPlatformType.SubmitLearnerData;
         private static Type[] inheritors;
         private static Type[] GetInheritors()
         {
