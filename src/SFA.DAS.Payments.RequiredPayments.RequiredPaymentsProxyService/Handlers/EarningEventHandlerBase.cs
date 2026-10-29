@@ -52,7 +52,9 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                 message.LearningAim.StandardCode,
                 message.LearningAim.Reference,
                 message.CollectionPeriod.AcademicYear,
-                contractType
+                contractType,
+                message.LearningAim.CourseCode,
+                GetCourseType( message.LearningAim.LearningType )
             );
 
             var actorId = new ActorId(key);
@@ -85,6 +87,19 @@ namespace SFA.DAS.Payments.RequiredPayments.RequiredPaymentsProxyService.Handler
                 throw;
             }
         }
+
+
+        private CourseType GetCourseType(LearningType learningType)
+        {
+            return learningType switch
+            {
+                LearningType.Apprenticeship or LearningType.FoundationApprenticeship => CourseType.Apprenticeship,
+                LearningType.MathsAndEnglish => CourseType.FunctionalSkill,
+                LearningType.ApprenticeshipUnit => CourseType.ShortCourse,
+                _ => throw new InvalidOperationException($"Cannot get course type from learning type. Unknown learning type: {learningType}"),
+            };
+        }
+
 
         private ContractType GetContractTypeFromMessage(T message)
         {
