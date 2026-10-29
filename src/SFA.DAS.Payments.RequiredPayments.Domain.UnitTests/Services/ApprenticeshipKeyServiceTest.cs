@@ -21,12 +21,9 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             var standardCode = 5;
             var learnAimRef = "6";
             short academicYear = 1819;
-            string courseCode = "123";
-            var courseType = CourseType.Apprenticeship;
-
             // act
             var key = new ApprenticeshipKeyService().GenerateApprenticeshipKey(ukprn, learnerReferenceNumber,
-                frameworkCode, pathwayCode, programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1, courseCode, courseType);
+                frameworkCode, pathwayCode, programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1);
 
             // assert
             ClassicAssert.AreEqual(0, key.IndexOf("2", StringComparison.Ordinal), "UKPRN should go first");
@@ -44,7 +41,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
                 "LearnAimRef should be after StandardCode");
             ClassicAssert.Less(key.IndexOf("6", StringComparison.Ordinal), key.IndexOf("1819", StringComparison.Ordinal),
                 "AcademicYear should be after LearnAimRef");
-
         }
 
 
@@ -63,7 +59,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
 
             // act
             var key = new ApprenticeshipKeyService().GenerateApprenticeshipKey(ukprn, learnerReferenceNumber,
-                frameworkCode, pathwayCode, programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1, "123", CourseType.Apprenticeship);
+                frameworkCode, pathwayCode, programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1);
 
             // assert
             ClassicAssert.IsFalse(key.Contains("A"));
@@ -87,7 +83,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             short academicYear = 1819;
             var service = new ApprenticeshipKeyService();
             var key = service.GenerateApprenticeshipKey(ukprn, learnerReferenceNumber, frameworkCode, pathwayCode,
-                programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1, "123", CourseType.Apprenticeship);
+                programmeType, standardCode, learnAimRef, academicYear, ContractType.Act1);
 
             // act
             var apprenticeshipKey = service.ParseApprenticeshipKey(key);
@@ -117,9 +113,8 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             short academicYear = 1819;
             var service = new ApprenticeshipKeyService();
             var contractType = ContractType.Act1;
-            string courseCode = null;
             var key = service.GenerateApprenticeshipKey(ukprn, learnerReferenceNumber, frameworkCode, pathwayCode,
-                programmeType, standardCode, learnAimRef, academicYear, contractType, courseCode, CourseType.Apprenticeship);
+                programmeType, standardCode, learnAimRef, academicYear, contractType);
 
             // act
             var apprenticeshipKey = service.ParseApprenticeshipKey(key);
@@ -134,60 +129,6 @@ namespace SFA.DAS.Payments.RequiredPayments.Domain.UnitTests.Services
             ClassicAssert.AreEqual(apprenticeshipKey.LearnAimRef, string.Empty);
             ClassicAssert.AreEqual(apprenticeshipKey.AcademicYear, academicYear);
             ClassicAssert.AreEqual(apprenticeshipKey.ContractType, contractType);
-            ClassicAssert.AreEqual(apprenticeshipKey.CourseCode, string.Empty);
-            ClassicAssert.AreEqual(apprenticeshipKey.CourseType, CourseType.Apprenticeship);
-        }
-
-        [Test]
-        public void Can_Parse_Course_Code()
-        {
-            // arrange
-            var learnerReferenceNumber = "1";
-            var ukprn = 2;
-            var frameworkCode = 3;
-            var pathwayCode = 4;
-            var programmeType = 25;
-            var standardCode = 5;
-            string learnAimRef = null;
-            short academicYear = 1819;
-            var service = new ApprenticeshipKeyService();
-            var contractType = ContractType.Act1;
-            string courseCode = "5678";
-            var key = service.GenerateApprenticeshipKey(ukprn, learnerReferenceNumber, frameworkCode, pathwayCode,
-                programmeType, standardCode, learnAimRef, academicYear, contractType, courseCode, CourseType.Apprenticeship);
-
-            // act
-            var apprenticeshipKey = service.ParseApprenticeshipKey(key);
-
-            // assert
-            ClassicAssert.AreEqual(apprenticeshipKey.CourseCode, courseCode);
-        }
-
-        [TestCase(CourseType.Apprenticeship)]
-        [TestCase(CourseType.FunctionalSkill)]
-        [TestCase(CourseType.ShortCourse)]
-        public void Can_Parse_CourseType(CourseType courseType)
-        {
-            // arrange
-            var learnerReferenceNumber = "1";
-            var ukprn = 2;
-            var frameworkCode = 0;
-            var pathwayCode = 0;
-            var programmeType = 25;
-            var standardCode = 5;
-            string learnAimRef = null;
-            short academicYear = 1819;
-            var contractType = ContractType.Act1;
-            string courseCode = "5678";
-            var service = new ApprenticeshipKeyService();
-            var key = service.GenerateApprenticeshipKey(ukprn, learnerReferenceNumber, frameworkCode, pathwayCode,
-                programmeType, standardCode, learnAimRef, academicYear, contractType, courseCode, courseType);
-
-            // act
-            var apprenticeshipKey = service.ParseApprenticeshipKey(key);
-
-            // assert
-            ClassicAssert.AreEqual(apprenticeshipKey.CourseType, courseType);
         }
     }
 }
