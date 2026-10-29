@@ -133,6 +133,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Repositories
                     where
 					    AcademicYear = {academicYear}
                         and Ukprn = {ukprn}
+                        and (FundingPlatformType is null or FundingPlatformType = 1)
                     except
 				    select
 					    LearnerReferenceNumber,
