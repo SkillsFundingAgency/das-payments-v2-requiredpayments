@@ -251,6 +251,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Mapping
             CreateMap<FunctionalSkillEarningsEvent, CalculatedRequiredIncentiveAmount>()
                 .ForMember(x => x.StartDate, opt => opt.MapFrom(source => source.StartDate))
                 .ForMember(x => x.ContractType, opt => opt.MapFrom(x => x.ContractType))
+                .ForMember(x => x.FundingPlatformType, opt => opt.MapFrom(src => FundingPlatformType.SubmitLearnerData))
                 ;
 
             CreateMap<PayableFunctionalSkillEarningEvent, CalculatedRequiredIncentiveAmount>()
