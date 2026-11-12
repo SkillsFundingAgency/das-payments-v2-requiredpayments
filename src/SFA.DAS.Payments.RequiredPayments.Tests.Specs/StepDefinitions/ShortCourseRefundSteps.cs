@@ -43,7 +43,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             ? "GSO Short Courses (Apprenticeship Units) Levy"
             : "GSO Short Courses (Apprenticeship Units) Non-Levy";
 
-        [Given("an Apprenticeship Unit learner with a (Levy|Non-Levy) employer who started training on 1 September 2026")]
+        [Given("an Apprenticeship Unit learner with a {word} employer who started training on 1 September 2026")]
         public void GivenAnApprenticeshipUnitLearnerWithAnEmployerWhoStartedTrainingOn1September2026(string employer)
         {
             employerType = employer == "Levy" ? ApprenticeshipEmployerType.Levy : ApprenticeshipEmployerType.NonLevy;
@@ -119,7 +119,7 @@ namespace SFA.DAS.Payments.RequiredPayments.Tests.Specs.StepDefinitions
             await messagingContext.Send<GSLShortCourseEarningsEvent>(System.Text.Json.JsonSerializer.Serialize(withdrawal));
         }
 
-        [Then("the following (Levy|Co-Invested) refunds are generated")]
+        [Then("the following {word} refunds are generated")]
         public async Task ThenTheFollowingRefundsAreGenerated(string requiredPaymentType, Table table)
         {
             var expectedRefunds = table.Rows.Select(row => new
