@@ -145,7 +145,16 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.Processors
                     GenerateRequiredPaymentEvent(
                         earningEvent,
                         earningEvent.PriceEpisodes.FirstOrDefault()
-                            ?? new PriceEpisode { FundingLineType = paymentToBeRefunded.LearningAimFundingLineType },
+                            ?? new PriceEpisode
+                            {
+                                FundingLineType = paymentToBeRefunded.LearningAimFundingLineType,
+                                StartDate = paymentToBeRefunded.StartDate,
+                                PlannedEndDate = paymentToBeRefunded.PlannedEndDate.GetValueOrDefault(),
+                                ActualEndDate = paymentToBeRefunded.ActualEndDate,
+                                CompletionAmount = paymentToBeRefunded.CompletionAmount,
+                                InstalmentAmount = paymentToBeRefunded.InstalmentAmount,
+                                NumberOfInstalments = paymentToBeRefunded.NumberOfInstalments
+                            },
                         refundPeriod,
                         paymentToBeRefunded.TransactionType,
                         IsCoInvested(historicPayments)));

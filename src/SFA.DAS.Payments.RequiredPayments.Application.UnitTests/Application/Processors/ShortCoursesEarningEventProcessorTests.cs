@@ -622,6 +622,210 @@ namespace SFA.DAS.Payments.RequiredPayments.Application.UnitTests.Application.Pr
         }
 
         [Test]
+        public async Task Full_Withdrawal_Refund_Carries_Start_Date_From_Payment_History()
+        {
+            var startDate = new DateTime(2026, 9, 1);
+            var plannedEndDate = new DateTime(2026, 10, 31);
+            var actualEndDate = new DateTime(2026, 10, 15);
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2627,
+                    CollectionPeriod = 3,
+                    PlannedEndDate = new DateTime(2026, 10, 31)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2627, Period = 2 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 2,
+                    Amount = 300m,
+                    FundingSource = FundingSourceType.Levy,
+                    SfaContributionPercentage = 1m,
+                    StartDate = startDate,
+                    PlannedEndDate = plannedEndDate,
+                    ActualEndDate = actualEndDate,
+                    CompletionAmount = 700m,
+                    InstalmentAmount = 300m,
+                    NumberOfInstalments = 1,
+                    LearningAimFundingLineType = "GSO Short Courses (Apprenticeship Units) Levy"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            ClassicAssert.AreEqual(1, result.Count);
+            var refund = result.Single() as CalculatedRequiredLevyAmount;
+            ClassicAssert.IsNotNull(refund, "Refund should be a CalculatedRequiredLevyAmount");
+            ClassicAssert.AreEqual(-300m, refund.AmountDue);
+            ClassicAssert.AreEqual(1m, refund.SfaContributionPercentage);
+            ClassicAssert.AreEqual(startDate, refund.StartDate);
+            ClassicAssert.AreEqual(plannedEndDate, refund.PlannedEndDate);
+            ClassicAssert.AreEqual(actualEndDate, refund.ActualEndDate);
+            ClassicAssert.AreEqual(700m, refund.CompletionAmount);
+            ClassicAssert.AreEqual(300m, refund.InstalmentAmount);
+            ClassicAssert.AreEqual(1, refund.NumberOfInstalments);
+            ClassicAssert.AreEqual("GSO Short Courses (Apprenticeship Units) Levy", refund.LearningAim.FundingLineType);
+        }
+
+        [Test]
+        public async Task Full_Withdrawal_Refund_With_No_Planned_End_Date_In_Payment_History_Is_Generated()
+        {
+            var startDate = new DateTime(2026, 9, 1);
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2627,
+                    CollectionPeriod = 3,
+                    PlannedEndDate = new DateTime(2026, 10, 31)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2627, Period = 2 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 2,
+                    Amount = 300m,
+                    FundingSource = FundingSourceType.Levy,
+                    SfaContributionPercentage = 1m,
+                    StartDate = startDate,
+                    PlannedEndDate = null,
+                    ActualEndDate = null,
+                    LearningAimFundingLineType = "GSO Short Courses (Apprenticeship Units) Levy"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            var refund = result.Single();
+            ClassicAssert.AreEqual(-300m, refund.AmountDue);
+            ClassicAssert.AreEqual(startDate, refund.StartDate);
+            ClassicAssert.AreEqual(default(DateTime), refund.PlannedEndDate);
+            ClassicAssert.IsNull(refund.ActualEndDate);
+        }
+
+        [Test]
+        public async Task Full_Withdrawal_CoInvested_Refund_Carries_Start_Date_From_Payment_History()
+        {
+            var startDate = new DateTime(2026, 9, 1);
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>(),
+                    Year = 2627,
+                    CollectionPeriod = 3,
+                    PlannedEndDate = new DateTime(2026, 10, 31)
+                });
+            earningEvent.PriceEpisodes = new List<PriceEpisode>();
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2627, Period = 2 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 2,
+                    Amount = 300m,
+                    FundingSource = FundingSourceType.CoInvestedSfa,
+                    SfaContributionPercentage = 1m,
+                    StartDate = startDate,
+                    LearningAimFundingLineType = "GSO Short Courses (Apprenticeship Units) Non-Levy"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            var refund = result.Single() as CalculatedRequiredCoInvestedAmount;
+            ClassicAssert.IsNotNull(refund, "Refund should be a CalculatedRequiredCoInvestedAmount");
+            ClassicAssert.AreEqual(-300m, refund.AmountDue);
+            ClassicAssert.AreEqual(startDate, refund.StartDate);
+        }
+
+        [Test]
+        public async Task Partial_Refund_Takes_Start_Date_From_Earning_Event_Price_Episode()
+        {
+            var priceEpisodeStartDate = new DateTime(2026, 9, 15);
+            var earningEvent = GenerateTestShortCourseEarningsEvent(
+                new ShortCoursesTestValues
+                {
+                    ShortCourseEarnings = new List<ShortCourseEarning>
+                    {
+                        new ShortCourseEarning
+                        {
+                            Type = ShortCourseEarningType.Milestone1,
+                            Periods = new List<EarningPeriod>
+                            {
+                                GenerateTestEarningPeriod(2, 330m, ApprenticeshipEmployerType.Levy, 1m)
+                            }
+                        }
+                    },
+                    Year = 2627,
+                    CollectionPeriod = 3,
+                    PlannedEndDate = new DateTime(2026, 10, 31)
+                });
+            earningEvent.PriceEpisodes[0].StartDate = priceEpisodeStartDate;
+
+            var paymentHistoryEntities = new PaymentHistoryEntity[]
+            {
+                new PaymentHistoryEntity
+                {
+                    LearnAimReference = "ZSC0001",
+                    CollectionPeriod = new CollectionPeriod { AcademicYear = 2627, Period = 2 },
+                    PriceEpisodeIdentifier = "PE-1",
+                    TransactionType = (int)TransactionType.Milestone1,
+                    DeliveryPeriod = 2,
+                    Amount = 300m,
+                    FundingSource = FundingSourceType.Levy,
+                    SfaContributionPercentage = 1m,
+                    StartDate = new DateTime(2026, 9, 1),
+                    LearningAimFundingLineType = "GSO Short Courses (Apprenticeship Units) Levy"
+                }
+            };
+
+            paymentHistoryCacheMock
+                .Setup(x => x.TryGet(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ConditionalValue<PaymentHistoryEntity[]>(true, paymentHistoryEntities));
+
+            var result = await processor.HandleEarningEvent(earningEvent, paymentHistoryCacheMock.Object,
+                CancellationToken.None);
+
+            ClassicAssert.AreEqual(2, result.Count);
+            var refund = result.Single(x => x.AmountDue < 0m);
+            ClassicAssert.AreEqual(-300m, refund.AmountDue);
+            ClassicAssert.AreEqual(priceEpisodeStartDate, refund.StartDate);
+        }
+
+        [Test]
         public async Task Change_Of_Circumstances_Learner_Withdrawn_After_Milestone_CoInvested_Payment_Made_Generates_Refund()
         {
             // Arrange
